@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy>=2.0
+psycopg2-binary
+python-dotenv
+pydantic-settings
+alembic
+passlib[bcrypt]
+python-jose[cryptography]
+fastapi-users
+httpx
+requests
+pytest
+pytest-asyncio

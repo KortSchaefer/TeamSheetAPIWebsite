@@ -1,0 +1,614 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Team Sheet Studio · Manager Console</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #112850, #070c1a 55%);
+        color: #f5f7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      #login-view, #builder-view {
+        width: min(1100px, 100%);
+        background: rgba(10, 18, 35, 0.9);
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
+      }
+      #login-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+      .brand {
+        padding: 3rem;
+        background: linear-gradient(160deg, #1c346e, #3c64ff);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 2.6rem;
+      }
+      .brand p {
+        margin: 0;
+        opacity: 0.9;
+        line-height: 1.5;
+      }
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+      }
+      .feature-list li {
+        margin-bottom: .4rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+      }
+      .feature-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #86ffd3;
+      }
+      .login-card {
+        padding: 3rem;
+        background: #0c1630;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      form { display: flex; flex-direction: column; gap: 1.2rem; }
+      label {
+        font-weight: 600;
+        font-size: .9rem;
+        color: #a7b4d8;
+      }
+      input {
+        padding: .85rem 1rem;
+        border-radius: 14px;
+        border: 1px solid #202a48;
+        background: #050919;
+        color: #f5f7ff;
+        font-size: 1rem;
+        transition: border 0.2s;
+      }
+      input:focus { outline: none; border-color: #4b7bff; }
+      button {
+        border: none;
+        border-radius: 16px;
+        padding: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        color: #fff;
+      }
+      button:hover { opacity: .95; }
+      .status {
+        min-height: 1.5rem;
+        font-size: .9rem;
+      }
+      .status.error { color: #ff8b8b; }
+      .status.success { color: #65f5b6; }
+      .token-box {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: .85rem;
+        background: #050919;
+        border-radius: 14px;
+        border: 1px solid #202a48;
+        padding: 1rem;
+        word-break: break-all;
+        display: none;
+      }
+      .token-box.active { display: block; }
+
+      /* Builder layout */
+      #builder-view {
+        display: none;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 2rem 2.5rem 3rem;
+      }
+      .builder-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .builder-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .pill-nav {
+        display: flex;
+        gap: .75rem;
+      }
+      .pill-nav button {
+        border: none;
+        padding: .55rem 1.4rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #132752, #1f3e8d);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 1.5rem;
+      }
+      .servers-panel {
+        background: #050919;
+        border-radius: 20px;
+        padding: 1.2rem;
+        border: 1px solid #1f2a46;
+      }
+      .servers-panel h3 {
+        margin-top: 0;
+        font-size: 1.05rem;
+        letter-spacing: .05em;
+        color: #7b8bb3;
+        text-transform: uppercase;
+      }
+      .server-card {
+        background: #0f1a33;
+        border: 1px solid #1f2d51;
+        border-radius: 16px;
+        padding: .9rem;
+        margin-bottom: .8rem;
+        cursor: grab;
+      }
+      .server-card strong { display: block; font-size: 1.05rem; }
+      .server-meta {
+        font-size: .85rem;
+        color: #9fb1e1;
+      }
+      .grid-panel {
+        background: #050919;
+        border-radius: 20px;
+        border: 1px solid #1f2a46;
+        padding: 1.2rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #dbe3ff;
+      }
+      th, td {
+        border: 1px solid #10172c;
+        padding: .75rem 1rem;
+        text-align: left;
+      }
+      thead th {
+        background: #0f1f40;
+        text-transform: uppercase;
+        font-size: .85rem;
+        letter-spacing: .05em;
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.01);
+      }
+      .dropzone {
+        min-height: 48px;
+        border: 1px dashed transparent;
+      }
+      .dropzone.over {
+        border-color: #4b63f7;
+        background: rgba(75, 99, 247, 0.08);
+      }
+      .assigned-name {
+        font-weight: 600;
+        color: #fdfdfd;
+      }
+      .workspace-hidden { display: none !important; }
+      @media (max-width: 900px) {
+        body { padding: 1rem; }
+        .board { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <section id="login-view">
+      <div class="brand">
+        <p class="pill-nav" style="gap:.5rem;">
+          <span style="padding:.2rem .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.35);font-size:.85rem;">Internal Tooling</span>
+        </p>
+        <h1>Team Sheet Studio</h1>
+        <p>Plan the night with confidence. Drag, drop, and publish your perfect coverage sheet.</p>
+        <ul class="feature-list">
+          <li><span class="feature-dot"></span>JWT-secured API</li>
+          <li><span class="feature-dot"></span>Role-based access</li>
+          <li><span class="feature-dot"></span>Clone & export sheets</li>
+        </ul>
+      </div>
+      <div class="login-card">
+        <div>
+          <h2 style="margin:0;">Welcome back</h2>
+          <p style="margin:.4rem 0 0;color:#7e8ab4;">Enter your credentials to continue.</p>
+        </div>
+        <form id="login-form">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit">Sign in</button>
+        </form>
+        <div class="status" id="status"></div>
+        <div class="token-box" id="token-box"></div>
+        <div style="font-size:.85rem;color:#a1accf;">
+          Need an account? Use <code>POST /auth/register</code>. &mdash; <a href="/docs" style="color:#6c8eff;text-decoration:none;">API Docs</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="builder-view">
+      <div class="builder-header">
+        <div>
+          <h1>Team Sheet Studio</h1>
+          <p style="margin:.2rem 0 0;color:#8ea7ff;font-size:.9rem;">Optimize floor coverage with confidence</p>
+        </div>
+        <div class="pill-nav">
+          <button>Servers</button>
+          <button>Hosts</button>
+          <button>SAS</button>
+          <button id="auto-assign-btn">Auto-Assign</button>
+          <button>Change Sheet</button>
+          <button id="import-btn">Import Data ▼</button>
+          <input type="file" id="csv-input" accept=".csv" style="display:none;" />
+        </div>
+      </div>
+      <div class="board">
+        <aside class="servers-panel">
+          <h3>Servers</h3>
+          <div id="server-list"></div>
+        </aside>
+        <div class="grid-panel">
+          <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Sections Grid</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Server</th>
+                <th>Sidework</th>
+                <th>Outwork</th>
+              </tr>
+            </thead>
+            <tbody id="section-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const form = document.getElementById('login-form');
+      const statusEl = document.getElementById('status');
+      const tokenBox = document.getElementById('token-box');
+      const loginView = document.getElementById('login-view');
+      const builderView = document.getElementById('builder-view');
+
+      const serverListEl = document.getElementById('server-list');
+      const sectionRowsEl = document.getElementById('section-rows');
+      const autoAssignBtn = document.getElementById('auto-assign-btn');
+      const importBtn = document.getElementById('import-btn');
+      const csvInput = document.getElementById('csv-input');
+
+      const fallbackServers = [
+        { id: 1, name: 'Blake', upsellScore: 104, clockIn: '6:51 PM', hours: 33, length_of_employment: 820, pitty: 4, max_guests: 20 },
+        { id: 2, name: 'Kort', upsellScore: 60, clockIn: '8:57 AM', hours: 25, length_of_employment: 340, pitty: 2, max_guests: 16 },
+        { id: 3, name: 'Kort s', upsellScore: 4, clockIn: '8:59 AM', hours: 14, length_of_employment: 120, pitty: 1, max_guests: 12 },
+        { id: 4, name: 'Mia', upsellScore: 78, clockIn: '4:12 PM', hours: 22, length_of_employment: 610, pitty: 3, max_guests: 18 },
+        { id: 5, name: 'Janelle', upsellScore: 95, clockIn: '5:05 PM', hours: 30, length_of_employment: 450, pitty: 5, max_guests: 24 },
+      ];
+      let allServers = [];
+      let activeServers = [];
+
+      const sectionTemplates = [
+        { id: 101, label: '15,22,23', sidework: 'Sweep section', outwork: 'Closing Sidework' },
+        { id: 102, label: '14,13,112', sidework: 'Sanitize caddies', outwork: 'Right hot well' },
+        { id: 103, label: '11,12,21', sidework: 'Restock ramekins', outwork: 'Cold Well Wipe Down' },
+        { id: 104, label: '114,123,134', sidework: 'Restock napkins', outwork: 'Soda Station & Syrup Pumps' },
+        { id: 105, label: '113,133,124', sidework: 'Polish glasses', outwork: 'Cold Well Flips' },
+        { id: 106, label: '121,122,111', sidework: 'Restock straws', outwork: 'Tea 1' },
+      ];
+
+      const setStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = 'status ' + (isError ? 'error' : 'success');
+      };
+
+      const WEIGHTS = {
+        employment: 1,
+        blast: 1,
+        pitty: 1,
+        capacity: 1,
+        random: 1,
+      };
+
+      const loadInternalRoster = async (token) => {
+        try {
+          const resp = await fetch('/employees?role=SERVER&active=true', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No server records found');
+          allServers = employees.map((emp) => ({
+            id: emp.id,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+            upsellScore: emp.upsell_score ?? 0,
+            length_of_employment: emp.employment_days ?? 1,
+            pitty: emp.pitty_score ?? 0,
+            max_guests: emp.max_section_load ?? 0,
+            hours: emp.notes ?? emp.max_section_load ?? '-',
+            clockIn: emp.notes ?? '--:--',
+          }));
+        } catch (err) {
+          console.warn('Using fallback roster because DB roster fetch failed.', err);
+          allServers = fallbackServers.map((srv) => ({ ...srv }));
+        }
+      };
+
+      const calculateServerScore = (server) => {
+        const upsellComponent = ((server.upsellScore || 0) / 10) * WEIGHTS.blast;
+        const employmentComponent = Math.pow(
+          Math.max(server.length_of_employment || 1, 1),
+          1 / (3.5 * WEIGHTS.employment)
+        );
+        const pittyComponent = (server.pitty || 0) * WEIGHTS.pitty;
+        const capacityComponent = ((server.max_guests || 0) * WEIGHTS.capacity) / 2;
+        const randomComponent = Math.floor(Math.random() * (10 * WEIGHTS.random)) + 1;
+        const total = upsellComponent + employmentComponent + pittyComponent + capacityComponent + randomComponent;
+        return Number(total.toFixed(2));
+      };
+
+      const renderServers = () => {
+        serverListEl.innerHTML = '';
+        if (!activeServers.length) {
+          serverListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Import a CSV roster to load today\'s team.</p>';
+          return;
+        }
+        activeServers.forEach((srv) => {
+          const score = calculateServerScore(srv);
+          srv.currentScore = score;
+          const card = document.createElement('div');
+          card.className = 'server-card';
+          card.draggable = true;
+          card.dataset.serverId = srv.id;
+          card.innerHTML = `
+            <strong>${srv.name}</strong>
+            <div class="server-meta">Upsell: <span style="color:#4df58c;">${srv.upsellScore}</span></div>
+            <div class="server-meta">In: ${srv.clockIn} | Hours: ${srv.hours}</div>
+            <div class="server-meta">Score: ${score}</div>
+          `;
+          card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify(srv));
+            card.classList.add('dragging');
+          });
+          card.addEventListener('dragend', () => card.classList.remove('dragging'));
+          serverListEl.appendChild(card);
+        });
+      };
+
+      const renderSections = () => {
+        sectionRowsEl.innerHTML = '';
+        const sections = [];
+        for (let i = 0; i < 23; i++) {
+          const template = sectionTemplates[i % sectionTemplates.length];
+          sections.push({
+            ...template,
+            id: template.id + i * 100,
+            label: template.label,
+          });
+        }
+        sections.forEach((section, index) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${section.label}</td>
+            <td class="dropzone" data-section="${section.id}"></td>
+            <td>${section.sidework}</td>
+            <td>${section.outwork}</td>
+          `;
+          sectionRowsEl.appendChild(tr);
+        });
+      };
+
+      const enableDragDrop = () => {
+        const dropzones = document.querySelectorAll('.dropzone');
+        dropzones.forEach((zone) => {
+          zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('over');
+          });
+          zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+          zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('over');
+            const data = e.dataTransfer.getData('text/plain');
+            if (!data) return;
+            const server = JSON.parse(data);
+            zone.innerHTML = `<span class="assigned-name">${server.name}</span>`;
+          });
+        });
+      };
+
+      const autoAssign = () => {
+        if (!activeServers.length) {
+          alert('Upload a roster CSV or add servers for this shift.');
+          return;
+        }
+        const computed = activeServers.map((server) => ({
+          ...server,
+          autoScore: calculateServerScore(server),
+        }));
+        computed.sort((a, b) => b.autoScore - a.autoScore || a.name.localeCompare(b.name));
+        const dropzones = [...document.querySelectorAll('.dropzone')];
+        dropzones.forEach((zone, index) => {
+          const server = computed[index % computed.length];
+          zone.innerHTML = `<span class="assigned-name">${server.name}</span><div class="server-meta">Score: ${server.autoScore}</div>`;
+        });
+        // Refresh server cards to display latest randomized scores
+        renderServers();
+      };
+
+      const showBuilder = (user) => {
+        loginView.classList.add('workspace-hidden');
+        builderView.style.display = 'flex';
+        builderView.querySelector('.builder-header h1').textContent = `Team Sheet Studio · ${user.full_name}`;
+        renderServers();
+        renderSections();
+        enableDragDrop();
+      };
+
+      const parseCsv = (text) => {
+        const rows = text
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        if (!rows.length) return [];
+
+        const columnMap = {};
+        const extractName = (str) => (str || '').replace(/Hours?:?/i, '').trim();
+
+        if (rows[0].toLowerCase().includes('name')) {
+          const headers = rows[0].split(',').map((h) => h.trim().toLowerCase());
+          headers.forEach((header, idx) => {
+            if (header.includes('name')) columnMap.name = idx;
+            if (header.includes('hour') || header.includes('shift')) columnMap.hours = idx;
+          });
+          rows.shift();
+        }
+
+        return rows.map((row) => {
+          const cells = row.split(',').map((p) => p.trim());
+          let name = '';
+          let hours;
+
+          if (columnMap.name !== undefined) {
+            name = cells[columnMap.name] || '';
+          } else {
+            name = extractName(cells[0]);
+          }
+
+          if (columnMap.hours !== undefined) {
+            hours = Number(cells[columnMap.hours]);
+          } else if (cells.length > 1) {
+            const match = cells.slice(1).join(' ').match(/(\d+(\.\d+)?)/);
+            if (match) hours = Number(match[1]);
+          }
+
+          return { name, hours };
+        }).filter(item => item.name);
+      };
+
+      const hydrateServersForShift = (roster) => {
+        const lookup = new Map(allServers.map((srv) => [srv.name.toLowerCase(), srv]));
+        const matched = [];
+        const missed = [];
+        roster.forEach((entry) => {
+          const base = lookup.get(entry.name.toLowerCase());
+          if (base) {
+            matched.push({
+              ...base,
+              hours: entry.hours ?? base.hours,
+              rosterName: entry.name,
+            });
+          } else {
+            missed.push(entry.name);
+          }
+        });
+        activeServers = matched;
+        renderServers();
+        document.querySelectorAll('.dropzone').forEach((zone) => (zone.textContent = ''));
+        if (missed.length) {
+          alert(`No data found for: ${missed.join(', ')}. Add them to the internal roster to enable scoring.`);
+        }
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        if (!email || !password) return;
+        setStatus('Signing in...');
+        tokenBox.classList.remove('active');
+        tokenBox.textContent = '';
+
+        try {
+          const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+
+          if (!response.ok) {
+            const detail = await response.json().catch(() => ({}));
+            throw new Error(detail.detail || `HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          localStorage.setItem('tss_access_token', data.access_token);
+          localStorage.setItem('tss_refresh_token', data.refresh_token);
+          tokenBox.textContent = `Access Token: ${data.access_token}`;
+          tokenBox.classList.add('active');
+          setStatus('Login successful.');
+
+          const meResp = await fetch('/auth/me', {
+            headers: { Authorization: `Bearer ${data.access_token}` }
+          });
+          if (meResp.ok) {
+            const me = await meResp.json();
+            setStatus(`Welcome, ${me.full_name} (${me.role})`);
+            await loadInternalRoster(data.access_token);
+            showBuilder(me);
+          } else {
+            throw new Error('Could not load profile');
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || 'Login failed', true);
+        }
+      });
+
+      autoAssignBtn.addEventListener('click', () => autoAssign());
+
+      importBtn.addEventListener('click', () => csvInput.click());
+
+      csvInput.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target?.result;
+          if (typeof text !== 'string') {
+            alert('Unable to read CSV file.');
+            return;
+          }
+          const roster = parseCsv(text);
+          if (!roster.length) {
+            alert('CSV appeared empty. Expected lines like "Name,Hours".');
+            return;
+          }
+          hydrateServersForShift(roster);
+        };
+        reader.readAsText(file);
+        csvInput.value = '';
+      });
+    </script>
+  </body>
+</html>
