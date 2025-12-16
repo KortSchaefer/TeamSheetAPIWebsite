@@ -71,6 +71,7 @@ build/
 .env
 .env.*
 secrets.yaml
+!.env.example
 
 # Logs
 *.log
@@ -78,6 +79,7 @@ secrets.yaml
 # Database files
 *.db
 *.sqlite3
+!team_sheet.db
 
 # Coverage and profiling
 coverage/
