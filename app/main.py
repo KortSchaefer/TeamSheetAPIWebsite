@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, employees, imports, sections, shifts, team_sheets
+from app.routers import auth, employees, imports, sections, shifts, team_sheets, cobrands, gift_tracker
 
 PUBLIC_DIR = Path(__file__).resolve().parent.parent / "public"
 
@@ -34,6 +34,8 @@ def create_app() -> FastAPI:
     app.include_router(sections.router)
     app.include_router(shifts.router)
     app.include_router(team_sheets.router)
+    app.include_router(cobrands.router)
+    app.include_router(gift_tracker.router)
     app.include_router(imports.router)
 
     @app.get("/health")

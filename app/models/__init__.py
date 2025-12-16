@@ -1,6 +1,8 @@
 from .models import (
+    CobrandDeal,
     Employee,
     EmployeeRole,
+    GiftTrackerEntry,
     OutworkAssignment,
     OutworkTask,
     Section,
@@ -17,6 +19,8 @@ from .models import (
 )
 
 __all__ = [
+    "CobrandDeal",
+    "GiftTrackerEntry",
     "User",
     "UserRole",
     "Employee",

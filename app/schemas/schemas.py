@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
@@ -175,3 +176,56 @@ class TeamSheetRead(TeamSheetBase, TimestampModel):
     assignments: List[TeamSheetAssignmentRead] = Field(default_factory=list)
     sidework: List[TeamSheetTaskRead] = Field(default_factory=list)
     outwork: List[TeamSheetTaskRead] = Field(default_factory=list)
+
+
+class CobrandDealBase(BaseModel):
+    company_name: str = Field(min_length=1, max_length=255)
+    amount_usd: Decimal = Field(gt=0)
+    date_of_commission: date | None = None
+    date_of_payment: date | None = None
+    date_of_pickup: date | None = None
+    seller_id: int | None = None
+    logo_base64: str | None = None
+
+
+class CobrandDealCreate(CobrandDealBase):
+    pass
+
+
+class CobrandDealRead(CobrandDealBase, TimestampModel):
+    amount_usd: float
+    id: int
+    seller_name: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SellerOption(BaseModel):
+    id: int
+    name: str
+    role: EmployeeRole
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GiftTrackerEntryPayload(BaseModel):
+    employee_name: str = Field(min_length=1, max_length=255)
+    tuesday: int = 0
+    wednesday: int = 0
+    thursday: int = 0
+    friday: int = 0
+    saturday: int = 0
+    sunday: int = 0
+    monday: int = 0
+
+
+class GiftTrackerUpsertRequest(BaseModel):
+    week_number: int = Field(ge=1)
+    entries: List[GiftTrackerEntryPayload] = Field(default_factory=list)
+
+
+class GiftTrackerEntryRead(GiftTrackerEntryPayload, TimestampModel):
+    id: int
+    week_number: int
+
+    model_config = ConfigDict(from_attributes=True)

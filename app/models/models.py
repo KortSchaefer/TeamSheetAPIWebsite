@@ -193,3 +193,50 @@ class OutworkAssignment(Base):
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
 
     task = relationship("OutworkTask", back_populates="assignments")
+
+
+class CobrandDeal(Base, TimestampMixin):
+    __tablename__ = "cobrand_deals"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    date_of_commission: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_of_payment: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_of_pickup: Mapped[date | None] = mapped_column(Date, nullable=True)
+    seller_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"), nullable=True)
+    logo_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    seller = relationship("Employee")
+
+    @property
+    def amount_usd(self) -> float:
+        if self.amount_cents is None:
+            return 0.0
+        return self.amount_cents / 100
+
+    @property
+    def seller_name(self) -> str | None:
+        if not self.seller:
+            return None
+        full_name = f"{self.seller.first_name or ''} {self.seller.last_name or ''}".strip()
+        return full_name or self.seller.nickname
+
+
+class GiftTrackerEntry(Base, TimestampMixin):
+    __tablename__ = "gift_tracker_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    week_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    tuesday: Mapped[int] = mapped_column(Integer, default=0)
+    wednesday: Mapped[int] = mapped_column(Integer, default=0)
+    thursday: Mapped[int] = mapped_column(Integer, default=0)
+    friday: Mapped[int] = mapped_column(Integer, default=0)
+    saturday: Mapped[int] = mapped_column(Integer, default=0)
+    sunday: Mapped[int] = mapped_column(Integer, default=0)
+    monday: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (
+        {"sqlite_autoincrement": True},
+    )
