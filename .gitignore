@@ -1,0 +1,93 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+wheelhouse/
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Django / local DB
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask instance folder
+instance/
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor swap files
+*~
+*.swp
+
+# Distribution artifacts
+dist/
+build/
+*.egg
+
+# Package metadata
+.egg-info/
+
+# Secret/env files
+.env
+.env.*
+secrets.yaml
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite3
+
+# Coverage and profiling
+coverage/
+nosetests.xml
+
+# Jupyter
+.ipynb_checkpoints
+
+# Node
+node_modules/
+
+# Ignore compiled frontend assets (if you generate them locally)
+public/static/

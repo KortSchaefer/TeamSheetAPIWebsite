@@ -13,7 +13,7 @@ from app.database import get_db
 from app.models import User, UserRole
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

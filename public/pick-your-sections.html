@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Pick Your Own Sections</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at 70% 10%, #2b3f76, #0a1223 60%);
+        color: #f5f7ff;
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+      .card {
+        width: min(900px, 90vw);
+        background: rgba(10, 18, 35, 0.85);
+        border-radius: 28px;
+        padding: 2.5rem;
+        border: 1px solid #1f2d51;
+        text-align: center;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      }
+      .back-btn {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .back-btn:hover {
+        color: #cfe0ff;
+        border-color: #4b7bff;
+      }
+      h1 {
+        margin: 0 0 .6rem;
+        font-size: 2.2rem;
+      }
+      p {
+        margin: 0;
+        color: #a4b6e6;
+      }
+      a {
+        color: #77b0ff;
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-btn" onclick="window.location.href='/static/index.html'">← Back</button>
+    <div class="card">
+      <h1>Pick Your Own Sections</h1>
+      <p>Placeholder page. Build draft/selection UI here.</p>
+    </div>
+  </body>
+</html>

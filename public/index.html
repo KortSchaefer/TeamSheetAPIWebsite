@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Team Sheet Studio · Manager Console</title>
+    <title>Team Sheet Studio - Manager Console</title>
     <style>
       :root {
         color-scheme: dark;
@@ -19,8 +19,8 @@
         justify-content: center;
         padding: 2rem;
       }
-      #login-view, #builder-view {
-        width: min(1100px, 100%);
+      #login-view, #builder-view, #hub-view {
+        width: min(1400px, 100%);
         background: rgba(10, 18, 35, 0.9);
         border-radius: 32px;
         overflow: hidden;
@@ -114,6 +114,7 @@
         display: none;
       }
       .token-box.active { display: block; }
+      .hidden { display: none !important; }
 
       /* Builder layout */
       #builder-view {
@@ -121,6 +122,86 @@
         flex-direction: column;
         gap: 1.5rem;
         padding: 2rem 2.5rem 3rem;
+      }
+      #hub-view {
+        display: none;
+        padding: 2.5rem;
+        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+      }
+      .hub-header {
+        text-align: center;
+      }
+      .wheel {
+        position: relative;
+        width: min(760px, 90vw);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 1px dashed rgba(132, 154, 255, 0.35);
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at center, rgba(43, 72, 140, 0.2), rgba(10, 18, 35, 0.05));
+      }
+      .wheel-center {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: #fff;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      }
+      .wheel-item {
+        position: absolute;
+        width: 180px;
+        height: 120px;
+        padding: 1rem;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(83, 121, 255, 0.2), rgba(124, 221, 255, 0.08));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(4px);
+        color: #e8edff;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .wheel-item:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+        border-color: rgba(118, 255, 196, 0.7);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      }
+      .wheel-item strong {
+        font-size: 1.05rem;
+        letter-spacing: .03em;
+      }
+      .wheel-item span {
+        color: #9bb0ff;
+        font-size: .9rem;
+      }
+      .back-btn {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        z-index: 20;
+      }
+      .back-btn:hover {
+        color: #cfe0ff;
+        border-color: #4b7bff;
       }
       .builder-header {
         display: flex;
@@ -144,30 +225,38 @@
         font-weight: 600;
         cursor: pointer;
       }
+      .pill-nav button.active {
+        border: 1px solid #4b7bff;
+        box-shadow: 0 0 0 1px rgba(75, 123, 255, 0.4);
+      }
       .board {
         display: grid;
-        grid-template-columns: 280px 1fr;
+        grid-template-columns: 380px 1fr;
         gap: 1.5rem;
       }
-      .servers-panel {
+      .panel {
         background: #050919;
         border-radius: 20px;
         padding: 1.2rem;
         border: 1px solid #1f2a46;
       }
-      .servers-panel h3 {
+      .panel h3 {
         margin-top: 0;
         font-size: 1.05rem;
         letter-spacing: .05em;
         color: #7b8bb3;
         text-transform: uppercase;
       }
+      #server-list, #host-list, #sas-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: .9rem;
+      }
       .server-card {
         background: #0f1a33;
         border: 1px solid #1f2d51;
         border-radius: 16px;
         padding: .9rem;
-        margin-bottom: .8rem;
         cursor: grab;
       }
       .server-card strong { display: block; font-size: 1.05rem; }
@@ -220,6 +309,7 @@
     </style>
   </head>
   <body>
+    <button class="back-btn" onclick="returnToHub()">← Back</button>
     <section id="login-view">
       <div class="brand">
         <p class="pill-nav" style="gap:.5rem;">
@@ -235,8 +325,8 @@
       </div>
       <div class="login-card">
         <div>
-          <h2 style="margin:0;">Welcome back</h2>
-          <p style="margin:.4rem 0 0;color:#7e8ab4;">Enter your credentials to continue.</p>
+          <h2 style="margin:0;">Welcome</h2>
+          <p style="margin:.4rem 0 0;color:#7e8ab4;">Sign in or create a new account.</p>
         </div>
         <form id="login-form">
           <div>
@@ -247,13 +337,55 @@
             <label for="password">Password</label>
             <input id="password" type="password" placeholder="••••••••" required />
           </div>
-          <button type="submit">Sign in</button>
+          <div id="register-fields" class="hidden">
+            <div>
+              <label for="full_name">Full Name</label>
+              <input id="full_name" type="text" placeholder="Taylor Manager" />
+            </div>
+            <div>
+              <label for="role">Role</label>
+              <select id="role">
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SERVER">Server</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" id="submit-btn">Sign in</button>
+          <button type="button" id="toggle-mode-btn" style="background:#0f1831;border:1px solid #243258;">Need an account? Register</button>
         </form>
         <div class="status" id="status"></div>
         <div class="token-box" id="token-box"></div>
-        <div style="font-size:.85rem;color:#a1accf;">
-          Need an account? Use <code>POST /auth/register</code>. &mdash; <a href="/docs" style="color:#6c8eff;text-decoration:none;">API Docs</a>
-        </div>
+      </div>
+    </section>
+
+    <section id="hub-view">
+      <div class="hub-header">
+        <h1 style="margin:0;font-size:2rem;">Operations Hub</h1>
+        <p style="margin:.4rem 0 0;color:#8ea7ff;font-size:1rem;">Choose a workspace to continue</p>
+      </div>
+      <div class="wheel" id="hub-wheel">
+        <div class="wheel-center">Tools</div>
+        <a href="#" id="hub-teamsheet" class="wheel-item" data-index="0">
+          <strong>Team Sheet Studio</strong>
+          <span>Plan and assign servers</span>
+        </a>
+        <a href="/static/gift-card-tracker.html" class="wheel-item" data-index="1">
+          <strong>Gift Card Tracker</strong>
+          <span>Monitor balances</span>
+        </a>
+        <a href="/static/pick-your-sections.html" class="wheel-item" data-index="2">
+          <strong>Pick Your Own Sections</strong>
+          <span>Draft your floor</span>
+        </a>
+        <a href="/static/pos-practice.html" class="wheel-item" data-index="3">
+          <strong>POS Practice</strong>
+          <span>Reps & drills</span>
+        </a>
+        <a href="/static/under-construction.html" class="wheel-item" data-index="4">
+          <strong>Under Construction</strong>
+          <span>Coming soon</span>
+        </a>
       </div>
     </section>
 
@@ -264,21 +396,19 @@
           <p style="margin:.2rem 0 0;color:#8ea7ff;font-size:.9rem;">Optimize floor coverage with confidence</p>
         </div>
         <div class="pill-nav">
-          <button>Servers</button>
-          <button>Hosts</button>
-          <button>SAS</button>
+          <button id="servers-tab" class="active">Servers</button>
+          <button id="hosts-tab">Hosts & SAS</button>
           <button id="auto-assign-btn">Auto-Assign</button>
-          <button>Change Sheet</button>
           <button id="import-btn">Import Data ▼</button>
           <input type="file" id="csv-input" accept=".csv" style="display:none;" />
         </div>
       </div>
-      <div class="board">
-        <aside class="servers-panel">
+      <div class="board" id="servers-board">
+        <aside class="panel">
           <h3>Servers</h3>
           <div id="server-list"></div>
         </aside>
-        <div class="grid-panel">
+        <div class="grid-panel panel">
           <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Sections Grid</h3>
           <table>
             <thead>
@@ -293,6 +423,46 @@
           </table>
         </div>
       </div>
+
+      <div class="board" id="hosts-board" style="display:none;">
+        <aside class="panel" style="display:flex;flex-direction:column;gap:1rem;">
+          <div>
+            <h3>Hosts</h3>
+            <div id="host-list"></div>
+          </div>
+          <div>
+            <h3>SAS</h3>
+            <div id="sas-list"></div>
+          </div>
+        </aside>
+        <div class="panel" style="display:flex;flex-direction:column;gap:1.2rem;">
+          <div class="grid-panel panel" style="margin:0;">
+            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Host Deck</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Assigned Host</th>
+                  <th>Qualifications</th>
+                </tr>
+              </thead>
+              <tbody id="host-rows"></tbody>
+            </table>
+          </div>
+          <div class="grid-panel panel" style="margin:0;">
+            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">SAS Deck</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Assigned SA</th>
+                </tr>
+              </thead>
+              <tbody id="sas-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
     <script>
@@ -301,12 +471,27 @@
       const tokenBox = document.getElementById('token-box');
       const loginView = document.getElementById('login-view');
       const builderView = document.getElementById('builder-view');
+      const hubView = document.getElementById('hub-view');
+      const hubWheel = document.getElementById('hub-wheel');
+      const hubTeamsheet = document.getElementById('hub-teamsheet');
 
       const serverListEl = document.getElementById('server-list');
+      const hostListEl = document.getElementById('host-list');
+      const sasListEl = document.getElementById('sas-list');
       const sectionRowsEl = document.getElementById('section-rows');
+      const hostRowsEl = document.getElementById('host-rows');
+      const sasRowsEl = document.getElementById('sas-rows');
       const autoAssignBtn = document.getElementById('auto-assign-btn');
       const importBtn = document.getElementById('import-btn');
       const csvInput = document.getElementById('csv-input');
+      const serversTab = document.getElementById('servers-tab');
+      const hostsTab = document.getElementById('hosts-tab');
+      const serversBoard = document.getElementById('servers-board');
+      const hostsBoard = document.getElementById('hosts-board');
+      const toggleModeBtn = document.getElementById('toggle-mode-btn');
+      const registerFields = document.getElementById('register-fields');
+      const fullNameInput = document.getElementById('full_name');
+      const roleSelect = document.getElementById('role');
 
       const fallbackServers = [
         { id: 1, name: 'Blake', upsellScore: 104, clockIn: '6:51 PM', hours: 33, length_of_employment: 820, pitty: 4, max_guests: 20 },
@@ -315,8 +500,24 @@
         { id: 4, name: 'Mia', upsellScore: 78, clockIn: '4:12 PM', hours: 22, length_of_employment: 610, pitty: 3, max_guests: 18 },
         { id: 5, name: 'Janelle', upsellScore: 95, clockIn: '5:05 PM', hours: 30, length_of_employment: 450, pitty: 5, max_guests: 24 },
       ];
+      const fallbackHosts = [
+        { id: 'h1', name: 'Alex H', qualifications: ['L.A.D', 'Seater', 'Board'] },
+        { id: 'h2', name: 'Bailey H', qualifications: ['Restroom', 'Call Ahead'] },
+        { id: 'h3', name: 'Casey H', qualifications: ['L.A.D', 'Board'] },
+        { id: 'h4', name: 'Devon H', qualifications: ['Seater', 'Restroom'] },
+      ];
+      const fallbackSas = [
+        { id: 's1', name: 'Pat SA' },
+        { id: 's2', name: 'Jamie SA' },
+        { id: 's3', name: 'Riley SA' },
+      ];
       let allServers = [];
       let activeServers = [];
+      let allHosts = [];
+      let activeHosts = [];
+      let allSas = [];
+      let activeSas = [];
+      let currentUser = null;
 
       const sectionTemplates = [
         { id: 101, label: '15,22,23', sidework: 'Sweep section', outwork: 'Closing Sidework' },
@@ -326,6 +527,8 @@
         { id: 105, label: '113,133,124', sidework: 'Polish glasses', outwork: 'Cold Well Flips' },
         { id: 106, label: '121,122,111', sidework: 'Restock straws', outwork: 'Tea 1' },
       ];
+      const hostSlots = Array.from({ length: 7 }).map((_, i) => ({ id: `host-${i + 1}`, label: `Host ${i + 1}` }));
+      const sasSlots = Array.from({ length: 7 }).map((_, i) => ({ id: `sas-${i + 1}`, label: `SA ${i + 1}` }));
 
       const setStatus = (message, isError = false) => {
         statusEl.textContent = message;
@@ -340,10 +543,42 @@
         random: 1,
       };
 
+      let accessToken = null;
+      let currentMode = 'servers';
+      let authMode = 'login';
+      const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+
+      const getStoredToken = () => {
+        if (accessToken) return accessToken;
+        const cookieMatch = document.cookie
+          .split(';')
+          .map((c) => c.trim())
+          .find((c) => c.startsWith('tss_access_token='));
+        if (cookieMatch) {
+          return cookieMatch.split('=')[1];
+        }
+        return localStorage.getItem('tss_access_token');
+      };
+
+      const setStoredTokens = (access, refresh) => {
+        accessToken = access;
+        if (access) {
+          document.cookie = `tss_access_token=${access}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+          localStorage.setItem('tss_access_token', access);
+        }
+        if (refresh) {
+          localStorage.setItem('tss_refresh_token', refresh);
+          document.cookie = `tss_refresh_token=${refresh}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+        }
+      };
+
       const loadInternalRoster = async (token) => {
         try {
+          const bearer = token || accessToken || getStoredToken();
+          if (!bearer) throw new Error('Login first to load roster.');
+          accessToken = bearer;
           const resp = await fetch('/employees?role=SERVER&active=true', {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${bearer}` },
           });
           if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
           const employees = await resp.json();
@@ -351,6 +586,7 @@
           allServers = employees.map((emp) => ({
             id: emp.id,
             name: `${emp.first_name} ${emp.last_name}`.trim(),
+            nickname: emp.nickname,
             upsellScore: emp.upsell_score ?? 0,
             length_of_employment: emp.employment_days ?? 1,
             pitty: emp.pitty_score ?? 0,
@@ -361,6 +597,49 @@
         } catch (err) {
           console.warn('Using fallback roster because DB roster fetch failed.', err);
           allServers = fallbackServers.map((srv) => ({ ...srv }));
+        }
+      };
+
+      const loadHostRoster = async (token) => {
+        try {
+          const bearer = token || accessToken || getStoredToken();
+          if (!bearer) throw new Error('Login first to load hosts.');
+          accessToken = bearer;
+          const resp = await fetch('/employees?role=HOST&active=true', {
+            headers: { Authorization: `Bearer ${bearer}` },
+          });
+          if (!resp.ok) throw new Error(`Host roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No host records found');
+          allHosts = employees.map((emp) => ({
+            id: `host-${emp.id}`,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+            qualifications: (emp.notes || '').split(',').map((q) => q.trim()).filter(Boolean),
+          }));
+        } catch (err) {
+          console.warn('Using fallback hosts because DB fetch failed.', err);
+          allHosts = fallbackHosts.map((h) => ({ ...h }));
+        }
+      };
+
+      const loadSasRoster = async (token) => {
+        try {
+          const bearer = token || accessToken || getStoredToken();
+          if (!bearer) throw new Error('Login first to load SAS.');
+          accessToken = bearer;
+          const resp = await fetch('/employees?role=BUSSER&active=true', {
+            headers: { Authorization: `Bearer ${bearer}` },
+          });
+          if (!resp.ok) throw new Error(`SA roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No SA records found');
+          allSas = employees.map((emp) => ({
+            id: `sas-${emp.id}`,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+          }));
+        } catch (err) {
+          console.warn('Using fallback SAS because DB fetch failed.', err);
+          allSas = fallbackSas.map((s) => ({ ...s }));
         }
       };
 
@@ -397,7 +676,7 @@
             <div class="server-meta">Score: ${score}</div>
           `;
           card.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', JSON.stringify(srv));
+            e.dataTransfer.setData('text/plain', JSON.stringify({ ...srv, pool: 'servers' }));
             card.classList.add('dragging');
           });
           card.addEventListener('dragend', () => card.classList.remove('dragging'));
@@ -417,14 +696,84 @@
           });
         }
         sections.forEach((section, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${section.label}</td>
+              <td class="dropzone" data-section="${section.id}" data-pool="servers"></td>
+              <td>${section.sidework}</td>
+              <td>${section.outwork}</td>
+            `;
+            sectionRowsEl.appendChild(tr);
+          });
+      };
+
+      const renderHosts = () => {
+        hostListEl.innerHTML = '';
+        if (!activeHosts.length) {
+          hostListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load host roster to begin.</p>';
+          return;
+        }
+        activeHosts.forEach((host) => {
+          const card = document.createElement('div');
+          card.className = 'server-card';
+          card.draggable = true;
+          card.dataset.serverId = host.id;
+          const quals = (host.qualifications || []).join(', ');
+          card.innerHTML = `
+            <strong>${host.name}</strong>
+            <div class="server-meta">${quals || 'General'}</div>
+          `;
+          card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify({ ...host, pool: 'hosts' }));
+            card.classList.add('dragging');
+          });
+          card.addEventListener('dragend', () => card.classList.remove('dragging'));
+          hostListEl.appendChild(card);
+        });
+      };
+
+      const renderSas = () => {
+        sasListEl.innerHTML = '';
+        if (!activeSas.length) {
+          sasListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load SA roster to begin.</p>';
+          return;
+        }
+        activeSas.forEach((sa) => {
+          const card = document.createElement('div');
+          card.className = 'server-card';
+          card.draggable = true;
+          card.dataset.serverId = sa.id;
+          card.innerHTML = `
+            <strong>${sa.name}</strong>
+          `;
+          card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify({ ...sa, pool: 'sas' }));
+            card.classList.add('dragging');
+          });
+          card.addEventListener('dragend', () => card.classList.remove('dragging'));
+          sasListEl.appendChild(card);
+        });
+      };
+
+      const renderHostTables = () => {
+        hostRowsEl.innerHTML = '';
+        hostSlots.forEach((slot) => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${section.label}</td>
-            <td class="dropzone" data-section="${section.id}"></td>
-            <td>${section.sidework}</td>
-            <td>${section.outwork}</td>
+            <td>${slot.label}</td>
+            <td class="dropzone" data-slot="${slot.id}" data-pool="hosts"></td>
+            <td class="dropzone-qualifications" data-slot="${slot.id}-quals"></td>
           `;
-          sectionRowsEl.appendChild(tr);
+          hostRowsEl.appendChild(tr);
+        });
+        sasRowsEl.innerHTML = '';
+        sasSlots.forEach((slot) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${slot.label}</td>
+            <td class="dropzone" data-slot="${slot.id}" data-pool="sas"></td>
+          `;
+          sasRowsEl.appendChild(tr);
         });
       };
 
@@ -442,7 +791,38 @@
             const data = e.dataTransfer.getData('text/plain');
             if (!data) return;
             const server = JSON.parse(data);
+            const pool = zone.dataset.pool || server.pool || 'servers';
+            if (zone.dataset.pool && zone.dataset.pool !== server.pool) {
+              alert('This slot is reserved for a different role.');
+              return;
+            }
+            const previous = zone.dataset.assignedServer;
+            if (previous) {
+              try {
+                const prev = JSON.parse(previous);
+                if (pool === 'servers') activeServers.push(prev);
+                if (pool === 'hosts') activeHosts.push(prev);
+                if (pool === 'sas') activeSas.push(prev);
+              } catch (err) {
+                console.warn('Could not restore previous slot occupant', err);
+              }
+            }
+            zone.dataset.assignedServer = JSON.stringify(server);
             zone.innerHTML = `<span class="assigned-name">${server.name}</span>`;
+            if (pool === 'servers') {
+              activeServers = activeServers.filter((srv) => `${srv.id}` !== `${server.id}`);
+              renderServers();
+            } else if (pool === 'hosts') {
+              activeHosts = activeHosts.filter((h) => `${h.id}` !== `${server.id}`);
+              renderHosts();
+              const qualsCell = zone.parentElement?.querySelector('.dropzone-qualifications');
+              if (qualsCell) {
+                qualsCell.textContent = (server.qualifications || []).join(', ');
+              }
+            } else if (pool === 'sas') {
+              activeSas = activeSas.filter((sa) => `${sa.id}` !== `${server.id}`);
+              renderSas();
+            }
           });
         });
       };
@@ -458,134 +838,306 @@
         }));
         computed.sort((a, b) => b.autoScore - a.autoScore || a.name.localeCompare(b.name));
         const dropzones = [...document.querySelectorAll('.dropzone')];
-        dropzones.forEach((zone, index) => {
-          const server = computed[index % computed.length];
-          zone.innerHTML = `<span class="assigned-name">${server.name}</span><div class="server-meta">Score: ${server.autoScore}</div>`;
-        });
-        // Refresh server cards to display latest randomized scores
+        const assignedIds = new Set();
+        dropzones
+          .filter((zone) => (zone.dataset.pool || 'servers') === 'servers')
+          .forEach((zone, index) => {
+            const server = computed[index % computed.length];
+            assignedIds.add(`${server.id}`);
+            zone.dataset.assignedServer = JSON.stringify(server);
+            zone.innerHTML = `<span class="assigned-name">${server.name}</span><div class="server-meta">Score: ${server.autoScore}</div>`;
+          });
+        activeServers = activeServers.filter((srv) => !assignedIds.has(`${srv.id}`));
         renderServers();
+      };
+
+      const showHub = () => {
+        loginView.classList.add('workspace-hidden');
+        hubView.style.display = 'flex';
+        builderView.style.display = 'none';
       };
 
       const showBuilder = (user) => {
         loginView.classList.add('workspace-hidden');
+        hubView.style.display = 'none';
         builderView.style.display = 'flex';
-        builderView.querySelector('.builder-header h1').textContent = `Team Sheet Studio · ${user.full_name}`;
+        const headerName = user?.full_name || currentUser?.full_name || 'Manager';
+        builderView.querySelector('.builder-header h1').textContent = `Team Sheet Studio - ${headerName}`;
         renderServers();
+        renderHosts();
+        renderSas();
         renderSections();
+        renderHostTables();
         enableDragDrop();
       };
 
+      const splitCsvLine = (line) => {
+        const cells = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+            continue;
+          }
+          if (char === ',' && !inQuotes) {
+            cells.push(current.trim());
+            current = '';
+            continue;
+          }
+          current += char;
+        }
+        cells.push(current.trim());
+        return cells;
+      };
+
       const parseCsv = (text) => {
-        const rows = text
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean);
+        const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
         if (!rows.length) return [];
 
-        const columnMap = {};
-        const extractName = (str) => (str || '').replace(/Hours?:?/i, '').trim();
+        const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const headersRaw = splitCsvLine(rows[0]);
+        const normalizedHeaders = headersRaw.map(normalizeHeader);
+        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
+        const hasHeader = normalizedHeaders.some((h) => expectedHeaders.includes(h));
 
-        if (rows[0].toLowerCase().includes('name')) {
-          const headers = rows[0].split(',').map((h) => h.trim().toLowerCase());
-          headers.forEach((header, idx) => {
-            if (header.includes('name')) columnMap.name = idx;
-            if (header.includes('hour') || header.includes('shift')) columnMap.hours = idx;
-          });
-          rows.shift();
-        }
+        const dataRows = hasHeader ? rows.slice(1) : rows;
 
-        return rows.map((row) => {
-          const cells = row.split(',').map((p) => p.trim());
-          let name = '';
-          let hours;
+        const toNumber = (value) => {
+          if (value === undefined || value === null) return undefined;
+          const num = Number(String(value).trim());
+          return Number.isFinite(num) ? num : undefined;
+        };
 
-          if (columnMap.name !== undefined) {
-            name = cells[columnMap.name] || '';
-          } else {
-            name = extractName(cells[0]);
+        const resolveField = (headers, cells, keys) => {
+          for (const key of keys) {
+            const idx = headers.indexOf(key);
+            if (idx !== -1) return cells[idx];
           }
+          return undefined;
+        };
 
-          if (columnMap.hours !== undefined) {
-            hours = Number(cells[columnMap.hours]);
-          } else if (cells.length > 1) {
-            const match = cells.slice(1).join(' ').match(/(\d+(\.\d+)?)/);
-            if (match) hours = Number(match[1]);
-          }
+        const extractName = (value) => (value || '').replace(/Hours?:?/i, '').trim();
 
-          return { name, hours };
-        }).filter(item => item.name);
+        return dataRows
+          .map((row) => {
+            const cells = splitCsvLine(row).map((cell) => cell.trim());
+            const headers = hasHeader ? normalizedHeaders : [];
+
+            const name = hasHeader ? resolveField(headers, cells, ['name']) : extractName(cells[0]);
+            const nickname = hasHeader ? resolveField(headers, cells, ['nickname']) : undefined;
+            const upsell_score = toNumber(resolveField(headers, cells, ['upsell_score', 'upsell']));
+            const pitty = toNumber(resolveField(headers, cells, ['pitty', 'pity']));
+            const employment_days = toNumber(resolveField(headers, cells, ['employment_days', 'employment']));
+            const max_guests = toNumber(resolveField(headers, cells, ['max_guests', 'capacity', 'max_section_load']));
+            const hours = toNumber(hasHeader ? resolveField(headers, cells, ['hours', 'hrs']) : cells[1]);
+
+            return {
+              name: name || '',
+              nickname,
+              upsell_score,
+              pitty,
+              employment_days,
+              max_guests,
+              hours,
+            };
+          })
+          .filter((item) => item.name);
       };
 
       const hydrateServersForShift = (roster) => {
         const lookup = new Map(allServers.map((srv) => [srv.name.toLowerCase(), srv]));
         const matched = [];
         const missed = [];
-        roster.forEach((entry) => {
+        roster.forEach((entry, index) => {
           const base = lookup.get(entry.name.toLowerCase());
+          const mergedMetrics = {
+            upsellScore: entry.upsell_score ?? base?.upsellScore ?? 0,
+            length_of_employment: entry.employment_days ?? base?.length_of_employment ?? 1,
+            pitty: entry.pitty ?? base?.pitty ?? 0,
+            max_guests: entry.max_guests ?? base?.max_guests ?? 0,
+          };
+
           if (base) {
             matched.push({
               ...base,
+              nickname: entry.nickname || base.nickname,
+              ...mergedMetrics,
               hours: entry.hours ?? base.hours,
               rosterName: entry.name,
             });
           } else {
             missed.push(entry.name);
+            matched.push({
+              id: `csv-${Date.now()}-${index}`,
+              name: entry.name,
+              nickname: entry.nickname,
+              ...mergedMetrics,
+              hours: entry.hours ?? '-',
+              clockIn: '--:--',
+            });
           }
         });
-        activeServers = matched;
+        activeServers = matched.filter((srv) => srv.name);
         renderServers();
-        document.querySelectorAll('.dropzone').forEach((zone) => (zone.textContent = ''));
+        document.querySelectorAll('.dropzone').forEach((zone) => {
+          zone.textContent = '';
+          delete zone.dataset.assignedServer;
+        });
+        document.querySelectorAll('.dropzone-qualifications').forEach((cell) => (cell.textContent = ''));
         if (missed.length) {
           alert(`No data found for: ${missed.join(', ')}. Add them to the internal roster to enable scoring.`);
         }
       };
+
+      const uploadRosterCsv = async (file) => {
+        const bearer = accessToken || getStoredToken();
+        if (!bearer) throw new Error('Login first, then import.');
+        const formData = new FormData();
+        formData.append('file', file);
+        const resp = await fetch('/imports/servers', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${bearer}` },
+          body: formData,
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Import failed (${resp.status})`);
+        }
+        return resp.json();
+      };
+
+      const switchMode = (mode) => {
+        currentMode = mode;
+        if (mode === 'servers') {
+          serversBoard.style.display = 'grid';
+          hostsBoard.style.display = 'none';
+          autoAssignBtn.disabled = false;
+          renderServers();
+        } else {
+          serversBoard.style.display = 'none';
+          hostsBoard.style.display = 'grid';
+          autoAssignBtn.disabled = true;
+          renderHosts();
+          renderSas();
+        }
+        serversTab.classList.toggle('active', mode === 'servers');
+        hostsTab.classList.toggle('active', mode !== 'servers');
+      };
+      const authenticate = async (email, password) => {
+        const response = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        setStoredTokens(data.access_token, data.refresh_token);
+        tokenBox.textContent = `Access Token: ${data.access_token}`;
+        tokenBox.classList.add('active');
+        setStatus('Login successful.');
+
+          const meResp = await fetch('/auth/me', {
+            headers: { Authorization: `Bearer ${data.access_token}` }
+          });
+        if (!meResp.ok) {
+          throw new Error('Could not load profile');
+        }
+        const me = await meResp.json();
+        currentUser = me;
+        setStatus(`Welcome, ${me.full_name} (${me.role})`);
+        await Promise.all([
+          loadInternalRoster(data.access_token),
+          loadHostRoster(data.access_token),
+          loadSasRoster(data.access_token),
+        ]);
+        activeServers = [...allServers];
+        activeHosts = [...allHosts];
+        activeSas = [...allSas];
+        layoutWheel();
+        showHub();
+        switchMode('servers');
+      };
+
+      const registerAccount = async ({ email, password, full_name, role }) => {
+        const response = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, full_name, role }),
+        });
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${response.status}`);
+        }
+        return response.json();
+      };
+
+      const setAuthMode = (mode) => {
+        authMode = mode;
+        const isRegister = mode === 'register';
+        registerFields.classList.toggle('hidden', !isRegister);
+        document.getElementById('submit-btn').textContent = isRegister ? 'Create account' : 'Sign in';
+        toggleModeBtn.textContent = isRegister ? 'Have an account? Sign in' : 'Need an account? Register';
+        setStatus(isRegister ? 'Create a new account.' : 'Enter your credentials to continue.');
+      };
+
+      setAuthMode('login');
+
+      toggleModeBtn.addEventListener('click', () => {
+        setAuthMode(authMode === 'login' ? 'register' : 'login');
+      });
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         if (!email || !password) return;
-        setStatus('Signing in...');
         tokenBox.classList.remove('active');
         tokenBox.textContent = '';
 
         try {
-          const response = await fetch('/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-
-          if (!response.ok) {
-            const detail = await response.json().catch(() => ({}));
-            throw new Error(detail.detail || `HTTP ${response.status}`);
-          }
-
-          const data = await response.json();
-          localStorage.setItem('tss_access_token', data.access_token);
-          localStorage.setItem('tss_refresh_token', data.refresh_token);
-          tokenBox.textContent = `Access Token: ${data.access_token}`;
-          tokenBox.classList.add('active');
-          setStatus('Login successful.');
-
-          const meResp = await fetch('/auth/me', {
-            headers: { Authorization: `Bearer ${data.access_token}` }
-          });
-          if (meResp.ok) {
-            const me = await meResp.json();
-            setStatus(`Welcome, ${me.full_name} (${me.role})`);
-            await loadInternalRoster(data.access_token);
-            showBuilder(me);
+          if (authMode === 'register') {
+            const full_name = fullNameInput.value.trim();
+            const role = roleSelect.value || 'MANAGER';
+            if (!full_name) {
+              setStatus('Please enter your full name to register.', true);
+              return;
+            }
+            setStatus('Creating your account...');
+            await registerAccount({ email, password, full_name, role });
+            setStatus('Account created. Signing you in...');
           } else {
-            throw new Error('Could not load profile');
+            setStatus('Signing in...');
           }
+          await authenticate(email, password);
         } catch (err) {
           console.error(err);
-          setStatus(err.message || 'Login failed', true);
+          setStatus(err.message || 'Authentication failed', true);
         }
       });
 
-      autoAssignBtn.addEventListener('click', () => autoAssign());
+      autoAssignBtn.addEventListener('click', () => {
+        if (currentMode !== 'servers') return;
+        autoAssign();
+      });
+
+      serversTab.addEventListener('click', () => switchMode('servers'));
+      hostsTab.addEventListener('click', () => switchMode('hosts'));
+      hubTeamsheet.addEventListener('click', (e) => {
+        e.preventDefault();
+        showBuilder(currentUser);
+      });
 
       importBtn.addEventListener('click', () => csvInput.click());
 
@@ -593,7 +1145,7 @@
         const file = event.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           const text = e.target?.result;
           if (typeof text !== 'string') {
             alert('Unable to read CSV file.');
@@ -601,14 +1153,44 @@
           }
           const roster = parseCsv(text);
           if (!roster.length) {
-            alert('CSV appeared empty. Expected lines like "Name,Hours".');
+            alert('CSV appeared empty. Expected headers like name,nickname,upsell_score,pitty,employment_days,max_guests.');
             return;
+          }
+          try {
+            const result = await uploadRosterCsv(file);
+            setStatus(`Imported roster: ${result.created} new, ${result.updated} updated.`);
+            await loadInternalRoster(accessToken);
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Import failed. Confirm you are logged in as a manager or admin.');
           }
           hydrateServersForShift(roster);
         };
         reader.readAsText(file);
         csvInput.value = '';
       });
+
+      const layoutWheel = () => {
+        const items = hubWheel.querySelectorAll('.wheel-item');
+        const total = items.length;
+        items.forEach((item, idx) => {
+          const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
+          const radius = 38;
+          const x = 50 + radius * Math.cos(angle);
+          const y = 50 + radius * Math.sin(angle);
+          item.style.left = `${x}%`;
+          item.style.top = `${y}%`;
+          item.style.transform = 'translate(-50%, -50%)';
+        });
+      };
+
+      layoutWheel();
+
+      const returnToHub = () => {
+        // Always send back to hub without forcing a new login. If the user is not authenticated, the hub will still render.
+        showHub();
+        switchMode('servers');
+      };
     </script>
   </body>
 </html>

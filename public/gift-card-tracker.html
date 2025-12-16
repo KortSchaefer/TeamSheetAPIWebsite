@@ -1,0 +1,348 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gift Card Tracker</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 20% 20%, #1f2b55, #080d1c 60%);
+        color: #f5f7ff;
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+      .status {
+        color: #9bb0ff;
+        font-size: .95rem;
+      }
+      .status.error {
+        color: #ff9b9b;
+      }
+      .card {
+        width: min(1200px, 96vw);
+        background: rgba(10, 18, 35, 0.85);
+        border-radius: 28px;
+        padding: 2rem;
+        border: 1px solid #1f2d51;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .back-btn {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .back-btn:hover {
+        color: #cfe0ff;
+        border-color: #4b7bff;
+      }
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      p {
+        margin: 0;
+        color: #a4b6e6;
+      }
+      .tabs {
+        display: flex;
+        gap: .6rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        border: 1px solid #243258;
+        background: #0f1831;
+        color: #dbe3ff;
+        padding: .5rem 1rem;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .tab.active {
+        border-color: #4b7bff;
+        box-shadow: 0 0 0 1px rgba(75, 123, 255, 0.4);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #dbe3ff;
+        font-size: .95rem;
+      }
+      th, td {
+        border: 1px solid #10172c;
+        padding: .55rem .7rem;
+        text-align: center;
+      }
+      thead th {
+        background: #0f1f40;
+        text-transform: uppercase;
+        font-size: .8rem;
+        letter-spacing: .05em;
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      input[type="number"] {
+        width: 100%;
+        padding: .35rem .4rem;
+        border-radius: 8px;
+        border: 1px solid #243258;
+        background: #0a1223;
+        color: #f5f7ff;
+        text-align: right;
+      }
+      input[type="number"]:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        color: #98a4c4;
+      }
+      .mode-pill {
+        align-self: flex-start;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+        border: 1px solid #2a365a;
+        background: rgba(255,255,255,0.05);
+        color: #9bb0ff;
+        font-weight: 600;
+        font-size: .9rem;
+      }
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-btn" onclick="window.location.href='/static/index.html'">← Back</button>
+    <div class="card">
+      <div class="header-row">
+        <div>
+          <h1>Gift Card Tracker</h1>
+          <p id="mode-subtitle">Loading mode...</p>
+        </div>
+        <div id="mode-pill" class="mode-pill">Checking role...</div>
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Server</th>
+              <th>Tuesday</th>
+              <th>Wednesday</th>
+              <th>Thursday</th>
+              <th>Friday</th>
+              <th>Saturday</th>
+              <th>Sunday</th>
+              <th>Monday</th>
+              <th>This Week</th>
+              <th>YTD</th>
+              <th>Goal</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      const UNIVERSAL_GOAL = 4000;
+      const days = ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday'];
+      const fallbackServers = [
+        'Alex Thompson',
+        'Brianna Lopez',
+        'Carlos Mendoza',
+        'Danielle Harper',
+        'Ethan Brooks',
+        'Faith Reynolds',
+      ];
+      const weeksCount = 8;
+
+      const tabsEl = document.getElementById('tabs');
+      const tbody = document.getElementById('table-body');
+      const modePill = document.getElementById('mode-pill');
+      const modeSubtitle = document.getElementById('mode-subtitle');
+      const statusMsg = document.createElement('div');
+      statusMsg.className = 'status';
+      document.querySelector('.card').appendChild(statusMsg);
+      const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+      let isAdmin = false;
+      let currentWeek = 1;
+      let giftData = {};
+      let serverNames = [];
+
+      const initData = (names) => {
+        giftData = {};
+        for (let w = 1; w <= weeksCount; w++) {
+          giftData[w] = names.map((name, idx) => {
+            const base = 0 + (idx * 2);
+            const entries = {};
+            days.forEach((d, di) => {
+              entries[d] = 0;
+            });
+            return { name, ...entries };
+          });
+        }
+      };
+
+      const computeYtdMap = () => {
+        const ytd = {};
+        for (let w = 1; w <= weeksCount; w++) {
+          giftData[w].forEach((row) => {
+            const weekTotal = days.reduce((sum, d) => sum + Number(row[d] || 0), 0);
+            ytd[row.name] = (ytd[row.name] || 0) + weekTotal;
+          });
+        }
+        return ytd;
+      };
+
+      const getStoredToken = () => {
+        const cookieMatch = document.cookie
+          .split(';')
+          .map((c) => c.trim())
+          .find((c) => c.startsWith('tss_access_token='));
+        if (cookieMatch) return cookieMatch.split('=')[1];
+        return localStorage.getItem('tss_access_token');
+      };
+
+      const setStoredTokens = (access, refresh) => {
+        if (access) {
+          document.cookie = `tss_access_token=${access}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+          localStorage.setItem('tss_access_token', access);
+        }
+        if (refresh) {
+          document.cookie = `tss_refresh_token=${refresh}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+          localStorage.setItem('tss_refresh_token', refresh);
+        }
+      };
+
+      const loadServerRoster = async () => {
+        const token = getStoredToken();
+        if (!token) throw new Error('No token found. Please log in first.');
+        const resp = await fetch('/employees?role=SERVER&active=true', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (resp.status === 401) throw new Error('Unauthorized. Log in again to load servers.');
+        if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
+        const data = await resp.json();
+        if (!Array.isArray(data) || !data.length) throw new Error('Empty roster');
+        return data.map((emp) => `${emp.first_name} ${emp.last_name}`.trim());
+      };
+
+      const renderTabs = () => {
+        tabsEl.innerHTML = '';
+        for (let w = 1; w <= weeksCount; w++) {
+          const btn = document.createElement('button');
+          btn.className = 'tab' + (w === currentWeek ? ' active' : '');
+          btn.textContent = `Week ${w}`;
+          btn.addEventListener('click', () => {
+            currentWeek = w;
+            renderTabs();
+            renderTable();
+          });
+          tabsEl.appendChild(btn);
+        }
+      };
+
+      const renderTable = () => {
+        const ytdMap = computeYtdMap();
+        const rows = giftData[currentWeek];
+        tbody.innerHTML = '';
+        rows.forEach((row, rowIndex) => {
+          const tr = document.createElement('tr');
+          const weekTotal = days.reduce((sum, d) => sum + Number(row[d] || 0), 0);
+          const ytd = ytdMap[row.name] || 0;
+          const goal = UNIVERSAL_GOAL - ytd;
+          tr.innerHTML = `
+            <td style="text-align:left;font-weight:600;">${row.name}</td>
+            ${days
+              .map((d) => {
+                const val = row[d] ?? 0;
+                if (isAdmin) {
+                  return `<td><input type="number" min="0" step="1" data-row="${rowIndex}" data-day="${d}" value="${val}"></td>`;
+                }
+                return `<td>${val}</td>`;
+              })
+              .join('')}
+            <td>${weekTotal}</td>
+            <td>${ytd}</td>
+            <td>${goal}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        if (isAdmin) {
+          tbody.querySelectorAll('input').forEach((input) => {
+            input.addEventListener('change', (e) => {
+              const rowIdx = Number(e.target.dataset.row);
+              const day = e.target.dataset.day;
+              const val = Number(e.target.value || 0);
+              giftData[currentWeek][rowIdx][day] = val;
+              renderTable();
+            });
+          });
+        }
+      };
+
+      const determineRole = async () => {
+        try {
+          const token = getStoredToken();
+          if (!token) throw new Error('No token, view only');
+          const resp = await fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error('Not authenticated');
+          const me = await resp.json();
+          isAdmin = me.role === 'ADMIN';
+          modePill.textContent = isAdmin ? 'Edit mode (Admin)' : 'View only';
+          modeSubtitle.textContent = isAdmin
+            ? 'You can edit daily amounts. Changes stay local for now.'
+            : 'View-only mode. Contact an admin to update values.';
+        } catch (err) {
+          isAdmin = false;
+          modePill.textContent = 'View only';
+          modeSubtitle.textContent = 'View-only mode. Sign in as an admin to edit.';
+        }
+      };
+
+      const init = async () => {
+        await determineRole();
+        try {
+          serverNames = await loadServerRoster();
+          modeSubtitle.textContent = isAdmin
+            ? 'Editing live roster data.'
+            : 'Viewing live roster data.';
+          statusMsg.textContent = `Loaded ${serverNames.length} servers from roster.`;
+          statusMsg.classList.remove('error');
+        } catch (err) {
+          console.error(err);
+          statusMsg.textContent = err.message || 'Could not load roster.';
+          statusMsg.classList.add('error');
+          serverNames = [];
+        }
+        if (serverNames.length) {
+          initData(serverNames);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff9b9b;">No roster data loaded. Please log in as an authenticated user.</td></tr>';
+          renderTabs();
+          return;
+        }
+        renderTabs();
+        renderTable();
+      };
+
+      init();
+    </script>
+  </body>
+</html>
