@@ -313,12 +313,151 @@
       .cobrands-table th[data-sort]:not(.sorted)::after {
         content: "";
       }
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
       .actions-row {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: .8rem;
         margin: .6rem 0;
+      }
+      .draw-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .8rem;
+        align-items: center;
+        margin-top: .6rem;
+      }
+      .draw-btn {
+        background: linear-gradient(135deg, #ff8c42, #ff5f6d);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: .65rem 1.4rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(255, 105, 97, 0.4);
+      }
+      .draw-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        backdrop-filter: blur(4px);
+      }
+      .overlay.visible {
+        display: flex;
+      }
+      .draw-modal {
+        width: min(480px, 92vw);
+        background: radial-gradient(circle at 20% 20%, #1f2948, #0b1122 70%);
+        border: 1px solid #24345d;
+        border-radius: 20px;
+        padding: 1.4rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        color: #e8edff;
+      }
+      .draw-roller {
+        height: 120px;
+        overflow: hidden;
+        border: 1px solid #24345d;
+        border-radius: 14px;
+        background: #050b1c;
+        position: relative;
+        margin: 1rem 0;
+      }
+      .draw-list {
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+        padding: .8rem;
+        transform: translateY(0);
+        transition: transform 1.6s cubic-bezier(0.12, 0.76, 0.35, 1);
+      }
+      .draw-list .name {
+        text-align: center;
+        font-weight: 700;
+        letter-spacing: .02em;
+      }
+      .winner-highlight {
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin-top: .5rem;
+        color: #8ef7a4;
+      }
+      .history-list {
+        margin-top: .8rem;
+        border: 1px solid #1f2d51;
+        border-radius: 12px;
+        padding: .6rem .8rem;
+        background: rgba(255,255,255,0.03);
+        max-height: 220px;
+        overflow-y: auto;
+      }
+      .history-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+      }
+      .history-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: .95rem;
+        color: #cfd6ff;
+      }
+      .tag-sm {
+        font-size: .75rem;
+        border: 1px solid #2f3f6b;
+        padding: .05rem .4rem;
+        border-radius: 999px;
+        color: #9bb0ff;
+      }
+      .form-modal {
+        width: min(520px, 94vw);
+        background: #0b1228;
+        border: 1px solid #1f2f54;
+        border-radius: 16px;
+        padding: 1.2rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+        color: #e5ebff;
+      }
+      .form-modal h3 {
+        margin: 0 0 .5rem 0;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+        margin-bottom: .8rem;
+      }
+      .form-group label {
+        font-size: .9rem;
+        color: #9bb0ff;
+      }
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        background: #050b1c;
+        border: 1px solid #243258;
+        border-radius: 10px;
+        color: #fff;
+        padding: .55rem .6rem;
       }
       @keyframes pulseGlow {
         0% { box-shadow: 0 0 0 0 rgba(86, 111, 248, 0.5); }
@@ -343,8 +482,15 @@
       <div class="view-tabs" id="view-tabs">
         <button class="view-tab active" type="button" data-view="weekly">Weekly Tracker</button>
         <button class="view-tab" type="button" data-view="cobrands">Cobrands</button>
+        <button class="view-tab" type="button" data-view="christmas">12 Days of Christmas</button>
+        <button class="view-tab" type="button" data-view="payouts">Payouts</button>
       </div>
       <section id="weekly-view">
+        <div class="actions-row">
+          <label style="color:#9bb0ff;">Season:</label>
+          <select id="season-select" style="background:#050b1c;border:1px solid #243258;border-radius:10px;color:#fff;padding:.4rem .6rem;"></select>
+          <button class="ghost-btn" type="button" id="add-season-btn">Add Year</button>
+        </div>
         <div class="tabs" id="tabs"></div>
         <div class="actions-row">
           <button class="primary-btn" type="button" id="save-week-btn">Save Week</button>
@@ -461,6 +607,95 @@
           </div>
         </div>
       </section>
+      <section id="christmas-view" class="hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>12 Days of Christmas</h2>
+              <p class="panel-subtitle">Track gift card sales for the 12 days leading up to Dec 24.</p>
+            </div>
+            <div class="status" id="christmas-status"></div>
+          </div>
+          <div class="draw-row">
+            <button class="draw-btn" type="button" id="draw-btn">Draw Winner</button>
+            <button class="ghost-btn" type="button" id="reset-draws-btn">Reset Draws</button>
+            <button class="ghost-btn" type="button" id="view-results-btn">View Results</button>
+            <div class="status" id="draw-status"></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr id="christmas-head-row">
+                  <th>Employee</th>
+                </tr>
+              </thead>
+              <tbody id="christmas-body">
+                <tr>
+                  <td colspan="15" style="text-align:center;color:#8ea0d6;">No data loaded yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="history-list">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong>Draw History</strong>
+              <span class="tag-sm" id="draws-remaining">12 gifts left</span>
+            </div>
+            <ul id="draw-history-list">
+              <li style="color:#8ea0d6;">No draws yet.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section id="payouts-view" class="hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Payouts</h2>
+              <p class="panel-subtitle">Manage tiers, rules, prizes, and see per-employee payouts.</p>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button class="primary-btn" type="button" id="refresh-payouts-btn">Refresh Payouts</button>
+            <button class="ghost-btn" type="button" id="add-tier-btn">Add Tier</button>
+            <button class="ghost-btn" type="button" id="add-rule-btn">Add Rule</button>
+            <button class="ghost-btn" type="button" id="add-prize-btn">Add Prize</button>
+            <div class="status" id="payouts-status"></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Tier Payout</th>
+                  <th>Rule Bonus</th>
+                  <th>Misc</th>
+                  <th>Prizes</th>
+                  <th>Total</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="payouts-body">
+                <tr><td colspan="7" style="text-align:center;color:#8ea0d6;">No payout data loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 style="margin:0 0 .4rem 0;">Tiers</h3>
+          <ul id="tier-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem;">
+            <li style="color:#8ea0d6;">No tiers yet.</li>
+          </ul>
+          <h3 style="margin:1rem 0 .4rem 0;">Rules</h3>
+          <ul id="rule-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem;">
+            <li style="color:#8ea0d6;">No rules yet.</li>
+          </ul>
+          <h3 style="margin:1rem 0 .4rem 0;">Prizes</h3>
+          <ul id="prize-list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem;">
+            <li style="color:#8ea0d6;">No prizes yet.</li>
+          </ul>
+        </div>
+      </section>
     </div>
     <script>
       const UNIVERSAL_GOAL = 4000;
@@ -478,6 +713,7 @@
 
       const tabsEl = document.getElementById('tabs');
       const tbody = document.getElementById('table-body');
+      const weeklyHeadRow = document.getElementById('weekly-head-row') || document.querySelector('#weekly-view thead tr');
       const modePill = document.getElementById('mode-pill');
       const modeSubtitle = document.getElementById('mode-subtitle');
       const statusMsg = document.createElement('div');
@@ -488,6 +724,10 @@
       const viewTabsWrapper = document.getElementById('view-tabs');
       const weeklyView = document.getElementById('weekly-view');
       const cobrandsView = document.getElementById('cobrands-view');
+      const christmasView = document.getElementById('christmas-view');
+      const payoutsView = document.getElementById('payouts-view');
+      const seasonSelect = document.getElementById('season-select');
+      const addSeasonBtn = document.getElementById('add-season-btn');
       const saveWeekBtn = document.getElementById('save-week-btn');
       const refreshWeekBtn = document.getElementById('refresh-week-btn');
       const weeklyStatus = document.getElementById('weekly-status');
@@ -497,6 +737,24 @@
       const cobrandTableBody = document.getElementById('cobrands-body');
       const cobrandTableHead = document.getElementById('cobrands-head');
       const refreshCobrandsBtn = document.getElementById('refresh-cobrands');
+      const christmasHeadRow = document.getElementById('christmas-head-row');
+      const christmasBody = document.getElementById('christmas-body');
+      const christmasStatus = document.getElementById('christmas-status');
+      const drawBtn = document.getElementById('draw-btn');
+      const drawStatus = document.getElementById('draw-status');
+      const drawHistoryList = document.getElementById('draw-history-list');
+      const drawsRemaining = document.getElementById('draws-remaining');
+      const resetDrawsBtn = document.getElementById('reset-draws-btn');
+      const viewResultsBtn = document.getElementById('view-results-btn');
+      const payoutsStatus = document.getElementById('payouts-status');
+      const payoutsBody = document.getElementById('payouts-body');
+      const tierList = document.getElementById('tier-list');
+      const ruleList = document.getElementById('rule-list');
+      const prizeList = document.getElementById('prize-list');
+      const refreshPayoutsBtn = document.getElementById('refresh-payouts-btn');
+      const addTierBtn = document.getElementById('add-tier-btn');
+      const addRuleBtn = document.getElementById('add-rule-btn');
+      const addPrizeBtn = document.getElementById('add-prize-btn');
       const companyNameInput = document.getElementById('company-name');
       const amountInput = document.getElementById('cobrand-amount');
       const commissionInput = document.getElementById('commission-date');
@@ -525,8 +783,29 @@
       let isSavingWeek = false;
       let isWeekDirty = false;
       let cobrandTotalsBySeller = {};
+      let cobrandDayCredits = {}; // week -> nameLower -> dayLabel -> amount
+      const MS_PER_DAY = 24 * 60 * 60 * 1000;
+      let christmasData = [];
+      let drawTicketsRemaining = {};
+      let drawHistory = [];
+      let isDrawing = false;
+      let payoutTiers = [];
+      let payoutRules = [];
+      let payoutPrizes = [];
+      let payoutSummary = [];
+      let payoutsLoaded = false;
+      let seasons = [];
+      let selectedSeasonYear = null;
+      let weeklySort = { field: null, direction: 'desc' };
 
       const dayKeys = ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday'];
+      const christmasDays = Array.from({ length: 12 }, (_, idx) => {
+        const day = 13 + idx;
+        return `Dec ${day}`;
+      });
+      const SEASONS_KEY = 'gift_tracker_seasons';
+      const getSeasonYear = () => selectedSeasonYear || 2025;
+      const seasonQuery = () => `season_year=${encodeURIComponent(getSeasonYear())}`;
 
       const setStatus = (node, message, isError = false) => {
         if (!node) return;
@@ -537,6 +816,175 @@
         }
         node.textContent = message;
         node.classList.toggle('error', Boolean(isError));
+      };
+
+      const loadSeasonsLocal = () => {
+        try {
+          const stored = localStorage.getItem(SEASONS_KEY);
+          if (stored) {
+            seasons = JSON.parse(stored);
+          }
+        } catch (err) {
+          seasons = [];
+        }
+        if (!Array.isArray(seasons)) seasons = [];
+        if (!seasons.length) {
+          seasons.push({ year: 2025, start_date: '2025-11-05' });
+        }
+        if (!selectedSeasonYear || !seasons.some((s) => s.year === selectedSeasonYear)) {
+          selectedSeasonYear = seasons[0].year;
+        }
+      };
+
+      const loadSeasonsFromServer = async () => {
+        try {
+          const token = getStoredToken();
+          const resp = await fetch('/seasons', token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+          if (!resp.ok) throw new Error('server seasons not available');
+          const data = await resp.json();
+          if (Array.isArray(data) && data.length) {
+            seasons = data;
+            if (!selectedSeasonYear || !seasons.some((s) => s.year === selectedSeasonYear)) {
+              selectedSeasonYear = seasons[0].year;
+            }
+            saveSeasons();
+          } else {
+            loadSeasonsLocal();
+          }
+        } catch (err) {
+          loadSeasonsLocal();
+        }
+      };
+
+      const saveSeasons = () => {
+        localStorage.setItem(SEASONS_KEY, JSON.stringify(seasons));
+      };
+
+      const renderSeasonSelect = () => {
+        if (!seasonSelect) return;
+        seasonSelect.innerHTML = seasons
+          .map((s) => `<option value="${s.year}" ${s.year === selectedSeasonYear ? 'selected' : ''}>${s.year}</option>`)
+          .join('');
+      };
+
+      const addSeason = async (year, startDate) => {
+        const idx = seasons.findIndex((s) => s.year === year);
+        if (idx >= 0) {
+          seasons[idx].start_date = startDate;
+        } else {
+          seasons.push({ year, start_date: startDate });
+          seasons.sort((a, b) => a.year - b.year);
+        }
+        selectedSeasonYear = year;
+        try {
+          const token = getStoredToken();
+          if (token) {
+            await fetch('/seasons', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ year, start_date: startDate }),
+            });
+          }
+        } catch (err) {
+          console.warn('Season save fallback to local only', err);
+        }
+        saveSeasons();
+        renderSeasonSelect();
+        renderWeeklyHeadLabels();
+      };
+
+      const openSeasonModal = () => {
+        const { modal, close } = showFormModal('Add Season', (content) => {
+          content.innerHTML = `
+            <div class="form-group">
+              <label>Year</label>
+              <input id="season-year" type="number" min="2024" step="1" value="${new Date().getFullYear()}" />
+            </div>
+            <div class="form-group">
+              <label>Start Date (first Tuesday)</label>
+              <input id="season-start" type="date" />
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;">
+              <button class="primary-btn" type="button" id="save-season-modal">Save Season</button>
+            </div>
+          `;
+        });
+        modal.querySelector('#save-season-modal').addEventListener('click', () => {
+          const yearVal = Number(modal.querySelector('#season-year').value);
+          const startVal = modal.querySelector('#season-start').value;
+          if (!yearVal || !startVal) {
+            setStatus(statusMsg, 'Year and start date required.', true);
+            return;
+          }
+          addSeason(yearVal, startVal).then(close);
+        });
+      };
+
+      const getSelectedSeason = () => seasons.find((s) => s.year === selectedSeasonYear);
+
+      const getDateLabelFor = (week, dayIndex) => {
+        const season = getSelectedSeason();
+        if (!season || !season.start_date) return '';
+        const start = new Date(season.start_date);
+        if (Number.isNaN(start.getTime())) return '';
+        const offset = (week - 1) * 7 + dayIndex;
+        const target = new Date(start.getTime() + offset * 24 * 60 * 60 * 1000);
+        return `${(target.getMonth() + 1).toString().padStart(2, '0')}/${target
+          .getDate()
+          .toString()
+          .padStart(2, '0')}`;
+      };
+
+      const renderWeeklyHeadLabels = () => {
+        if (!weeklyHeadRow) return;
+        const sortIndicator = (key) => {
+          if (weeklySort.field !== key) return '';
+          return weeklySort.direction === 'asc' ? ' ▲' : ' ▼';
+        };
+        const labels = days.map((d, idx) => {
+          const dateLabel = getDateLabelFor(currentWeek, idx);
+          return `${d}${dateLabel ? ` (${dateLabel})` : ''}`;
+        });
+        weeklyHeadRow.innerHTML = `
+          <th data-sort="name" class="sortable">Server${sortIndicator('name')}</th>
+          ${labels.map((l, idx) => `<th data-sort="${days[idx]}" class="sortable">${l}${sortIndicator(days[idx])}</th>`).join('')}
+          <th data-sort="week" class="sortable">This Week${sortIndicator('week')}</th>
+          <th data-sort="ytd" class="sortable">YTD${sortIndicator('ytd')}</th>
+          <th data-sort="goal" class="sortable">Goal${sortIndicator('goal')}</th>
+        `;
+      };
+
+      const getSeasonStartDate = () => {
+        const season = getSelectedSeason();
+        if (!season || !season.start_date) return null;
+        const d = new Date(season.start_date);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+
+      const mapCobrandsToDaysFromDeals = (deals) => {
+        cobrandDayCredits = {};
+        cobrandTotalsBySeller = {};
+        const startDate = getSeasonStartDate();
+        if (!startDate) return;
+        const startMs = new Date(startDate.getTime()).setHours(0, 0, 0, 0);
+        deals.forEach((deal) => {
+          if (!deal.date_of_commission || !deal.seller_name) return;
+          const commission = new Date(deal.date_of_commission);
+          if (Number.isNaN(commission.getTime())) return;
+          const commissionMs = new Date(commission.getTime()).setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((commissionMs - startMs) / MS_PER_DAY);
+          if (diffDays < 0) return;
+          const weekIdx = Math.floor(diffDays / 7) + 1;
+          const dayIdx = diffDays % 7;
+          if (weekIdx < 1 || weekIdx > weeksCount) return;
+          const nameKey = deal.seller_name.toLowerCase();
+          cobrandTotalsBySeller[nameKey] = (cobrandTotalsBySeller[nameKey] || 0) + Number(deal.amount_usd || 0);
+          if (!cobrandDayCredits[weekIdx]) cobrandDayCredits[weekIdx] = {};
+          if (!cobrandDayCredits[weekIdx][nameKey]) cobrandDayCredits[weekIdx][nameKey] = {};
+          const dayLabel = days[dayIdx];
+          cobrandDayCredits[weekIdx][nameKey][dayLabel] =
+            (cobrandDayCredits[weekIdx][nameKey][dayLabel] || 0) + Number(deal.amount_usd || 0);
+        });
       };
 
       const markWeekDirty = (dirty) => {
@@ -554,22 +1002,11 @@
         const token = getStoredToken();
         if (!token) return;
         try {
-          const resp = await fetch('/cobrands', { headers: { Authorization: `Bearer ${token}` } });
+          const resp = await fetch(`/cobrands?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
           if (!resp.ok) throw new Error(`Unable to load cobrands (${resp.status})`);
-          const deals = await resp.json();
-          const totals = {};
-          deals.forEach((deal) => {
-            if (!deal.seller_name || deal.amount_usd === undefined || deal.amount_usd === null) return;
-            const key = deal.seller_name.trim().toLowerCase();
-            totals[key] = (totals[key] || 0) + Number(deal.amount_usd || 0);
-          });
-          cobrandTotalsBySeller = totals;
-          if (Object.keys(totals).length) {
-            setStatus(
-              weeklyStatus,
-              `Cobrands synced for ${Object.keys(totals).length} seller${Object.keys(totals).length === 1 ? '' : 's'}.`,
-            );
-          }
+          cobrandDeals = await resp.json();
+          mapCobrandsToDaysFromDeals(cobrandDeals);
+          renderTable();
         } catch (err) {
           console.error(err);
           setStatus(weeklyStatus, err.message || 'Unable to sync cobrands', true);
@@ -663,6 +1100,44 @@
         });
       };
 
+      const initChristmasData = (names) => {
+        christmasData = names.map((name) => {
+          const entry = { name };
+          christmasDays.forEach((d) => {
+            entry[d] = 0;
+          });
+          entry.total = 0;
+          entry.tickets = 0;
+          return entry;
+        });
+      };
+
+      const computeChristmasTickets = () => {
+        // reset totals
+        christmasData.forEach((entry) => {
+          entry.total = 0;
+          entry.tickets = 0;
+        });
+        christmasDays.forEach((dayLabel) => {
+          const dayValues = christmasData.map((entry) => ({
+            name: entry.name,
+            value: Number(entry[dayLabel] || 0),
+          }));
+          dayValues.sort((a, b) => b.value - a.value);
+          const awards = [5, 3, 1, 1, 1];
+          dayValues.slice(0, awards.length).forEach((item, idx) => {
+            const points = awards[idx];
+            const target = christmasData.find((e) => e.name === item.name);
+            if (!target) return;
+            target.tickets += points;
+          });
+        });
+        christmasData.forEach((entry) => {
+          entry.total = christmasDays.reduce((sum, d) => sum + Number(entry[d] || 0), 0);
+        });
+        resetDrawPool();
+      };
+
       const loadServerRoster = async () => {
         const token = getStoredToken();
         if (!token) throw new Error('No token found. Please log in first.');
@@ -685,6 +1160,7 @@
           btn.addEventListener('click', () => {
             currentWeek = w;
             renderTabs();
+            renderWeeklyHeadLabels();
             renderTable();
           });
           tabsEl.appendChild(btn);
@@ -699,9 +1175,9 @@
         }
         setStatus(weeklyStatus, 'Loading weekly tracker data...');
         try {
-          const resp = await fetch('/gift-tracker', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+        const resp = await fetch(`/gift-tracker?${seasonQuery()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
           if (!resp.ok) throw new Error(`Unable to load tracker data (${resp.status})`);
           const entries = await resp.json();
           entries.forEach((entry) => {
@@ -742,13 +1218,14 @@
         });
         const body = {
           week_number: currentWeek,
+          season_year: getSeasonYear(),
           entries,
         };
         setStatus(weeklyStatus, 'Saving week...');
         isSavingWeek = true;
         if (saveWeekBtn) saveWeekBtn.disabled = true;
         try {
-          const resp = await fetch('/gift-tracker', {
+          const resp = await fetch(`/gift-tracker?${seasonQuery()}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -775,27 +1252,60 @@
 
       const renderTable = () => {
         const ytdMap = computeYtdMap();
-        const rows = giftData[currentWeek];
-        tbody.innerHTML = '';
-        rows.forEach((row, rowIndex) => {
-          const tr = document.createElement('tr');
-          const weekTotal = days.reduce((sum, d) => sum + Number(row[d] || 0), 0);
-          const cobrandBonus = cobrandTotalsBySeller[row.name.toLowerCase()] || 0;
-          const weekWithBonus = weekTotal + cobrandBonus;
+        const rows = (giftData[currentWeek] || []).map((row, rowIndex) => {
+          const nameKey = row.name.toLowerCase();
+          const dailyBonuses = cobrandDayCredits[currentWeek]?.[nameKey] || {};
+          const weekTotal = days.reduce((sum, d) => sum + Number(row[d] || 0) + Number(dailyBonuses[d] || 0), 0);
+          const cobrandBonus = cobrandTotalsBySeller[nameKey] || 0;
           const ytd = (ytdMap[row.name] || 0) + cobrandBonus;
           const goal = UNIVERSAL_GOAL - ytd;
+          return { row, rowIndex, nameKey, dailyBonuses, weekTotal, ytd, goal };
+        });
+
+        const getSortValue = (entry, field) => {
+          if (field === 'name') return entry.row.name.toLowerCase();
+          if (field === 'week') return entry.weekTotal;
+          if (field === 'ytd') return entry.ytd;
+          if (field === 'goal') return entry.goal;
+          const dayIdx = days.findIndex((d) => d.toLowerCase() === field.toLowerCase());
+          if (dayIdx >= 0) {
+            const dayLabel = days[dayIdx];
+            return Number(entry.row[dayLabel] || 0) + Number(entry.dailyBonuses[dayLabel] || 0);
+          }
+          return 0;
+        };
+
+        if (weeklySort.field) {
+          const dir = weeklySort.direction === 'asc' ? 1 : -1;
+          rows.sort((a, b) => {
+            const aVal = getSortValue(a, weeklySort.field);
+            const bVal = getSortValue(b, weeklySort.field);
+            if (typeof aVal === 'string' || typeof bVal === 'string') {
+              return aVal.localeCompare(bVal) * dir;
+            }
+            if (aVal === bVal) return a.row.name.localeCompare(b.row.name);
+            return (aVal - bVal) * dir;
+          });
+        }
+
+        tbody.innerHTML = '';
+        rows.forEach((entry) => {
+          const { row, rowIndex, nameKey, dailyBonuses, weekTotal, ytd, goal } = entry;
+          const tr = document.createElement('tr');
           tr.innerHTML = `
             <td style="text-align:left;font-weight:600;">${row.name}</td>
             ${days
               .map((d) => {
                 const val = row[d] ?? 0;
+                const cb = dailyBonuses[d] || 0;
+                const displayVal = val + cb;
                 if (isAdmin) {
-                  return `<td><input type="number" min="0" step="1" data-row="${rowIndex}" data-day="${d}" value="${val}"></td>`;
+                  return `<td><input type="number" min="0" step="1" data-row="${rowIndex}" data-day="${d}" value="${val}">${cb ? `<div style="font-size:.8rem;color:#9bb0ff;">+${cb} cb</div>` : ''}</td>`;
                 }
-                return `<td>${val}</td>`;
+                return `<td>${displayVal}${cb ? ` <span style="color:#9bb0ff;font-size:.85rem;">(+${cb} cb)</span>` : ''}</td>`;
               })
               .join('')}
-            <td>${cobrandBonus ? `${weekWithBonus} (+${cobrandBonus} cb)` : weekWithBonus}</td>
+            <td>${weekTotal}</td>
             <td>${ytd}</td>
             <td>${goal}</td>
           `;
@@ -814,6 +1324,659 @@
             });
           });
         }
+      };
+
+      const renderChristmasHead = () => {
+        if (!christmasHeadRow) return;
+        christmasHeadRow.innerHTML = '<th>Employee</th>';
+        christmasDays.forEach((label) => {
+          const th = document.createElement('th');
+          th.textContent = label;
+          christmasHeadRow.appendChild(th);
+        });
+        const totalTh = document.createElement('th');
+        totalTh.textContent = 'Total';
+        christmasHeadRow.appendChild(totalTh);
+        const ticketTh = document.createElement('th');
+        ticketTh.textContent = 'Tickets';
+        christmasHeadRow.appendChild(ticketTh);
+      };
+
+      const renderChristmasTable = () => {
+        if (!christmasBody) return;
+        if (!christmasData.length) {
+          christmasBody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#8ea0d6;">No roster loaded.</td></tr>';
+          return;
+        }
+        computeChristmasTickets();
+        christmasBody.innerHTML = christmasData
+          .map((entry, rowIdx) => {
+            const cells = christmasDays
+              .map((label) => {
+                const val = entry[label] ?? 0;
+                if (isAdmin) {
+                  return `<td><input type="number" min="0" step="1" data-c-row="${rowIdx}" data-c-day="${label}" value="${val}"></td>`;
+                }
+                return `<td>${val}</td>`;
+              })
+              .join('');
+            return `
+              <tr>
+                <td style="text-align:left;font-weight:600;">${entry.name}</td>
+                ${cells}
+                <td>${entry.total}</td>
+                <td>${entry.tickets}</td>
+              </tr>
+            `;
+          })
+          .join('');
+
+        if (isAdmin) {
+          christmasBody.querySelectorAll('input').forEach((input) => {
+            input.addEventListener('change', (e) => {
+              const rowIdx = Number(e.target.dataset.cRow);
+              const dayLabel = e.target.dataset.cDay;
+              const val = Number(e.target.value || 0);
+              if (christmasData[rowIdx]) {
+                christmasData[rowIdx][dayLabel] = val;
+                renderChristmasTable();
+              }
+            });
+          });
+        }
+      };
+
+      const resetDrawPool = () => {
+        drawTicketsRemaining = {};
+        christmasData.forEach((entry) => {
+          drawTicketsRemaining[entry.name] = entry.tickets || 0;
+        });
+        updateDrawCounts();
+      };
+
+      const buildTicketPool = () => {
+        const pool = [];
+        Object.entries(drawTicketsRemaining).forEach(([name, count]) => {
+          for (let i = 0; i < count; i++) pool.push(name);
+        });
+        return pool;
+      };
+
+      const updateDrawHistoryUI = () => {
+        if (!drawHistoryList) return;
+        if (!drawHistory.length) {
+          drawHistoryList.innerHTML = '<li style="color:#8ea0d6;">No draws yet.</li>';
+          return;
+        }
+        drawHistoryList.innerHTML = drawHistory
+          .map(
+            (item, idx) => `
+              <li>
+                <span>#${idx + 1} - ${item.name}</span>
+                <span class="tag-sm">${item.timestamp}</span>
+              </li>
+            `,
+          )
+          .join('');
+      };
+
+      const updateDrawCounts = () => {
+        const remainingTickets = Object.values(drawTicketsRemaining).reduce((a, b) => a + b, 0);
+        const giftsLeft = Math.max(0, 12 - drawHistory.length);
+        if (drawsRemaining) {
+          drawsRemaining.textContent = `${giftsLeft} gift${giftsLeft === 1 ? '' : 's'} left • ${remainingTickets} tickets`;
+        }
+        if (drawBtn) drawBtn.disabled = isDrawing || !remainingTickets || drawHistory.length >= 12;
+      };
+
+      const showDrawOverlay = (name, ticketsBefore) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay visible';
+        const modal = document.createElement('div');
+        modal.className = 'draw-modal';
+        modal.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Drawing...</strong>
+            <button class="ghost-btn" type="button" id="close-draw-modal">Close</button>
+          </div>
+          <div class="draw-roller">
+            <div class="draw-list" id="draw-list"></div>
+          </div>
+          <div class="winner-highlight" id="winner-highlight">Selecting...</div>
+          <div style="color:#9bb0ff;font-size:.9rem;">Tickets before draw: ${ticketsBefore}</div>
+          <div style="margin-top:.8rem;display:flex;gap:.6rem;">
+            <button class="primary-btn" type="button" id="draw-again-btn">Draw Again</button>
+            <button class="ghost-btn" type="button" id="close-draw-modal-2">Close</button>
+          </div>
+        `;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        return overlay;
+      };
+
+      const performDraw = () => {
+        if (isDrawing) return;
+        const pool = buildTicketPool();
+        if (!pool.length) {
+          setStatus(drawStatus, 'No tickets available to draw.', true);
+          return;
+        }
+        if (drawHistory.length >= 12) {
+          setStatus(drawStatus, 'All 12 gifts have been drawn.', true);
+          return;
+        }
+        isDrawing = true;
+        setStatus(drawStatus, 'Drawing...');
+        const ticketsBefore = pool.length;
+        const winner = pool[Math.floor(Math.random() * pool.length)];
+
+        // Prepare animation list
+        const spinList = [];
+        for (let i = 0; i < 18; i++) {
+          spinList.push(pool[Math.floor(Math.random() * pool.length)]);
+        }
+        spinList.push(winner);
+
+        const overlay = showDrawOverlay(winner, ticketsBefore);
+        const listEl = overlay.querySelector('#draw-list');
+        const winnerEl = overlay.querySelector('#winner-highlight');
+        listEl.innerHTML = spinList.map((n) => `<div class="name">${n}</div>`).join('');
+        const itemHeight = 24;
+        requestAnimationFrame(() => {
+          listEl.style.transform = `translateY(-${(spinList.length - 1) * itemHeight}px)`;
+        });
+        setTimeout(() => {
+          winnerEl.textContent = `Winner: ${winner}!`;
+          setStatus(drawStatus, `Winner: ${winner}`);
+          // decrement ticket
+          if (drawTicketsRemaining[winner] > 0) {
+            drawTicketsRemaining[winner] -= 1;
+          }
+          drawHistory.push({
+            name: winner,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+          updateDrawHistoryUI();
+          updateDrawCounts();
+          isDrawing = false;
+        }, 1700);
+
+        const closeModal = () => {
+          overlay.remove();
+        };
+        overlay.querySelector('#close-draw-modal').addEventListener('click', closeModal);
+        overlay.querySelector('#close-draw-modal-2').addEventListener('click', closeModal);
+        overlay.querySelector('#draw-again-btn').addEventListener('click', () => {
+          closeModal();
+          performDraw();
+        });
+      };
+
+      const resetDraws = () => {
+        drawHistory = [];
+        resetDrawPool();
+        updateDrawHistoryUI();
+        setStatus(drawStatus, 'Draws reset.');
+      };
+
+      const viewResults = () => {
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay visible';
+        const modal = document.createElement('div');
+        modal.className = 'draw-modal';
+        const items = drawHistory
+          .map((item, idx) => `<li>#${idx + 1}: ${item.name} <span class="tag-sm">${item.timestamp}</span></li>`)
+          .join('') || '<li style="color:#8ea0d6;">No draws yet.</li>';
+        modal.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Results</strong>
+            <button class="ghost-btn" type="button" id="close-results">Close</button>
+          </div>
+          <ul style="list-style:none;padding:0;margin:.8rem 0;display:flex;flex-direction:column;gap:.35rem;">${items}</ul>
+        `;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        overlay.querySelector('#close-results').addEventListener('click', () => overlay.remove());
+      };
+
+      const showFormModal = (title, contentNodeBuilder) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay visible';
+        const modal = document.createElement('div');
+        modal.className = 'form-modal';
+        modal.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+            <h3 style="margin:0;">${title}</h3>
+            <button class="ghost-btn" type="button" id="close-form-modal">Close</button>
+          </div>
+        `;
+        const content = document.createElement('div');
+        contentNodeBuilder(content);
+        modal.appendChild(content);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        const close = () => overlay.remove();
+        modal.querySelector('#close-form-modal').addEventListener('click', close);
+        return { overlay, modal, close };
+      };
+
+      const openTierModal = () => {
+        const { modal, close } = showFormModal('Add Tier', (content) => {
+          content.innerHTML = `
+            <div class="form-group">
+              <label>Label</label>
+              <input id="tier-label" type="text" placeholder="e.g., Bronze" />
+            </div>
+            <div class="form-group">
+              <label>Min Amount ($)</label>
+              <input id="tier-min" type="number" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Max Amount ($, optional)</label>
+              <input id="tier-max" type="number" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Payout Type</label>
+              <select id="tier-type">
+                <option value="FIXED">Fixed $</option>
+                <option value="PERCENT">Percent</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Payout Value</label>
+              <input id="tier-value" type="number" min="0" step="0.01" placeholder="Dollars or percent" />
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;">
+              <button class="primary-btn" type="button" id="save-tier-modal">Save Tier</button>
+            </div>
+          `;
+        });
+        const saveBtn = modal.querySelector('#save-tier-modal');
+        saveBtn.addEventListener('click', async () => {
+          const token = getStoredToken();
+          if (!token) return;
+          const label = modal.querySelector('#tier-label').value.trim();
+          if (!label) return setStatus(payoutsStatus, 'Label required.', true);
+          const min = Number(modal.querySelector('#tier-min').value || 0);
+          const maxVal = modal.querySelector('#tier-max').value;
+          const max = maxVal ? Number(maxVal) : null;
+          const type = modal.querySelector('#tier-type').value === 'PERCENT' ? 'PERCENT' : 'FIXED';
+          const val = Number(modal.querySelector('#tier-value').value || 0);
+          const payload = {
+            label,
+            min_amount_cents: Math.round(min * 100),
+            max_amount_cents: max != null ? Math.round(max * 100) : null,
+            payout_type: type,
+            payout_value: type === 'PERCENT' ? Math.round(val * 100) : Math.round(val * 100),
+            season_year: getSeasonYear(),
+            active: true,
+          };
+          const resp = await fetch('/payouts/tiers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            setStatus(payoutsStatus, `Could not add tier (${resp.status})`, true);
+            return;
+          }
+          await loadTiers();
+          setStatus(payoutsStatus, 'Tier added.');
+          close();
+        });
+      };
+
+      const openRuleModal = () => {
+        const { modal, close } = showFormModal('Add Rule (Top Seller)', (content) => {
+          content.innerHTML = `
+            <div class="form-group">
+              <label>Rule Name</label>
+              <input id="rule-name" type="text" value="Season top seller" />
+            </div>
+            <div class="form-group">
+              <label>First place percent</label>
+              <input id="rule-first" type="number" min="0" step="0.01" value="10" />
+            </div>
+            <div class="form-group">
+              <label>Second place percent</label>
+              <input id="rule-second" type="number" min="0" step="0.01" value="5" />
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;">
+              <button class="primary-btn" type="button" id="save-rule-modal">Save Rule</button>
+            </div>
+          `;
+        });
+        modal.querySelector('#save-rule-modal').addEventListener('click', async () => {
+          const token = getStoredToken();
+          if (!token) return;
+          const name = modal.querySelector('#rule-name').value.trim() || 'Season top seller';
+          const firstPct = Number(modal.querySelector('#rule-first').value || 10);
+          const secondPct = Number(modal.querySelector('#rule-second').value || 5);
+          const payload = {
+            name,
+            type: 'season_top_seller',
+            config: { first_pct: firstPct, second_pct: secondPct },
+            season_year: getSeasonYear(),
+            active: true,
+          };
+          const resp = await fetch('/payouts/rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            setStatus(payoutsStatus, `Could not add rule (${resp.status})`, true);
+            return;
+          }
+          await loadRules();
+          setStatus(payoutsStatus, 'Rule added.');
+          close();
+        });
+      };
+
+      const openPrizeModal = () => {
+        const { modal, close } = showFormModal('Add Prize', (content) => {
+          content.innerHTML = `
+            <div class="form-group">
+              <label>Prize Name</label>
+              <input id="prize-name" type="text" placeholder="Prize name" />
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="prize-desc" rows="2" placeholder="Optional description"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Cost ($, optional)</label>
+              <input id="prize-cost" type="number" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Image URL (optional)</label>
+              <input id="prize-image" type="text" placeholder="https://..." />
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;">
+              <button class="primary-btn" type="button" id="save-prize-modal">Save Prize</button>
+            </div>
+          `;
+        });
+        modal.querySelector('#save-prize-modal').addEventListener('click', async () => {
+          const token = getStoredToken();
+          if (!token) return;
+          const name = modal.querySelector('#prize-name').value.trim();
+          if (!name) return setStatus(payoutsStatus, 'Prize name required.', true);
+          const desc = modal.querySelector('#prize-desc').value.trim();
+          const costVal = modal.querySelector('#prize-cost').value;
+          const image = modal.querySelector('#prize-image').value.trim() || null;
+          const payload = {
+            name,
+            description: desc,
+            cost_cents: costVal ? Math.round(Number(costVal) * 100) : null,
+            image_url: image,
+            season_year: getSeasonYear(),
+            active: true,
+          };
+          const resp = await fetch('/payouts/prizes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            setStatus(payoutsStatus, `Could not add prize (${resp.status})`, true);
+            return;
+          }
+          await loadPrizes();
+          setStatus(payoutsStatus, 'Prize added.');
+          close();
+        });
+      };
+
+      const renderTierList = () => {
+        if (!tierList) return;
+        if (!payoutTiers.length) {
+          tierList.innerHTML = '<li style="color:#8ea0d6;">No tiers yet.</li>';
+          return;
+        }
+        tierList.innerHTML = payoutTiers
+          .map(
+            (t) =>
+              `<li style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;">
+                <span>${t.label}: $${(t.min_amount_cents / 100).toFixed(2)} - ${t.max_amount_cents ? '$' + (t.max_amount_cents / 100).toFixed(2) : '∞'} → ${t.payout_type === 'PERCENT' ? (t.payout_value / 100).toFixed(2) + '%': '$' + (t.payout_value / 100).toFixed(2)} ${!t.active ? '(inactive)' : ''}</span>
+                <button class="ghost-btn" type="button" data-del-tier="${t.id}">Delete</button>
+              </li>`,
+          )
+          .join('');
+        tierList.querySelectorAll('button[data-del-tier]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-del-tier');
+            await deleteTier(id);
+          });
+        });
+      };
+
+      const renderRuleList = () => {
+        if (!ruleList) return;
+        if (!payoutRules.length) {
+          ruleList.innerHTML = '<li style="color:#8ea0d6;">No rules yet.</li>';
+          return;
+        }
+        ruleList.innerHTML = payoutRules
+          .map(
+            (r) => `<li style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;">
+              <span>${r.name} (${r.type}) ${!r.active ? '(inactive)' : ''}</span>
+              <button class="ghost-btn" type="button" data-del-rule="${r.id}">Delete</button>
+            </li>`,
+          )
+          .join('');
+        ruleList.querySelectorAll('button[data-del-rule]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-del-rule');
+            await deleteRule(id);
+          });
+        });
+      };
+
+      const renderPrizeList = () => {
+        if (!prizeList) return;
+        if (!payoutPrizes.length) {
+          prizeList.innerHTML = '<li style="color:#8ea0d6;">No prizes yet.</li>';
+          return;
+        }
+        prizeList.innerHTML = payoutPrizes
+          .map(
+            (p) =>
+              `<li style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;">
+                <span>${p.name} ${p.cost_cents != null ? `($${(p.cost_cents / 100).toFixed(2)})` : ''} ${p.image_url ? '📷' : ''} ${!p.active ? '(inactive)' : ''}</span>
+                <button class="ghost-btn" type="button" data-del-prize="${p.id}">Delete</button>
+              </li>`,
+          )
+          .join('');
+        prizeList.querySelectorAll('button[data-del-prize]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-del-prize');
+            await deletePrize(id);
+          });
+        });
+      };
+
+      const renderPayoutSummary = () => {
+        if (!payoutsBody) return;
+        if (!payoutSummary.length) {
+          payoutsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#8ea0d6;">No payout data loaded.</td></tr>';
+          return;
+        }
+        payoutsBody.innerHTML = payoutSummary
+          .map((row) => {
+            const prizeNames = (row.prizes || []).map((p) => p.name).join(', ') || '—';
+            return `
+              <tr>
+                <td style="text-align:left;font-weight:600;">${row.employee_name}</td>
+                <td>$${(row.tier_payout_cents / 100).toFixed(2)}</td>
+                <td>$${(row.rule_payout_cents / 100).toFixed(2)}</td>
+                <td>$${(row.misc_cents / 100).toFixed(2)}</td>
+                <td>${prizeNames}</td>
+                <td>$${(row.total_payout_cents / 100).toFixed(2)}</td>
+                <td><button class="ghost-btn" data-add-prize="${row.employee_name}">Add prize</button></td>
+              </tr>
+            `;
+          })
+          .join('');
+        payoutsBody.querySelectorAll('button[data-add-prize]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const name = btn.getAttribute('data-add-prize');
+            handleAssignPrize(name);
+          });
+        });
+      };
+
+      const loadTiers = async () => {
+        const token = getStoredToken();
+        if (!token) return;
+        const resp = await fetch(`/payouts/tiers?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (resp.ok) {
+          payoutTiers = await resp.json();
+          renderTierList();
+        }
+      };
+
+      const deleteTier = async (id) => {
+        const token = getStoredToken();
+        if (!token) return;
+        if (!window.confirm('Delete this tier?')) return;
+        const resp = await fetch(`/payouts/tiers/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) {
+          setStatus(payoutsStatus, `Could not delete tier (${resp.status})`, true);
+          return;
+        }
+        await loadTiers();
+        setStatus(payoutsStatus, 'Tier deleted.');
+      };
+
+      const loadRules = async () => {
+        const token = getStoredToken();
+        if (!token) return;
+        const resp = await fetch(`/payouts/rules?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (resp.ok) {
+          payoutRules = await resp.json();
+          renderRuleList();
+        }
+      };
+
+      const deleteRule = async (id) => {
+        const token = getStoredToken();
+        if (!token) return;
+        if (!window.confirm('Delete this rule?')) return;
+        const resp = await fetch(`/payouts/rules/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) {
+          setStatus(payoutsStatus, `Could not delete rule (${resp.status})`, true);
+          return;
+        }
+        await loadRules();
+        setStatus(payoutsStatus, 'Rule deleted.');
+      };
+
+      const loadPrizes = async () => {
+        const token = getStoredToken();
+        if (!token) return;
+        const resp = await fetch(`/payouts/prizes?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (resp.ok) {
+          payoutPrizes = await resp.json();
+          renderPrizeList();
+        }
+      };
+
+      const deletePrize = async (id) => {
+        const token = getStoredToken();
+        if (!token) return;
+        if (!window.confirm('Delete this prize?')) return;
+        const resp = await fetch(`/payouts/prizes/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) {
+          setStatus(payoutsStatus, `Could not delete prize (${resp.status})`, true);
+          return;
+        }
+        await loadPrizes();
+        setStatus(payoutsStatus, 'Prize deleted.');
+      };
+
+      const loadPayoutSummary = async () => {
+        const token = getStoredToken();
+        if (!token) {
+          setStatus(payoutsStatus, 'Log in to view payouts.', true);
+          return;
+        }
+        setStatus(payoutsStatus, 'Loading payouts...');
+        try {
+          const resp = await fetch(`/payouts/summary?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error(`Unable to load payouts (${resp.status})`);
+          const data = await resp.json();
+          payoutSummary = data.rows || [];
+          renderPayoutSummary();
+          setStatus(payoutsStatus, `Loaded ${payoutSummary.length} rows.`);
+          payoutsLoaded = true;
+        } catch (err) {
+          console.error(err);
+          setStatus(payoutsStatus, err.message || 'Unable to load payouts', true);
+        }
+      };
+
+      const handleAssignPrize = async (employeeName) => {
+        const token = getStoredToken();
+        if (!token) return;
+        if (!payoutPrizes.length) {
+          setStatus(payoutsStatus, 'Add prizes first.', true);
+          return;
+        }
+        const { modal, close } = showFormModal(`Assign prize to ${employeeName}`, (content) => {
+          const list = payoutPrizes
+            .map(
+              (p, idx) => `
+                <label style="display:flex;align-items:center;gap:.7rem;padding:.4rem .2rem;cursor:pointer;">
+                  <input type="radio" name="assign-prize" value="${p.id}" ${idx === 0 ? 'checked' : ''}/>
+                  ${
+                    p.image_url
+                      ? `<img src="${p.image_url}" alt="${p.name}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;border:1px solid #1f2f54;">`
+                      : '<div style="width:42px;height:42px;border-radius:10px;border:1px dashed #2a3c70;display:flex;align-items:center;justify-content:center;color:#6e7ca8;">No Img</div>'
+                  }
+                  <span>${p.name} ${p.cost_cents != null ? `($${(p.cost_cents / 100).toFixed(2)})` : ''}</span>
+                </label>
+              `,
+            )
+            .join('');
+          content.innerHTML = `
+            <div class="form-group">
+              <label>Select prize</label>
+              <div style="display:flex;flex-direction:column;gap:.35rem;max-height:240px;overflow:auto;">${list}</div>
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;">
+              <button class="primary-btn" type="button" id="save-assign-prize">Assign</button>
+            </div>
+          `;
+        });
+        modal.querySelector('#save-assign-prize').addEventListener('click', async () => {
+          const selected = modal.querySelector('input[name="assign-prize"]:checked');
+          if (!selected) return;
+          const prizeId = Number(selected.value);
+          const payload = { employee_name: employeeName, prize_id: prizeId, notes: '', season_year: getSeasonYear() };
+          const resp = await fetch('/payouts/prizes/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            setStatus(payoutsStatus, `Could not assign prize (${resp.status})`, true);
+            return;
+          }
+          setStatus(payoutsStatus, `Assigned prize to ${employeeName}.`);
+          close();
+          await loadPayoutSummary();
+        });
       };
 
       const determineRole = async () => {
@@ -844,8 +2007,23 @@
         });
         if (weeklyView) weeklyView.classList.toggle('hidden', view !== 'weekly');
         if (cobrandsView) cobrandsView.classList.toggle('hidden', view !== 'cobrands');
+        if (christmasView) christmasView.classList.toggle('hidden', view !== 'christmas');
+        if (payoutsView) payoutsView.classList.toggle('hidden', view !== 'payouts');
         if (view === 'cobrands' && !cobrandsLoaded) {
           loadCobrandDeals();
+        }
+        if (view === 'christmas') {
+          renderChristmasHead();
+          renderChristmasTable();
+        }
+        if (view === 'payouts' && !payoutsLoaded) {
+          renderTierList();
+          renderRuleList();
+          renderPrizeList();
+          loadTiers();
+          loadRules();
+          loadPrizes();
+          loadPayoutSummary();
         }
       };
 
@@ -864,6 +2042,7 @@
           cobrandTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#8ea0d6;">No cobrand deals have been logged.</td></tr>';
           return;
         }
+        cobrandTotalsBySeller = {};
         cobrandTableBody.innerHTML = cobrandDeals
           .map((deal) => {
             const logoCell = deal.logo_base64
@@ -883,6 +2062,8 @@
             `;
           })
           .join('');
+        mapCobrandsToDaysFromDeals(cobrandDeals);
+        renderTable();
       };
 
       const loadCobrandDeals = async () => {
@@ -893,9 +2074,12 @@
         }
         setStatus(cobrandStatus, 'Loading deals...');
         try {
-          const resp = await fetch(`/cobrands?sort_by=${cobrandSort.field}&sort_dir=${cobrandSort.direction}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const resp = await fetch(
+            `/cobrands?sort_by=${cobrandSort.field}&sort_dir=${cobrandSort.direction}&${seasonQuery()}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
           if (!resp.ok) throw new Error(`Unable to load deals (${resp.status})`);
           cobrandDeals = await resp.json();
           setStatus(
@@ -998,6 +2182,23 @@
         });
       }
 
+      if (weeklyHeadRow) {
+        weeklyHeadRow.addEventListener('click', (event) => {
+          const th = event.target.closest('th[data-sort]');
+          if (!th) return;
+          const field = th.dataset.sort;
+          if (!field) return;
+          if (weeklySort.field === field) {
+            weeklySort.direction = weeklySort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            weeklySort.field = field;
+            weeklySort.direction = field === 'name' ? 'asc' : 'desc';
+          }
+          renderWeeklyHeadLabels();
+          renderTable();
+        });
+      }
+
       if (cobrandTableHead) {
         cobrandTableHead.addEventListener('click', (event) => {
           const th = event.target.closest('th[data-sort]');
@@ -1024,8 +2225,50 @@
         saveWeekBtn.addEventListener('click', saveCurrentWeek);
       }
 
+      if (drawBtn) {
+        drawBtn.addEventListener('click', performDraw);
+      }
+      if (resetDrawsBtn) {
+        resetDrawsBtn.addEventListener('click', resetDraws);
+      }
+      if (viewResultsBtn) {
+        viewResultsBtn.addEventListener('click', viewResults);
+      }
+
       if (refreshCobrandsBtn) {
         refreshCobrandsBtn.addEventListener('click', loadCobrandDeals);
+      }
+
+      if (refreshPayoutsBtn) {
+        refreshPayoutsBtn.addEventListener('click', async () => {
+          await loadTiers();
+          await loadRules();
+          await loadPrizes();
+          await loadPayoutSummary();
+        });
+      }
+      if (addTierBtn) addTierBtn.addEventListener('click', openTierModal);
+      if (addRuleBtn) addRuleBtn.addEventListener('click', openRuleModal);
+      if (addPrizeBtn) addPrizeBtn.addEventListener('click', openPrizeModal);
+      if (seasonSelect) {
+        seasonSelect.addEventListener('change', (event) => {
+          selectedSeasonYear = Number(event.target.value);
+          initData(serverNames);
+          cobrandTotalsBySeller = {};
+          cobrandDayCredits = {};
+          cobrandDeals = [];
+          renderWeeklyHeadLabels();
+          renderTable();
+          loadGiftTrackerData();
+          loadCobrandTotalsForTracker();
+          loadPayoutSummary();
+          loadTiers();
+          loadRules();
+          loadPrizes();
+        });
+      }
+      if (addSeasonBtn) {
+        addSeasonBtn.addEventListener('click', openSeasonModal);
       }
 
       if (sellerInput) {
@@ -1119,6 +2362,7 @@
             date_of_pickup: pickupInput && pickupInput.value ? pickupInput.value : null,
             seller_id: sellerIdInput && sellerIdInput.value ? Number(sellerIdInput.value) : null,
             logo_base64: compressedLogoData,
+            season_year: getSeasonYear(),
           };
           setStatus(cobrandFormStatus, 'Saving deal...');
           isSavingCobrand = true;
@@ -1147,6 +2391,7 @@
       }
 
       const init = async () => {
+        await loadSeasonsFromServer();
         await determineRole();
         try {
           serverNames = await loadServerRoster();
@@ -1161,14 +2406,19 @@
         }
         if (serverNames.length) {
           initData(serverNames);
+          initChristmasData(serverNames);
         } else {
           tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff9b9b;">No roster data loaded. Please log in as an authenticated user.</td></tr>';
           renderTabs();
           return;
         }
         renderTabs();
+        renderSeasonSelect();
+        renderWeeklyHeadLabels();
         await loadGiftTrackerData();
         await loadCobrandTotalsForTracker();
+        renderChristmasHead();
+        renderChristmasTable();
         renderTable();
         markWeekDirty(false);
       };

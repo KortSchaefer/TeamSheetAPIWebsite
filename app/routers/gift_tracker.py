@@ -12,12 +12,15 @@ router = APIRouter(prefix="/gift-tracker", tags=["gift-tracker"])
 @router.get("", response_model=list[schemas.GiftTrackerEntryRead])
 def list_gift_tracker_entries(
     week_number: int | None = Query(default=None, ge=1),
+    season_year: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     query = db.query(GiftTrackerEntry)
     if week_number is not None:
         query = query.filter(GiftTrackerEntry.week_number == week_number)
+    if season_year is not None:
+        query = query.filter(GiftTrackerEntry.season_year == season_year)
     return query.order_by(GiftTrackerEntry.week_number.asc(), GiftTrackerEntry.employee_name.asc()).all()
 
 
@@ -33,7 +36,9 @@ def upsert_gift_tracker_entries(
 
     existing = {
         (entry.employee_name.lower(), entry.week_number): entry
-        for entry in db.query(GiftTrackerEntry).filter(GiftTrackerEntry.week_number == week).all()
+        for entry in db.query(GiftTrackerEntry)
+        .filter(GiftTrackerEntry.week_number == week, GiftTrackerEntry.season_year == payload.season_year)
+        .all()
     }
 
     seen_keys: set[tuple[str, int]] = set()
@@ -54,6 +59,7 @@ def upsert_gift_tracker_entries(
             record = GiftTrackerEntry(
                 employee_name=item.employee_name.strip(),
                 week_number=week,
+                season_year=payload.season_year,
                 tuesday=item.tuesday,
                 wednesday=item.wednesday,
                 thursday=item.thursday,
@@ -66,9 +72,7 @@ def upsert_gift_tracker_entries(
         results.append(record)
 
     # Remove entries for this week that were not included in the payload
-    to_delete = [
-        entry for key, entry in existing.items() if key not in seen_keys
-    ]
+    to_delete = [entry for key, entry in existing.items() if key not in seen_keys]
     for entry in to_delete:
         db.delete(entry)
 

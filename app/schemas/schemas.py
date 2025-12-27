@@ -10,6 +10,7 @@ from app.models import (
     ShiftPeriod,
     TeamSheetStatus,
     UserRole,
+    PayoutType,
 )
 
 
@@ -181,6 +182,7 @@ class TeamSheetRead(TeamSheetBase, TimestampModel):
 class CobrandDealBase(BaseModel):
     company_name: str = Field(min_length=1, max_length=255)
     amount_usd: Decimal = Field(gt=0)
+    season_year: Optional[int] = None
     date_of_commission: date | None = None
     date_of_payment: date | None = None
     date_of_pickup: date | None = None
@@ -208,8 +210,119 @@ class SellerOption(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PayoutTierBase(BaseModel):
+    label: str
+    season_year: Optional[int] = None
+    min_amount_cents: int = Field(ge=0)
+    max_amount_cents: int | None = Field(default=None, ge=0)
+    payout_type: PayoutType = PayoutType.FIXED
+    payout_value: int = Field(ge=0)  # cents if FIXED, percent * 100 if PERCENT
+    active: bool = True
+
+
+class PayoutTierCreate(PayoutTierBase):
+    pass
+
+
+class PayoutTierRead(PayoutTierBase, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PayoutRuleBase(BaseModel):
+    name: str
+    type: str
+    season_year: Optional[int] = None
+    config: dict | None = None
+    active: bool = True
+
+
+class PayoutRuleCreate(PayoutRuleBase):
+    pass
+
+
+class PayoutRuleRead(PayoutRuleBase, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PrizeBase(BaseModel):
+    name: str
+    season_year: Optional[int] = None
+    description: Optional[str] = None
+    cost_cents: Optional[int] = Field(default=None, ge=0)
+    image_url: Optional[str] = None
+    active: bool = True
+
+
+class PrizeCreate(PrizeBase):
+    pass
+
+
+class PrizeRead(PrizeBase, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PrizeAssignmentCreate(BaseModel):
+    employee_name: str
+    prize_id: int
+    season_year: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class PrizeAssignmentRead(PrizeAssignmentCreate, TimestampModel):
+    id: int
+    prize: Optional[PrizeRead] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PayoutAdjustmentCreate(BaseModel):
+    employee_name: str
+    label: str
+    season_year: Optional[int] = None
+    amount_cents: int
+
+
+class PayoutAdjustmentRead(PayoutAdjustmentCreate, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PayoutSummaryRow(BaseModel):
+    employee_name: str
+    sales_total_cents: int
+    tier_payout_cents: int
+    rule_payout_cents: int
+    misc_cents: int
+    prize_value_cents: int
+    total_payout_cents: int
+    prizes: List[PrizeRead] = Field(default_factory=list)
+
+
+class PayoutSummaryResponse(BaseModel):
+    rows: List[PayoutSummaryRow]
+
+
+class SeasonCreate(BaseModel):
+    year: int
+    start_date: date
+
+
+class SeasonRead(SeasonCreate, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GiftTrackerEntryPayload(BaseModel):
     employee_name: str = Field(min_length=1, max_length=255)
+    season_year: Optional[int] = None
     tuesday: int = 0
     wednesday: int = 0
     thursday: int = 0
@@ -221,6 +334,7 @@ class GiftTrackerEntryPayload(BaseModel):
 
 class GiftTrackerUpsertRequest(BaseModel):
     week_number: int = Field(ge=1)
+    season_year: Optional[int] = None
     entries: List[GiftTrackerEntryPayload] = Field(default_factory=list)
 
 

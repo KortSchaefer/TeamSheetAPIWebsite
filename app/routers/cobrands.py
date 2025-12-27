@@ -21,6 +21,7 @@ def _dollars_to_cents(amount: Decimal) -> int:
 def list_cobrand_deals(
     sort_by: str = Query(default="created_at"),
     sort_dir: str = Query(default="desc"),
+    season_year: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -34,7 +35,10 @@ def list_cobrand_deals(
     }
     sort_col = sort_map.get(sort_by, CobrandDeal.created_at)
     direction = desc if sort_dir.lower() == "desc" else asc
-    return db.query(CobrandDeal).order_by(direction(sort_col)).all()
+    query = db.query(CobrandDeal)
+    if season_year is not None:
+        query = query.filter(CobrandDeal.season_year == season_year)
+    return query.order_by(direction(sort_col)).all()
 
 
 @router.post("", response_model=schemas.CobrandDealRead, status_code=status.HTTP_201_CREATED)
@@ -49,6 +53,9 @@ def create_cobrand_deal(
     company_name = payload.company_name.strip()
     if not company_name:
         raise HTTPException(status_code=400, detail="Company name is required")
+
+    if payload.season_year is None:
+        raise HTTPException(status_code=400, detail="season_year is required")
 
     if payload.seller_id:
         seller_exists = (
@@ -70,6 +77,7 @@ def create_cobrand_deal(
         date_of_pickup=payload.date_of_pickup,
         seller_id=payload.seller_id,
         logo_base64=payload.logo_base64,
+        season_year=payload.season_year,
     )
 
     db.add(deal)

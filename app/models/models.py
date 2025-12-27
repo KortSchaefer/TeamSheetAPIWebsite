@@ -206,6 +206,7 @@ class CobrandDeal(Base, TimestampMixin):
     date_of_pickup: Mapped[date | None] = mapped_column(Date, nullable=True)
     seller_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"), nullable=True)
     logo_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
 
     seller = relationship("Employee")
 
@@ -229,6 +230,7 @@ class GiftTrackerEntry(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     employee_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     week_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     tuesday: Mapped[int] = mapped_column(Integer, default=0)
     wednesday: Mapped[int] = mapped_column(Integer, default=0)
     thursday: Mapped[int] = mapped_column(Integer, default=0)
@@ -240,3 +242,74 @@ class GiftTrackerEntry(Base, TimestampMixin):
     __table_args__ = (
         {"sqlite_autoincrement": True},
     )
+
+
+class PayoutType(str, enum.Enum):
+    FIXED = "FIXED"
+    PERCENT = "PERCENT"
+
+
+class PayoutTier(Base, TimestampMixin):
+    __tablename__ = "payout_tiers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    min_amount_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_amount_cents: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payout_type: Mapped[PayoutType] = mapped_column(Enum(PayoutType), default=PayoutType.FIXED)
+    payout_value: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # cents if FIXED, percent * 100 if PERCENT
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class PayoutRule(Base, TimestampMixin):
+    __tablename__ = "payout_rules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    type: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g., season_top_seller, monthly_pass
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    config: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON string
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class Prize(Base, TimestampMixin):
+    __tablename__ = "prizes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cost_cents: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class PrizeAssignment(Base, TimestampMixin):
+    __tablename__ = "prize_assignments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    prize_id: Mapped[int] = mapped_column(ForeignKey("prizes.id"))
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    prize = relationship("Prize")
+
+
+class PayoutAdjustment(Base, TimestampMixin):
+    __tablename__ = "payout_adjustments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    season_year: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class Season(Base, TimestampMixin):
+    __tablename__ = "seasons"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, index=True)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
