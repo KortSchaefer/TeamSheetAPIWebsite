@@ -12,9 +12,10 @@ from app.config import settings
 from app.database import get_db
 from app.models import User, UserRole
 
-# Use bcrypt_sha256 to avoid bcrypt's 72-byte password limit while still verifying
-# existing bcrypt hashes created previously.
-pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
+# Render is currently deploying on Python 3.13 where bcrypt wheels can be flaky.
+# Use pbkdf2_sha256 for new hashes (no external bcrypt backend required), while
+# still accepting existing bcrypt/bcrypt_sha256 hashes created previously.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt_sha256", "bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
