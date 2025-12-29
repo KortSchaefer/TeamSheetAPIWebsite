@@ -838,8 +838,7 @@
 
       const loadSeasonsFromServer = async () => {
         try {
-          const token = getStoredToken();
-          const resp = await fetch('/seasons', token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+          const resp = await authFetch('/seasons');
           if (!resp.ok) throw new Error('server seasons not available');
           const data = await resp.json();
           if (Array.isArray(data) && data.length) {
@@ -877,14 +876,11 @@
         }
         selectedSeasonYear = year;
         try {
-          const token = getStoredToken();
-          if (token) {
-            await fetch('/seasons', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ year, start_date: startDate }),
-            });
-          }
+          await authFetch('/seasons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ year, start_date: startDate }),
+          });
         } catch (err) {
           console.warn('Season save fallback to local only', err);
         }
@@ -999,10 +995,8 @@
       };
 
       const loadCobrandTotalsForTracker = async () => {
-        const token = getStoredToken();
-        if (!token) return;
         try {
-          const resp = await fetch(`/cobrands?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+          const resp = await authFetch(`/cobrands?${seasonQuery()}`);
           if (!resp.ok) throw new Error(`Unable to load cobrands (${resp.status})`);
           cobrandDeals = await resp.json();
           mapCobrandsToDaysFromDeals(cobrandDeals);
@@ -1039,6 +1033,13 @@
           .find((c) => c.startsWith('tss_access_token='));
         if (cookieMatch) return cookieMatch.split('=')[1];
         return localStorage.getItem('tss_access_token');
+      };
+
+      const authFetch = (url, options = {}) => {
+        const headers = { ...(options.headers || {}) };
+        const token = getStoredToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return fetch(url, { ...options, headers, credentials: 'include' });
       };
 
       const setStoredTokens = (access, refresh) => {
@@ -1139,11 +1140,7 @@
       };
 
       const loadServerRoster = async () => {
-        const token = getStoredToken();
-        if (!token) throw new Error('No token found. Please log in first.');
-        const resp = await fetch('/employees?role=SERVER&active=true', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resp = await authFetch('/employees?role=SERVER&active=true');
         if (resp.status === 401) throw new Error('Unauthorized. Log in again to load servers.');
         if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
         const data = await resp.json();
@@ -1168,16 +1165,9 @@
       };
 
       const loadGiftTrackerData = async () => {
-        const token = getStoredToken();
-        if (!token) {
-          setStatus(weeklyStatus, 'Log in to load weekly tracker data.', true);
-          return;
-        }
         setStatus(weeklyStatus, 'Loading weekly tracker data...');
         try {
-        const resp = await fetch(`/gift-tracker?${seasonQuery()}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resp = await authFetch(`/gift-tracker?${seasonQuery()}`);
           if (!resp.ok) throw new Error(`Unable to load tracker data (${resp.status})`);
           const entries = await resp.json();
           entries.forEach((entry) => {
@@ -1203,11 +1193,6 @@
           setStatus(weeklyStatus, 'You need edit access to save.', true);
           return;
         }
-        const token = getStoredToken();
-        if (!token) {
-          setStatus(weeklyStatus, 'Log in to save weekly tracker data.', true);
-          return;
-        }
         const rows = giftData[currentWeek] || [];
         const entries = rows.map((row) => {
           const payload = { employee_name: row.name };
@@ -1225,11 +1210,10 @@
         isSavingWeek = true;
         if (saveWeekBtn) saveWeekBtn.disabled = true;
         try {
-          const resp = await fetch(`/gift-tracker?${seasonQuery()}`, {
+          const resp = await authFetch(`/gift-tracker?${seasonQuery()}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(body),
           });
@@ -1593,8 +1577,6 @@
         });
         const saveBtn = modal.querySelector('#save-tier-modal');
         saveBtn.addEventListener('click', async () => {
-          const token = getStoredToken();
-          if (!token) return;
           const label = modal.querySelector('#tier-label').value.trim();
           if (!label) return setStatus(payoutsStatus, 'Label required.', true);
           const min = Number(modal.querySelector('#tier-min').value || 0);
@@ -1611,9 +1593,9 @@
             season_year: getSeasonYear(),
             active: true,
           };
-          const resp = await fetch('/payouts/tiers', {
+          const resp = await authFetch('/payouts/tiers', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
           if (!resp.ok) {
@@ -1647,8 +1629,6 @@
           `;
         });
         modal.querySelector('#save-rule-modal').addEventListener('click', async () => {
-          const token = getStoredToken();
-          if (!token) return;
           const name = modal.querySelector('#rule-name').value.trim() || 'Season top seller';
           const firstPct = Number(modal.querySelector('#rule-first').value || 10);
           const secondPct = Number(modal.querySelector('#rule-second').value || 5);
@@ -1659,9 +1639,9 @@
             season_year: getSeasonYear(),
             active: true,
           };
-          const resp = await fetch('/payouts/rules', {
+          const resp = await authFetch('/payouts/rules', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
           if (!resp.ok) {
@@ -1699,8 +1679,6 @@
           `;
         });
         modal.querySelector('#save-prize-modal').addEventListener('click', async () => {
-          const token = getStoredToken();
-          if (!token) return;
           const name = modal.querySelector('#prize-name').value.trim();
           if (!name) return setStatus(payoutsStatus, 'Prize name required.', true);
           const desc = modal.querySelector('#prize-desc').value.trim();
@@ -1714,9 +1692,9 @@
             season_year: getSeasonYear(),
             active: true,
           };
-          const resp = await fetch('/payouts/prizes', {
+          const resp = await authFetch('/payouts/prizes', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
           if (!resp.ok) {
@@ -1828,9 +1806,7 @@
       };
 
       const loadTiers = async () => {
-        const token = getStoredToken();
-        if (!token) return;
-        const resp = await fetch(`/payouts/tiers?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        const resp = await authFetch(`/payouts/tiers?${seasonQuery()}`);
         if (resp.ok) {
           payoutTiers = await resp.json();
           renderTierList();
@@ -1838,12 +1814,9 @@
       };
 
       const deleteTier = async (id) => {
-        const token = getStoredToken();
-        if (!token) return;
         if (!window.confirm('Delete this tier?')) return;
-        const resp = await fetch(`/payouts/tiers/${id}`, {
+        const resp = await authFetch(`/payouts/tiers/${id}`, {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (!resp.ok) {
           setStatus(payoutsStatus, `Could not delete tier (${resp.status})`, true);
@@ -1854,9 +1827,7 @@
       };
 
       const loadRules = async () => {
-        const token = getStoredToken();
-        if (!token) return;
-        const resp = await fetch(`/payouts/rules?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        const resp = await authFetch(`/payouts/rules?${seasonQuery()}`);
         if (resp.ok) {
           payoutRules = await resp.json();
           renderRuleList();
@@ -1864,12 +1835,9 @@
       };
 
       const deleteRule = async (id) => {
-        const token = getStoredToken();
-        if (!token) return;
         if (!window.confirm('Delete this rule?')) return;
-        const resp = await fetch(`/payouts/rules/${id}`, {
+        const resp = await authFetch(`/payouts/rules/${id}`, {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (!resp.ok) {
           setStatus(payoutsStatus, `Could not delete rule (${resp.status})`, true);
@@ -1880,9 +1848,7 @@
       };
 
       const loadPrizes = async () => {
-        const token = getStoredToken();
-        if (!token) return;
-        const resp = await fetch(`/payouts/prizes?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+        const resp = await authFetch(`/payouts/prizes?${seasonQuery()}`);
         if (resp.ok) {
           payoutPrizes = await resp.json();
           renderPrizeList();
@@ -1890,12 +1856,9 @@
       };
 
       const deletePrize = async (id) => {
-        const token = getStoredToken();
-        if (!token) return;
         if (!window.confirm('Delete this prize?')) return;
-        const resp = await fetch(`/payouts/prizes/${id}`, {
+        const resp = await authFetch(`/payouts/prizes/${id}`, {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (!resp.ok) {
           setStatus(payoutsStatus, `Could not delete prize (${resp.status})`, true);
@@ -1906,14 +1869,9 @@
       };
 
       const loadPayoutSummary = async () => {
-        const token = getStoredToken();
-        if (!token) {
-          setStatus(payoutsStatus, 'Log in to view payouts.', true);
-          return;
-        }
         setStatus(payoutsStatus, 'Loading payouts...');
         try {
-          const resp = await fetch(`/payouts/summary?${seasonQuery()}`, { headers: { Authorization: `Bearer ${token}` } });
+          const resp = await authFetch(`/payouts/summary?${seasonQuery()}`);
           if (!resp.ok) throw new Error(`Unable to load payouts (${resp.status})`);
           const data = await resp.json();
           payoutSummary = data.rows || [];
@@ -1927,8 +1885,6 @@
       };
 
       const handleAssignPrize = async (employeeName) => {
-        const token = getStoredToken();
-        if (!token) return;
         if (!payoutPrizes.length) {
           setStatus(payoutsStatus, 'Add prizes first.', true);
           return;
@@ -1964,9 +1920,9 @@
           if (!selected) return;
           const prizeId = Number(selected.value);
           const payload = { employee_name: employeeName, prize_id: prizeId, notes: '', season_year: getSeasonYear() };
-          const resp = await fetch('/payouts/prizes/assign', {
+          const resp = await authFetch('/payouts/prizes/assign', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
           if (!resp.ok) {
@@ -1981,9 +1937,7 @@
 
       const determineRole = async () => {
         try {
-          const token = getStoredToken();
-          if (!token) throw new Error('No token, view only');
-          const resp = await fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+          const resp = await authFetch('/auth/me');
           if (!resp.ok) throw new Error('Not authenticated');
           const me = await resp.json();
           isAdmin = me.role === 'ADMIN' || me.role === 'MANAGER';
@@ -2067,18 +2021,10 @@
       };
 
       const loadCobrandDeals = async () => {
-        const token = getStoredToken();
-        if (!token) {
-          setStatus(cobrandStatus, 'Log in to view cobrand deals.', true);
-          return;
-        }
         setStatus(cobrandStatus, 'Loading deals...');
         try {
-          const resp = await fetch(
+          const resp = await authFetch(
             `/cobrands?sort_by=${cobrandSort.field}&sort_dir=${cobrandSort.direction}&${seasonQuery()}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
           );
           if (!resp.ok) throw new Error(`Unable to load deals (${resp.status})`);
           cobrandDeals = await resp.json();
@@ -2115,13 +2061,11 @@
       };
 
       const fetchSellerSuggestions = async (term) => {
-        const token = getStoredToken();
-        if (!token || !sellerSuggestions) return;
+        if (!sellerSuggestions) return;
         if (sellerSearchAbort) sellerSearchAbort.abort();
         sellerSearchAbort = new AbortController();
         try {
-          const resp = await fetch(`/cobrands/sellers?search=${encodeURIComponent(term)}`, {
-            headers: { Authorization: `Bearer ${token}` },
+          const resp = await authFetch(`/cobrands/sellers?search=${encodeURIComponent(term)}`, {
             signal: sellerSearchAbort.signal,
           });
           if (!resp.ok) throw new Error('Unable to fetch sellers');
@@ -2349,11 +2293,6 @@
             setStatus(cobrandFormStatus, 'Enter a valid USD amount.', true);
             return;
           }
-          const token = getStoredToken();
-          if (!token) {
-            setStatus(cobrandFormStatus, 'Log in to save cobrand deals.', true);
-            return;
-          }
           const payload = {
             company_name: companyName,
             amount_usd: amountValue.toFixed(2),
@@ -2368,11 +2307,10 @@
           isSavingCobrand = true;
           if (saveCobrandBtn) saveCobrandBtn.disabled = true;
           try {
-            const resp = await fetch('/cobrands', {
+            const resp = await authFetch('/cobrands', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(payload),
             });

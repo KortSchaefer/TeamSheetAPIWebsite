@@ -16,7 +16,7 @@ from app.models import User, UserRole
 # Use pbkdf2_sha256 for new hashes (no external bcrypt backend required), while
 # still accepting existing bcrypt/bcrypt_sha256 hashes created previously.
 pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt_sha256", "bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -59,6 +59,8 @@ async def get_current_user(
         cookie_token = request.cookies.get("tss_access_token")
         if cookie_token:
             token = cookie_token
+    if not token:
+        raise credentials_exception
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         user_id: str | None = payload.get("sub")

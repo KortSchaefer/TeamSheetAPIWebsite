@@ -309,8 +309,7 @@
     </style>
   </head>
   <body>
-    <button class="back-btn" onclick="returnToHub()">← Back</button>
-    <section id="login-view">
+    <section id="login-view" class="workspace-hidden">
       <div class="brand">
         <p class="pill-nav" style="gap:.5rem;">
           <span style="padding:.2rem .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.35);font-size:.85rem;">Internal Tooling</span>
@@ -475,6 +474,10 @@
       const hubWheel = document.getElementById('hub-wheel');
       const hubTeamsheet = document.getElementById('hub-teamsheet');
 
+      const authFetch = (url, options = {}) => {
+        return fetch(url, { ...options, credentials: 'include' });
+      };
+
       const serverListEl = document.getElementById('server-list');
       const hostListEl = document.getElementById('host-list');
       const sasListEl = document.getElementById('sas-list');
@@ -546,40 +549,10 @@
       let accessToken = null;
       let currentMode = 'servers';
       let authMode = 'login';
-      const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-      const getStoredToken = () => {
-        if (accessToken) return accessToken;
-        const cookieMatch = document.cookie
-          .split(';')
-          .map((c) => c.trim())
-          .find((c) => c.startsWith('tss_access_token='));
-        if (cookieMatch) {
-          return cookieMatch.split('=')[1];
-        }
-        return localStorage.getItem('tss_access_token');
-      };
-
-      const setStoredTokens = (access, refresh) => {
-        accessToken = access;
-        if (access) {
-          document.cookie = `tss_access_token=${access}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-          localStorage.setItem('tss_access_token', access);
-        }
-        if (refresh) {
-          localStorage.setItem('tss_refresh_token', refresh);
-          document.cookie = `tss_refresh_token=${refresh}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-        }
-      };
-
-      const loadInternalRoster = async (token) => {
+      const loadInternalRoster = async () => {
         try {
-          const bearer = token || accessToken || getStoredToken();
-          if (!bearer) throw new Error('Login first to load roster.');
-          accessToken = bearer;
-          const resp = await fetch('/employees?role=SERVER&active=true', {
-            headers: { Authorization: `Bearer ${bearer}` },
-          });
+          const resp = await authFetch('/employees?role=SERVER&active=true');
           if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
           const employees = await resp.json();
           if (!Array.isArray(employees) || !employees.length) throw new Error('No server records found');
@@ -600,14 +573,9 @@
         }
       };
 
-      const loadHostRoster = async (token) => {
+      const loadHostRoster = async () => {
         try {
-          const bearer = token || accessToken || getStoredToken();
-          if (!bearer) throw new Error('Login first to load hosts.');
-          accessToken = bearer;
-          const resp = await fetch('/employees?role=HOST&active=true', {
-            headers: { Authorization: `Bearer ${bearer}` },
-          });
+          const resp = await authFetch('/employees?role=HOST&active=true');
           if (!resp.ok) throw new Error(`Host roster fetch failed (${resp.status})`);
           const employees = await resp.json();
           if (!Array.isArray(employees) || !employees.length) throw new Error('No host records found');
@@ -622,14 +590,9 @@
         }
       };
 
-      const loadSasRoster = async (token) => {
+      const loadSasRoster = async () => {
         try {
-          const bearer = token || accessToken || getStoredToken();
-          if (!bearer) throw new Error('Login first to load SAS.');
-          accessToken = bearer;
-          const resp = await fetch('/employees?role=BUSSER&active=true', {
-            headers: { Authorization: `Bearer ${bearer}` },
-          });
+          const resp = await authFetch('/employees?role=BUSSER&active=true');
           if (!resp.ok) throw new Error(`SA roster fetch failed (${resp.status})`);
           const employees = await resp.json();
           if (!Array.isArray(employees) || !employees.length) throw new Error('No SA records found');
@@ -997,13 +960,10 @@
       };
 
       const uploadRosterCsv = async (file) => {
-        const bearer = accessToken || getStoredToken();
-        if (!bearer) throw new Error('Login first, then import.');
         const formData = new FormData();
         formData.append('file', file);
-        const resp = await fetch('/imports/servers', {
+        const resp = await authFetch('/imports/servers', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${bearer}` },
           body: formData,
         });
         if (!resp.ok) {
@@ -1031,10 +991,10 @@
         hostsTab.classList.toggle('active', mode !== 'servers');
       };
       const authenticate = async (email, password) => {
-        const response = await fetch('/auth/login', {
+        const response = await authFetch('/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email, password }),
         });
 
         if (!response.ok) {
@@ -1042,15 +1002,10 @@
           throw new Error(detail.detail || `HTTP ${response.status}`);
         }
 
-        const data = await response.json();
-        setStoredTokens(data.access_token, data.refresh_token);
-        tokenBox.textContent = `Access Token: ${data.access_token}`;
-        tokenBox.classList.add('active');
+        await response.json().catch(() => ({}));
         setStatus('Login successful.');
 
-          const meResp = await fetch('/auth/me', {
-            headers: { Authorization: `Bearer ${data.access_token}` }
-          });
+        const meResp = await authFetch('/auth/me');
         if (!meResp.ok) {
           throw new Error('Could not load profile');
         }
@@ -1058,9 +1013,9 @@
         currentUser = me;
         setStatus(`Welcome, ${me.full_name} (${me.role})`);
         await Promise.all([
-          loadInternalRoster(data.access_token),
-          loadHostRoster(data.access_token),
-          loadSasRoster(data.access_token),
+          loadInternalRoster(),
+          loadHostRoster(),
+          loadSasRoster(),
         ]);
         activeServers = [...allServers];
         activeHosts = [...allHosts];
@@ -1071,7 +1026,7 @@
       };
 
       const registerAccount = async ({ email, password, full_name, role }) => {
-        const response = await fetch('/auth/register', {
+        const response = await authFetch('/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, full_name, role }),
@@ -1156,14 +1111,14 @@
             alert('CSV appeared empty. Expected headers like name,nickname,upsell_score,pitty,employment_days,max_guests.');
             return;
           }
-          try {
-            const result = await uploadRosterCsv(file);
-            setStatus(`Imported roster: ${result.created} new, ${result.updated} updated.`);
-            await loadInternalRoster(accessToken);
-          } catch (err) {
-            console.error(err);
-            alert(err.message || 'Import failed. Confirm you are logged in as a manager or admin.');
-          }
+            try {
+              const result = await uploadRosterCsv(file);
+              setStatus(`Imported roster: ${result.created} new, ${result.updated} updated.`);
+              await loadInternalRoster();
+            } catch (err) {
+              console.error(err);
+              alert(err.message || 'Import failed. Confirm you are logged in as a manager or admin.');
+            }
           hydrateServersForShift(roster);
         };
         reader.readAsText(file);
@@ -1184,7 +1139,28 @@
         });
       };
 
-      layoutWheel();
+      const ensureAuthenticated = async () => {
+        try {
+          const meResp = await authFetch('/auth/me');
+          if (!meResp.ok) {
+            window.location.href = '/static/login.html';
+            return;
+          }
+          currentUser = await meResp.json();
+          await Promise.all([loadInternalRoster(), loadHostRoster(), loadSasRoster()]);
+          activeServers = [...allServers];
+          activeHosts = [...allHosts];
+          activeSas = [...allSas];
+          layoutWheel();
+          showHub();
+          switchMode('servers');
+        } catch (err) {
+          console.error('Session check failed', err);
+          window.location.href = '/static/login.html';
+        }
+      };
+
+      ensureAuthenticated();
 
       const returnToHub = () => {
         // Always send back to hub without forcing a new login. If the user is not authenticated, the hub will still render.
