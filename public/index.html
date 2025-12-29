@@ -141,9 +141,18 @@
         border: 1px dashed rgba(132, 154, 255, 0.35);
         display: grid;
         place-items: center;
-        background: radial-gradient(circle at center, rgba(43, 72, 140, 0.2), rgba(10, 18, 35, 0.05));
+        background: radial-gradient(circle at center, rgba(43, 72, 140, 0.25), rgba(10, 18, 35, 0.05));
+        box-shadow: 0 0 80px rgba(33, 80, 190, 0.25);
       }
-      .wheel-center {
+      .wheel canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .wheel-center-btn {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
         width: 140px;
         height: 140px;
         border-radius: 50%;
@@ -155,36 +164,13 @@
         text-transform: uppercase;
         letter-spacing: .08em;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-      }
-      .wheel-item {
-        position: absolute;
-        width: 180px;
-        height: 120px;
-        padding: 1rem;
-        border-radius: 18px;
-        background: linear-gradient(135deg, rgba(83, 121, 255, 0.2), rgba(124, 221, 255, 0.08));
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(4px);
-        color: #e8edff;
         text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        text-align: center;
+        padding: .6rem;
+        z-index: 2;
       }
-      .wheel-item:hover {
-        transform: translate(-50%, -50%) scale(1.05);
-        border-color: rgba(118, 255, 196, 0.7);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-      }
-      .wheel-item strong {
-        font-size: 1.05rem;
-        letter-spacing: .03em;
-      }
-      .wheel-item span {
-        color: #9bb0ff;
-        font-size: .9rem;
+      .wheel-center-btn:hover {
+        filter: brightness(1.08);
       }
       .back-btn {
         position: fixed;
@@ -305,6 +291,13 @@
       @media (max-width: 900px) {
         body { padding: 1rem; }
         .board { grid-template-columns: 1fr; }
+        .wheel-center-btn {
+          width: 110px;
+          height: 110px;
+          font-size: .75rem;
+        }
+        .wheel-label { font-size: 12px; }
+        .wheel-sublabel { font-size: 10px; }
       }
     </style>
   </head>
@@ -364,27 +357,8 @@
         <p style="margin:.4rem 0 0;color:#8ea7ff;font-size:1rem;">Choose a workspace to continue</p>
       </div>
       <div class="wheel" id="hub-wheel">
-        <div class="wheel-center">Tools</div>
-        <a href="#" id="hub-teamsheet" class="wheel-item" data-index="0">
-          <strong>Team Sheet Studio</strong>
-          <span>Plan and assign servers</span>
-        </a>
-        <a href="/static/gift-card-tracker.html" class="wheel-item" data-index="1">
-          <strong>Gift Card Tracker</strong>
-          <span>Monitor balances</span>
-        </a>
-        <a href="/static/pick-your-sections.html" class="wheel-item" data-index="2">
-          <strong>Pick Your Own Sections</strong>
-          <span>Draft your floor</span>
-        </a>
-        <a href="/static/pos-practice.html" class="wheel-item" data-index="3">
-          <strong>POS Practice</strong>
-          <span>Reps & drills</span>
-        </a>
-        <a href="/static/under-construction.html" class="wheel-item" data-index="4">
-          <strong>Under Construction</strong>
-          <span>Coming soon</span>
-        </a>
+        <canvas id="hub-wheel-canvas" width="400" height="400" aria-hidden="true"></canvas>
+        <a class="wheel-center-btn" href="/static/import-center.html">Import Data</a>
       </div>
     </section>
 
@@ -472,7 +446,7 @@
       const builderView = document.getElementById('builder-view');
       const hubView = document.getElementById('hub-view');
       const hubWheel = document.getElementById('hub-wheel');
-      const hubTeamsheet = document.getElementById('hub-teamsheet');
+      const hubWheelCanvas = document.getElementById('hub-wheel-canvas');
 
       const authFetch = (url, options = {}) => {
         return fetch(url, { ...options, credentials: 'include' });
@@ -1020,8 +994,8 @@
         activeServers = [...allServers];
         activeHosts = [...allHosts];
         activeSas = [...allSas];
-        layoutWheel();
         showHub();
+        requestAnimationFrame(buildRadialMenu);
         switchMode('servers');
       };
 
@@ -1089,11 +1063,6 @@
 
       serversTab.addEventListener('click', () => switchMode('servers'));
       hostsTab.addEventListener('click', () => switchMode('hosts'));
-      hubTeamsheet.addEventListener('click', (e) => {
-        e.preventDefault();
-        showBuilder(currentUser);
-      });
-
       importBtn.addEventListener('click', () => csvInput.click());
 
       csvInput.addEventListener('change', (event) => {
@@ -1125,20 +1094,6 @@
         csvInput.value = '';
       });
 
-      const layoutWheel = () => {
-        const items = hubWheel.querySelectorAll('.wheel-item');
-        const total = items.length;
-        items.forEach((item, idx) => {
-          const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
-          const radius = 38;
-          const x = 50 + radius * Math.cos(angle);
-          const y = 50 + radius * Math.sin(angle);
-          item.style.left = `${x}%`;
-          item.style.top = `${y}%`;
-          item.style.transform = 'translate(-50%, -50%)';
-        });
-      };
-
       const ensureAuthenticated = async () => {
         try {
           const meResp = await authFetch('/auth/me');
@@ -1151,8 +1106,8 @@
           activeServers = [...allServers];
           activeHosts = [...allHosts];
           activeSas = [...allSas];
-          layoutWheel();
           showHub();
+          requestAnimationFrame(buildRadialMenu);
           switchMode('servers');
         } catch (err) {
           console.error('Session check failed', err);
@@ -1160,7 +1115,140 @@
         }
       };
 
+      const hubMenuItems = [
+        {
+          id: 'teamsheet',
+          label: 'Team Sheet Studio',
+          sublabel: 'Plan and assign servers',
+          href: '#',
+        },
+        {
+          id: 'gift-card',
+          label: 'Gift Card Tracker',
+          sublabel: 'Monitor balances',
+          href: '/static/gift-card-tracker.html',
+        },
+        {
+          id: 'sections',
+          label: 'Pick Your Own Sections',
+          sublabel: 'Draft your floor',
+          href: '/static/pick-your-sections.html',
+        },
+        {
+          id: 'pos',
+          label: 'POS Practice',
+          sublabel: 'Reps and drills',
+          href: '/static/pos-practice.html',
+        },
+        {
+          id: 'future',
+          label: 'Under Construction',
+          sublabel: 'Coming soon',
+          href: '/static/under-construction.html',
+        },
+      ];
+
+      let wheelHoverIndex = null;
+      let wheelMetrics = null;
+
+      const buildRadialMenu = () => {
+        if (!hubWheelCanvas || !hubWheel) return;
+        const size = hubWheel.clientWidth;
+        if (!size) return;
+        const dpr = window.devicePixelRatio || 1;
+        hubWheelCanvas.width = Math.floor(size * dpr);
+        hubWheelCanvas.height = Math.floor(size * dpr);
+        hubWheelCanvas.style.width = `${size}px`;
+        hubWheelCanvas.style.height = `${size}px`;
+        wheelMetrics = {
+          size,
+          dpr,
+          cx: size / 2,
+          cy: size / 2,
+          outerR: size * 0.46,
+          innerR: size * 0.22,
+          step: (Math.PI * 2) / hubMenuItems.length,
+        };
+        drawWheel();
+      };
+
+      const drawWheel = () => {
+        if (!hubWheelCanvas || !wheelMetrics) return;
+        const ctx = hubWheelCanvas.getContext('2d');
+        if (!ctx) return;
+        const { size, dpr, cx, cy, outerR, innerR, step } = wheelMetrics;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, size, size);
+        const scale = size < 520 ? 0.85 : 1;
+        hubMenuItems.forEach((item, idx) => {
+          const angle = -Math.PI / 2 + idx * step;
+          const start = angle - step / 2;
+          const end = angle + step / 2;
+          const isHover = wheelHoverIndex === idx;
+          ctx.beginPath();
+          ctx.arc(cx, cy, outerR, start, end);
+          ctx.arc(cx, cy, innerR, end, start, true);
+          ctx.closePath();
+          ctx.fillStyle = isHover ? 'rgba(98, 140, 255, 0.35)' : 'rgba(12, 22, 45, 0.92)';
+          ctx.strokeStyle = isHover ? 'rgba(118, 255, 196, 0.7)' : 'rgba(90, 120, 255, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.fill();
+          ctx.stroke();
+
+          const labelR = innerR + (outerR - innerR) * 0.56;
+          const labelX = cx + Math.cos(angle) * labelR;
+          const labelY = cy + Math.sin(angle) * labelR;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#e8edff';
+          ctx.font = `600 ${14 * scale}px "Inter", "Segoe UI", system-ui, sans-serif`;
+          ctx.fillText(item.label, labelX, labelY);
+          ctx.fillStyle = '#9bb0ff';
+          ctx.font = `500 ${11 * scale}px "Inter", "Segoe UI", system-ui, sans-serif`;
+          ctx.fillText(item.sublabel, labelX, labelY + 16 * scale);
+        });
+      };
+
+      const getWheelIndexFromEvent = (event) => {
+        if (!hubWheelCanvas || !wheelMetrics) return null;
+        const rect = hubWheelCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const dx = x - wheelMetrics.cx;
+        const dy = y - wheelMetrics.cy;
+        const distance = Math.hypot(dx, dy);
+        if (distance < wheelMetrics.innerR || distance > wheelMetrics.outerR) return null;
+        let angle = Math.atan2(dy, dx) - (-Math.PI / 2);
+        if (angle < 0) angle += Math.PI * 2;
+        return Math.floor(angle / wheelMetrics.step);
+      };
+
+      if (hubWheelCanvas) {
+        hubWheelCanvas.addEventListener('mousemove', (event) => {
+          const idx = getWheelIndexFromEvent(event);
+          if (idx !== wheelHoverIndex) {
+            wheelHoverIndex = idx;
+            drawWheel();
+          }
+        });
+        hubWheelCanvas.addEventListener('mouseleave', () => {
+          wheelHoverIndex = null;
+          drawWheel();
+        });
+        hubWheelCanvas.addEventListener('click', (event) => {
+          const idx = getWheelIndexFromEvent(event);
+          if (idx == null) return;
+          const item = hubMenuItems[idx];
+          if (item.id === 'teamsheet') {
+            showBuilder(currentUser);
+            return;
+          }
+          window.location.href = item.href;
+        });
+      }
+
       ensureAuthenticated();
+      window.addEventListener('resize', buildRadialMenu);
 
       const returnToHub = () => {
         // Always send back to hub without forcing a new login. If the user is not authenticated, the hub will still render.
