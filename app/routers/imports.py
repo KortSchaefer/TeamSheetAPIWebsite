@@ -2,12 +2,12 @@ import csv
 import io
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_manager_or_admin
 from app.database import get_db
-from app.models import Employee, EmployeeRole
+from app.models import DailyRoster, Employee, EmployeeRole
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 
@@ -89,3 +89,49 @@ async def import_servers(
 
     db.commit()
     return {"created": created, "updated": updated}
+
+
+@router.post("/daily-roster", status_code=status.HTTP_201_CREATED)
+async def import_daily_roster(
+    roster_date: date = Query(..., alias="date"),
+    store_id: int | None = Query(default=None),
+    file: UploadFile = File(..., description="CSV with column: name"),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_manager_or_admin),
+):
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames:
+        raise HTTPException(status_code=400, detail="CSV must include a header row.")
+
+    headers = {h.lower() for h in reader.fieldnames}
+    name_key = "name" if "name" in headers else None
+    if not name_key:
+        raise HTTPException(status_code=400, detail="CSV must include a 'name' column.")
+
+    entries = []
+    for row in reader:
+        name = row.get("name") or row.get("Name")
+        if not name:
+            continue
+        entries.append({"name": name.strip()})
+
+    roster = (
+        db.query(DailyRoster)
+        .filter(DailyRoster.date == roster_date, DailyRoster.store_id == store_id)
+        .first()
+    )
+    if roster:
+        roster.entries = entries
+    else:
+        roster = DailyRoster(date=roster_date, store_id=store_id, entries=entries)
+        db.add(roster)
+
+    db.commit()
+    db.refresh(roster)
+    return {"date": roster.date.isoformat(), "store_id": roster.store_id, "count": len(entries)}

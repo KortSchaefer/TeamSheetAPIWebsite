@@ -1,0 +1,2143 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Team Sheet Studio - Manager Console</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #112850, #070c1a 55%);
+        color: #f5f7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      #login-view, #builder-view, #hub-view {
+        width: min(1400px, 100%);
+        background: rgba(10, 18, 35, 0.9);
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
+      }
+      #login-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+      .brand {
+        padding: 3rem;
+        background: linear-gradient(160deg, #1c346e, #3c64ff);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 2.6rem;
+      }
+      .brand p {
+        margin: 0;
+        opacity: 0.9;
+        line-height: 1.5;
+      }
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+      }
+      .feature-list li {
+        margin-bottom: .4rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+      }
+      .feature-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #86ffd3;
+      }
+      .login-card {
+        padding: 3rem;
+        background: #0c1630;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      form { display: flex; flex-direction: column; gap: 1.2rem; }
+      label {
+        font-weight: 600;
+        font-size: .9rem;
+        color: #a7b4d8;
+      }
+      input {
+        padding: .85rem 1rem;
+        border-radius: 14px;
+        border: 1px solid #202a48;
+        background: #050919;
+        color: #f5f7ff;
+        font-size: 1rem;
+        transition: border 0.2s;
+      }
+      input:focus { outline: none; border-color: #4b7bff; }
+      button {
+        border: none;
+        border-radius: 16px;
+        padding: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        color: #fff;
+      }
+      button:hover { opacity: .95; }
+      .status {
+        min-height: 1.5rem;
+        font-size: .9rem;
+      }
+      .status.error { color: #ff8b8b; }
+      .status.success { color: #65f5b6; }
+      .token-box {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: .85rem;
+        background: #050919;
+        border-radius: 14px;
+        border: 1px solid #202a48;
+        padding: 1rem;
+        word-break: break-all;
+        display: none;
+      }
+      .token-box.active { display: block; }
+      .hidden { display: none !important; }
+
+      /* Builder layout */
+      #builder-view {
+        display: none;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 2rem 2.5rem 3rem;
+      }
+      #hub-view {
+        display: none;
+        padding: 2.5rem;
+        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+      }
+      .hub-header {
+        text-align: center;
+      }
+      .wheel {
+        position: relative;
+        width: min(760px, 90vw);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 1px dashed rgba(132, 154, 255, 0.35);
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at center, rgba(43, 72, 140, 0.25), rgba(10, 18, 35, 0.05));
+        box-shadow: 0 0 80px rgba(33, 80, 190, 0.25);
+      }
+      .wheel canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .wheel-center-btn {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: #fff;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        text-decoration: none;
+        text-align: center;
+        padding: .6rem;
+        z-index: 2;
+      }
+      .wheel-center-btn:hover {
+        filter: brightness(1.08);
+      }
+      .back-btn {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        z-index: 20;
+      }
+      .back-btn:hover {
+        color: #cfe0ff;
+        border-color: #4b7bff;
+      }
+      .builder-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .builder-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .schedule-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+        background: #0c1630;
+        border: 1px solid #1f2a46;
+        border-radius: 18px;
+        padding: 1rem 1.2rem;
+      }
+      .schedule-group {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        min-width: 140px;
+      }
+      .schedule-group label {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #8ea7ff;
+      }
+      .compact-input {
+        padding: .5rem .7rem;
+        border-radius: 10px;
+        border: 1px solid #202a48;
+        background: #050919;
+        color: #f5f7ff;
+        font-size: .9rem;
+        min-height: 38px;
+      }
+      .schedule-actions {
+        display: flex;
+        gap: .6rem;
+        flex-wrap: wrap;
+      }
+      .ghost-btn {
+        background: #0f1831;
+        border: 1px solid #243258;
+      }
+      .panel-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 10, 24, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        z-index: 50;
+      }
+      .panel-card {
+        width: min(1200px, 100%);
+        background: #0c1630;
+        border-radius: 24px;
+        border: 1px solid #243258;
+        padding: 1.5rem 1.8rem 1.8rem;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+      .panel-actions {
+        display: flex;
+        gap: .6rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+      .panel-table input,
+      .panel-table textarea {
+        width: 100%;
+        background: #050919;
+        border: 1px solid #202a48;
+        border-radius: 10px;
+        color: #f5f7ff;
+        padding: .45rem .6rem;
+        font-size: .85rem;
+      }
+      .panel-table textarea {
+        resize: vertical;
+        min-height: 48px;
+      }
+.json-output {
+        background: #050919;
+        border: 1px solid #1f2a46;
+        border-radius: 18px;
+        padding: 1rem 1.2rem;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: .8rem;
+        color: #dbe3ff;
+        max-height: 240px;
+        overflow: auto;
+      }
+      .pill-nav {
+        display: flex;
+        gap: .75rem;
+      }
+      .pill-nav button {
+        border: none;
+        padding: .55rem 1.4rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #132752, #1f3e8d);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .pill-nav button.active {
+        border: 1px solid #4b7bff;
+        box-shadow: 0 0 0 1px rgba(75, 123, 255, 0.4);
+      }
+      .board {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 1.5rem;
+      }
+      .panel {
+        background: #050919;
+        border-radius: 20px;
+        padding: 1.2rem;
+        border: 1px solid #1f2a46;
+      }
+      .panel h3 {
+        margin-top: 0;
+        font-size: 1.05rem;
+        letter-spacing: .05em;
+        color: #7b8bb3;
+        text-transform: uppercase;
+      }
+      #server-list, #host-list, #sas-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: .9rem;
+      }
+      #server-list.over {
+        border: 1px dashed rgba(118, 255, 196, 0.7);
+        border-radius: 16px;
+        padding: .4rem;
+      }
+      .server-card {
+        background: #0f1a33;
+        border: 1px solid #1f2d51;
+        border-radius: 16px;
+        padding: .9rem;
+        cursor: grab;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+      }
+      .server-card::after {
+        content: attr(data-tooltip);
+        white-space: pre-line;
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        transform: translateX(-50%);
+        min-width: 200px;
+        max-width: 260px;
+        background: rgba(8, 14, 30, 0.95);
+        border: 1px solid #2a3a66;
+        border-radius: 12px;
+        padding: .6rem .7rem;
+        font-size: .8rem;
+        color: #dbe3ff;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        z-index: 3;
+      }
+      .server-card:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-2px);
+      }
+      .drag-pill {
+        background: rgba(17, 29, 58, 0.9);
+        border: 1px solid rgba(67, 92, 155, 0.8);
+        border-radius: 12px;
+        padding: .4rem .55rem;
+        font-size: .85rem;
+        display: inline-flex;
+        flex-direction: column;
+        gap: .1rem;
+        cursor: grab;
+        min-height: 54px;
+        justify-content: center;
+        width: 100%;
+      }
+      .drag-pill strong {
+        font-size: .9rem;
+      }
+      .drag-pill span {
+        font-size: .75rem;
+        color: #9bb0ff;
+      }
+      .server-card strong { display: block; font-size: 1.05rem; }
+      .server-meta {
+        font-size: .85rem;
+        color: #9fb1e1;
+      }
+      .grid-panel {
+        background: #050919;
+        border-radius: 20px;
+        border: 1px solid #1f2a46;
+        padding: 1.2rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #dbe3ff;
+      }
+      th, td {
+        border: 1px solid #10172c;
+        padding: .75rem 1rem;
+        text-align: left;
+      }
+      thead th {
+        background: #0f1f40;
+        text-transform: uppercase;
+        font-size: .85rem;
+        letter-spacing: .05em;
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.01);
+      }
+      .dropzone {
+        min-height: 48px;
+        border: 1px dashed transparent;
+      }
+      .section-row td {
+        height: 96px;
+      }
+      .server-zone {
+        display: flex;
+        align-items: center;
+        min-height: 96px;
+      }
+      .dropzone.over {
+        border-color: #4b63f7;
+        background: rgba(75, 99, 247, 0.08);
+      }
+      .assigned-name {
+        font-weight: 600;
+        color: #fdfdfd;
+      }
+      .workspace-hidden { display: none !important; }
+      @media (max-width: 900px) {
+        body { padding: 1rem; }
+        .board { grid-template-columns: 1fr; }
+        .wheel-center-btn {
+          width: 110px;
+          height: 110px;
+          font-size: .75rem;
+        }
+        .wheel-label { font-size: 12px; }
+        .wheel-sublabel { font-size: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back-btn" href="/static/index.html">← Back</a>
+    <section id="login-view" class="workspace-hidden">
+      <div class="brand">
+        <p class="pill-nav" style="gap:.5rem;">
+          <span style="padding:.2rem .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.35);font-size:.85rem;">Internal Tooling</span>
+        </p>
+        <h1>Team Sheet Studio</h1>
+        <p>Plan the night with confidence. Drag, drop, and publish your perfect coverage sheet.</p>
+        <ul class="feature-list">
+          <li><span class="feature-dot"></span>JWT-secured API</li>
+          <li><span class="feature-dot"></span>Role-based access</li>
+          <li><span class="feature-dot"></span>Clone & export sheets</li>
+        </ul>
+      </div>
+      <div class="login-card">
+        <div>
+          <h2 style="margin:0;">Welcome</h2>
+          <p style="margin:.4rem 0 0;color:#7e8ab4;">Sign in or create a new account.</p>
+        </div>
+        <form id="login-form">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" required />
+          </div>
+          <div id="register-fields" class="hidden">
+            <div>
+              <label for="full_name">Full Name</label>
+              <input id="full_name" type="text" placeholder="Taylor Manager" />
+            </div>
+            <div>
+              <label for="role">Role</label>
+              <select id="role">
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SERVER">Server</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" id="submit-btn">Sign in</button>
+          <button type="button" id="toggle-mode-btn" style="background:#0f1831;border:1px solid #243258;">Need an account? Register</button>
+        </form>
+        <div class="status" id="status"></div>
+        <div class="token-box" id="token-box"></div>
+      </div>
+    </section>
+
+    <section id="builder-view">
+      <div class="builder-header">
+        <div>
+          <h1>Team Sheet Studio</h1>
+          <p style="margin:.2rem 0 0;color:#8ea7ff;font-size:.9rem;">Optimize floor coverage with confidence</p>
+        </div>
+        <div class="pill-nav">
+          <button id="servers-tab" class="active">Servers</button>
+          <button id="hosts-tab">Hosts & SAS</button>
+          <button id="auto-assign-btn">Auto-Assign</button>
+          <button id="remove-servers-btn">Remove All</button>
+          <button id="add-teamsheet-btn" class="ghost-btn">Add Teamsheet</button>
+          <button id="change-teamsheet-btn" class="ghost-btn">Change Teamsheet</button>
+          <button id="import-daily-roster-btn" class="ghost-btn">Daily Roster</button>
+          <button id="import-btn">Import Data</button>
+          <input type="file" id="csv-input" accept=".csv" style="display:none;" />
+          <input type="file" id="daily-roster-input" accept=".csv" style="display:none;" />
+        </div>
+      </div>
+      <div class="schedule-bar">
+        <div class="schedule-group">
+          <label for="store-number">Store</label>
+          <input id="store-number" class="compact-input" type="text" value="1" />
+        </div>
+        <div class="schedule-group">
+          <label for="shift-date">Date</label>
+          <input id="shift-date" class="compact-input" type="date" />
+        </div>
+        <div class="schedule-group">
+          <label for="shift-select">Shift</label>
+          <select id="shift-select" class="compact-input"></select>
+        </div>
+        <div class="schedule-actions">
+          <button id="load-shift-btn" class="ghost-btn" type="button">Load Shift</button>
+          <button id="save-sheet-btn" type="button">Save Sheet</button>
+          <button id="view-json-btn" class="ghost-btn" type="button">View JSON</button>
+          <button id="print-sheet-btn" class="ghost-btn" type="button">Print</button>
+        </div>
+      </div>
+      <div id="json-output" class="json-output hidden">
+        <pre id="json-content" style="margin:0;"></pre>
+      </div>
+      <div id="section-panel" class="panel-overlay hidden">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 id="section-panel-title">Manage Sections</h2>
+            <button id="close-section-panel" class="ghost-btn" type="button">Close</button>
+          </div>
+          <table class="panel-table">
+            <thead>
+              <tr>
+                <th>Section ID</th>
+                <th>Tables</th>
+                <th>Guest Count</th>
+                <th>Cut Order</th>
+                <th>Tags</th>
+                <th>Sidework</th>
+                <th>Outwork</th>
+              </tr>
+            </thead>
+            <tbody id="section-panel-rows"></tbody>
+          </table>
+          <div class="panel-actions">
+            <button id="add-section-row" class="ghost-btn" type="button">Add Row</button>
+            <button id="save-sections" type="button">Save Sections</button>
+          </div>
+        </div>
+      </div>
+      <div class="board" id="servers-board">
+        <aside class="panel">
+          <h3>Servers</h3>
+          <div id="server-list"></div>
+        </aside>
+        <div class="grid-panel panel">
+          <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Sections Grid</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Server</th>
+                <th>Sidework</th>
+                <th>Outwork</th>
+              </tr>
+            </thead>
+            <tbody id="section-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="board" id="hosts-board" style="display:none;">
+        <aside class="panel" style="display:flex;flex-direction:column;gap:1rem;">
+          <div>
+            <h3>Hosts</h3>
+            <div id="host-list"></div>
+          </div>
+          <div>
+            <h3>SAS</h3>
+            <div id="sas-list"></div>
+          </div>
+        </aside>
+        <div class="panel" style="display:flex;flex-direction:column;gap:1.2rem;">
+          <div class="grid-panel panel" style="margin:0;">
+            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Host Deck</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Assigned Host</th>
+                  <th>Qualifications</th>
+                </tr>
+              </thead>
+              <tbody id="host-rows"></tbody>
+            </table>
+          </div>
+          <div class="grid-panel panel" style="margin:0;">
+            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">SAS Deck</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Assigned SA</th>
+                </tr>
+              </thead>
+              <tbody id="sas-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const form = document.getElementById('login-form');
+      const statusEl = document.getElementById('status');
+      const tokenBox = document.getElementById('token-box');
+      const loginView = document.getElementById('login-view');
+      const builderView = document.getElementById('builder-view');
+
+      const authFetch = (url, options = {}) => {
+        return fetch(url, { ...options, credentials: 'include' });
+      };
+
+      const serverListEl = document.getElementById('server-list');
+      const hostListEl = document.getElementById('host-list');
+      const sasListEl = document.getElementById('sas-list');
+      const sectionRowsEl = document.getElementById('section-rows');
+      const hostRowsEl = document.getElementById('host-rows');
+      const sasRowsEl = document.getElementById('sas-rows');
+      const autoAssignBtn = document.getElementById('auto-assign-btn');
+      const removeServersBtn = document.getElementById('remove-servers-btn');
+      const importBtn = document.getElementById('import-btn');
+      const importDailyRosterBtn = document.getElementById('import-daily-roster-btn');
+      const csvInput = document.getElementById('csv-input');
+      const dailyRosterInput = document.getElementById('daily-roster-input');
+      const serversTab = document.getElementById('servers-tab');
+      const hostsTab = document.getElementById('hosts-tab');
+      const serversBoard = document.getElementById('servers-board');
+      const hostsBoard = document.getElementById('hosts-board');
+      const storeNumberInput = document.getElementById('store-number');
+      const shiftDateInput = document.getElementById('shift-date');
+      const shiftSelect = document.getElementById('shift-select');
+      const loadShiftBtn = document.getElementById('load-shift-btn');
+      const saveSheetBtn = document.getElementById('save-sheet-btn');
+      const viewJsonBtn = document.getElementById('view-json-btn');
+      const printSheetBtn = document.getElementById('print-sheet-btn');
+      const jsonOutput = document.getElementById('json-output');
+      const jsonContent = document.getElementById('json-content');
+      const toggleModeBtn = document.getElementById('toggle-mode-btn');
+      const registerFields = document.getElementById('register-fields');
+      const fullNameInput = document.getElementById('full_name');
+      const roleSelect = document.getElementById('role');
+
+      const fallbackServers = [
+        { id: 1, name: 'Blake', upsellScore: 104, clockIn: '6:51 PM', hours: 33, length_of_employment: 820, pitty: 4, max_guests: 20 },
+        { id: 2, name: 'Kort', upsellScore: 60, clockIn: '8:57 AM', hours: 25, length_of_employment: 340, pitty: 2, max_guests: 16 },
+        { id: 3, name: 'Kort s', upsellScore: 4, clockIn: '8:59 AM', hours: 14, length_of_employment: 120, pitty: 1, max_guests: 12 },
+        { id: 4, name: 'Mia', upsellScore: 78, clockIn: '4:12 PM', hours: 22, length_of_employment: 610, pitty: 3, max_guests: 18 },
+        { id: 5, name: 'Janelle', upsellScore: 95, clockIn: '5:05 PM', hours: 30, length_of_employment: 450, pitty: 5, max_guests: 24 },
+      ];
+      const fallbackHosts = [
+        { id: 'h1', name: 'Alex H', qualifications: ['L.A.D', 'Seater', 'Board'] },
+        { id: 'h2', name: 'Bailey H', qualifications: ['Restroom', 'Call Ahead'] },
+        { id: 'h3', name: 'Casey H', qualifications: ['L.A.D', 'Board'] },
+        { id: 'h4', name: 'Devon H', qualifications: ['Seater', 'Restroom'] },
+      ];
+      const fallbackSas = [
+        { id: 's1', name: 'Pat SA' },
+        { id: 's2', name: 'Jamie SA' },
+        { id: 's3', name: 'Riley SA' },
+      ];
+      let allServers = [];
+      let activeServers = [];
+      let allHosts = [];
+      let activeHosts = [];
+      let allSas = [];
+      let activeSas = [];
+      let currentUser = null;
+      let sectionsData = [];
+      let storeSchedule = [];
+      let currentShiftId = null;
+      let currentTeamSheetId = null;
+      let dailyRoster = [];
+
+      const sectionTemplates = [
+        { id: 101, label: '15,22,23', sidework: 'Sweep section', outwork: 'Closing Sidework' },
+        { id: 102, label: '14,13,112', sidework: 'Sanitize caddies', outwork: 'Right hot well' },
+        { id: 103, label: '11,12,21', sidework: 'Restock ramekins', outwork: 'Cold Well Wipe Down' },
+        { id: 104, label: '114,123,134', sidework: 'Restock napkins', outwork: 'Soda Station & Syrup Pumps' },
+        { id: 105, label: '113,133,124', sidework: 'Polish glasses', outwork: 'Cold Well Flips' },
+        { id: 106, label: '121,122,111', sidework: 'Restock straws', outwork: 'Tea 1' },
+      ];
+      const defaultSideworkTasks = sectionTemplates.map((s) => s.sidework);
+      const defaultOutworkTasks = sectionTemplates.map((s) => s.outwork);
+      const hostSlots = Array.from({ length: 7 }).map((_, i) => ({ id: `host-${i + 1}`, label: `Host ${i + 1}` }));
+      const sasSlots = Array.from({ length: 7 }).map((_, i) => ({ id: `sas-${i + 1}`, label: `SA ${i + 1}` }));
+
+      const setStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = 'status ' + (isError ? 'error' : 'success');
+      };
+
+      const WEIGHTS = {
+        employment: 1,
+        blast: 1,
+        pitty: 1,
+        capacity: 1,
+        random: 1,
+      };
+
+      let accessToken = null;
+      let currentMode = 'servers';
+      let authMode = 'login';
+
+      const loadInternalRoster = async () => {
+        try {
+          const resp = await authFetch('/employees?role=SERVER&active=true');
+          if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No server records found');
+          allServers = employees.map((emp) => ({
+            id: emp.id,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+            nickname: emp.nickname,
+            upsellScore: emp.upsell_score ?? 0,
+            length_of_employment: emp.employment_days ?? 1,
+            pitty: emp.pitty_score ?? 0,
+            max_guests: emp.max_section_load ?? 0,
+            hours: emp.notes ?? emp.max_section_load ?? '-',
+            clockIn: emp.notes ?? '--:--',
+          }));
+        } catch (err) {
+          console.warn('Using fallback roster because DB roster fetch failed.', err);
+          allServers = fallbackServers.map((srv) => ({ ...srv }));
+        }
+      };
+
+      const loadHostRoster = async () => {
+        try {
+          const resp = await authFetch('/employees?role=HOST&active=true');
+          if (!resp.ok) throw new Error(`Host roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No host records found');
+          allHosts = employees.map((emp) => ({
+            id: `host-${emp.id}`,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+            qualifications: (emp.notes || '').split(',').map((q) => q.trim()).filter(Boolean),
+          }));
+        } catch (err) {
+          console.warn('Using fallback hosts because DB fetch failed.', err);
+          allHosts = fallbackHosts.map((h) => ({ ...h }));
+        }
+      };
+
+      const loadSasRoster = async () => {
+        try {
+          const resp = await authFetch('/employees?role=BUSSER&active=true');
+          if (!resp.ok) throw new Error(`SA roster fetch failed (${resp.status})`);
+          const employees = await resp.json();
+          if (!Array.isArray(employees) || !employees.length) throw new Error('No SA records found');
+          allSas = employees.map((emp) => ({
+            id: `sas-${emp.id}`,
+            name: `${emp.first_name} ${emp.last_name}`.trim(),
+          }));
+        } catch (err) {
+          console.warn('Using fallback SAS because DB fetch failed.', err);
+          allSas = fallbackSas.map((s) => ({ ...s }));
+        }
+      };
+
+      const loadSections = async () => {
+        try {
+          const resp = await authFetch('/sections');
+          if (!resp.ok) throw new Error(`Section fetch failed (${resp.status})`);
+          const sections = await resp.json();
+          if (!Array.isArray(sections) || !sections.length) throw new Error('No sections found');
+          sectionsData = sections.filter((s) => s.is_active !== false);
+        } catch (err) {
+          console.warn('Using fallback sections because DB fetch failed.', err);
+          sectionsData = [];
+        }
+      };
+
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      const getDayName = (value) => {
+        if (!value) return null;
+        const date = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return null;
+        return dayNames[date.getDay()];
+      };
+
+      const toStoreId = () => {
+        const raw = storeNumberInput?.value?.trim();
+        if (!raw) return null;
+        const parsed = Number.parseInt(raw, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+
+      const loadStoreSchedule = async () => {
+        const storeNumber = storeNumberInput?.value?.trim();
+        if (!storeNumber) {
+          storeSchedule = [];
+          return;
+        }
+        try {
+          const resp = await authFetch(`/store-preferences?store_number=${encodeURIComponent(storeNumber)}`);
+          if (!resp.ok) throw new Error(`Store preferences failed (${resp.status})`);
+          const data = await resp.json();
+          storeSchedule = data?.[0]?.daily_schedule || [];
+        } catch (err) {
+          console.warn('Store preferences unavailable.', err);
+          storeSchedule = [];
+        }
+      };
+
+      const buildShiftOptions = (entry) => {
+        if (!shiftSelect) return;
+        shiftSelect.innerHTML = '';
+        const count = entry?.number_of_shifts ?? 1;
+        const firstLabel = entry?.first_shift_in ? `Shift 1 (${entry.first_shift_in})` : 'Shift 1';
+        const firstOption = document.createElement('option');
+        firstOption.value = 'LUNCH';
+        firstOption.textContent = firstLabel;
+        shiftSelect.appendChild(firstOption);
+        if (count > 1) {
+          const secondLabel = entry?.second_shift_in ? `Shift 2 (${entry.second_shift_in})` : 'Shift 2';
+          const secondOption = document.createElement('option');
+          secondOption.value = 'DINNER';
+          secondOption.textContent = secondLabel;
+          shiftSelect.appendChild(secondOption);
+        }
+      };
+
+      const refreshShiftOptions = async () => {
+        await loadStoreSchedule();
+        const dayName = getDayName(shiftDateInput?.value);
+        const entry = storeSchedule.find((item) => (item.day || '').toLowerCase() === (dayName || '').toLowerCase());
+        buildShiftOptions(entry);
+      };
+
+      const loadDailyRoster = async () => {
+        const dateValue = shiftDateInput?.value;
+        if (!dateValue) {
+          dailyRoster = [];
+          return;
+        }
+        const storeId = toStoreId();
+        const params = new URLSearchParams({ date: dateValue });
+        if (storeId !== null) params.append('store_id', String(storeId));
+        try {
+          const resp = await authFetch(`/daily-rosters?${params.toString()}`);
+          if (!resp.ok) throw new Error(`Daily roster fetch failed (${resp.status})`);
+          const data = await resp.json();
+          dailyRoster = data?.[0]?.entries || [];
+        } catch (err) {
+          console.warn('Daily roster unavailable.', err);
+          dailyRoster = [];
+        }
+      };
+
+      const applyDailyRoster = () => {
+        if (!dailyRoster.length) {
+          activeServers = [];
+          renderServers();
+          return;
+        }
+        const lookup = new Map(allServers.map((srv) => [srv.name.toLowerCase(), srv]));
+        activeServers = dailyRoster.map((entry, index) => {
+          const name = (entry.name || '').trim();
+          const base = lookup.get(name.toLowerCase());
+          if (base) return { ...base };
+          return {
+            id: `roster-${index}-${Date.now()}`,
+            name,
+            upsellScore: 0,
+            length_of_employment: 1,
+            pitty: 0,
+            max_guests: 0,
+            hours: '-',
+            clockIn: '--:--',
+          };
+        }).filter((srv) => srv.name);
+        renderServers();
+      };
+
+      const refreshDailyRoster = async () => {
+        await loadDailyRoster();
+        applyDailyRoster();
+      };
+
+      const uploadDailyRosterCsv = async (file) => {
+        const dateValue = shiftDateInput?.value;
+        if (!dateValue) throw new Error('Select a date before uploading a roster.');
+        const storeId = toStoreId();
+        const params = new URLSearchParams({ date: dateValue });
+        if (storeId !== null) params.append('store_id', String(storeId));
+        const formData = new FormData();
+        formData.append('file', file);
+        const resp = await authFetch(`/imports/daily-roster?${params.toString()}`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Daily roster import failed (${resp.status})`);
+        }
+        return resp.json();
+      };
+
+      const buildShiftTitle = () => {
+        const date = shiftDateInput?.value;
+        const dayName = getDayName(date) || 'Shift';
+        const shiftLabel = shiftSelect?.options?.[shiftSelect.selectedIndex]?.textContent || shiftSelect?.value || 'Shift';
+        return `${dayName} - ${shiftLabel}`;
+      };
+
+      const resetAssignments = () => {
+        activeHosts = [...allHosts];
+        activeSas = [...allSas];
+        document.querySelectorAll('.dropzone').forEach((zone) => {
+          const accept = zone.dataset.acceptType;
+          if (accept === 'server' || accept === 'host' || accept === 'sas') {
+            clearZone(zone);
+          }
+        });
+        document.querySelectorAll('.dropzone-qualifications').forEach((cell) => (cell.textContent = ''));
+        document.querySelectorAll('tr.section-row').forEach((row, index) => {
+          const sectionId = row.dataset.sectionId;
+          const section = sectionsData.find((s) => `${s.id}` === `${sectionId}`);
+          const sideworkLabel = section?.sidework || defaultSideworkTasks[index % defaultSideworkTasks.length];
+          const outworkLabel = section?.outwork || defaultOutworkTasks[index % defaultOutworkTasks.length];
+          const sideworkZone = row.querySelector('[data-accept-type="sidework"]');
+          const outworkZone = row.querySelector('[data-accept-type="outwork"]');
+          if (sideworkZone) setZoneItem(sideworkZone, { label: sideworkLabel }, 'sidework');
+          if (outworkZone) setZoneItem(outworkZone, { label: outworkLabel }, 'outwork');
+        });
+        if (dailyRoster.length) {
+          applyDailyRoster();
+        } else {
+          activeServers = [];
+          renderServers();
+        }
+        renderHosts();
+        renderSas();
+      };
+
+      const applyTeamSheetData = (teamSheet) => {
+        if (!teamSheet) return;
+        resetAssignments();
+        const serverById = new Map(allServers.map((srv) => [`${srv.id}`, srv]));
+        teamSheet.assignments.forEach((assignment) => {
+          const zone = document.querySelector(`[data-zone-id="section-${assignment.section_id}-server"]`);
+          if (!zone) return;
+          const server = serverById.get(`${assignment.employee_id}`);
+          if (!server) return;
+          setZoneItem(zone, server, 'server', {
+            html: `<strong>${server.name}</strong><span>Score: ${server.currentScore || calculateServerScore(server)}</span>`,
+          });
+          activeServers = activeServers.filter((srv) => `${srv.id}` !== `${server.id}`);
+        });
+        renderServers();
+
+        const parseTask = (label) => {
+          const match = /^\[Section:(\d+)\]\s*(.*)$/.exec(label || '');
+          if (!match) return null;
+          return { sectionId: match[1], taskLabel: match[2] || '' };
+        };
+
+        const sideworkBySection = new Map();
+        const outworkBySection = new Map();
+        (teamSheet.sidework || []).forEach((task) => {
+          const parsed = parseTask(task.label);
+          if (parsed) sideworkBySection.set(parsed.sectionId, parsed.taskLabel);
+        });
+        (teamSheet.outwork || []).forEach((task) => {
+          const parsed = parseTask(task.label);
+          if (parsed) outworkBySection.set(parsed.sectionId, parsed.taskLabel);
+        });
+
+        document.querySelectorAll('tr.section-row').forEach((row, index) => {
+          const sectionId = row.dataset.sectionId;
+          const sideworkLabel = sideworkBySection.get(sectionId);
+          const outworkLabel = outworkBySection.get(sectionId);
+          const sideworkZone = row.querySelector('[data-accept-type="sidework"]');
+          const outworkZone = row.querySelector('[data-accept-type="outwork"]');
+          if (sideworkZone && sideworkLabel) {
+            setZoneItem(sideworkZone, { label: sideworkLabel }, 'sidework');
+          }
+          if (outworkZone && outworkLabel) {
+            setZoneItem(outworkZone, { label: outworkLabel }, 'outwork');
+          }
+        });
+      };
+
+      const ensureShift = async () => {
+        const date = shiftDateInput?.value;
+        if (!date) throw new Error('Select a shift date.');
+        const period = shiftSelect?.value || 'LUNCH';
+        const storeId = toStoreId();
+        const resp = await authFetch(`/shifts?start_date=${date}&end_date=${date}&time_period=${period}`);
+        if (!resp.ok) throw new Error(`Shift lookup failed (${resp.status})`);
+        const shifts = await resp.json();
+        let shift = shifts.find((item) => storeId == null || item.store_id === storeId);
+        if (!shift) {
+          const createResp = await authFetch('/shifts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, time_period: period, store_id: storeId }),
+          });
+          if (!createResp.ok) throw new Error(`Shift create failed (${createResp.status})`);
+          shift = await createResp.json();
+        }
+        currentShiftId = shift.id;
+        return shift;
+      };
+
+      const ensureTeamSheet = async (shift) => {
+        const date = shiftDateInput?.value;
+        const period = shiftSelect?.value || 'LUNCH';
+        const resp = await authFetch(`/team-sheets?start_date=${date}&end_date=${date}&time_period=${period}`);
+        if (!resp.ok) throw new Error(`Team sheet lookup failed (${resp.status})`);
+        const sheets = await resp.json();
+        let teamSheet = sheets.find((item) => item.shift_id === shift.id);
+        if (!teamSheet) {
+          const payload = {
+            shift_id: shift.id,
+            title: buildShiftTitle(),
+            status: 'DRAFT',
+            assignments: [],
+            sidework: [],
+            outwork: [],
+          };
+          const createResp = await authFetch('/team-sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!createResp.ok) throw new Error(`Team sheet create failed (${createResp.status})`);
+          teamSheet = await createResp.json();
+        }
+        currentTeamSheetId = teamSheet.id;
+        return teamSheet;
+      };
+
+      const loadShift = async () => {
+        const shift = await ensureShift();
+        const teamSheet = await ensureTeamSheet(shift);
+        applyTeamSheetData(teamSheet);
+      };
+
+      const buildTaskLabel = (sectionId, label) => `[Section:${sectionId}] ${label || ''}`.trim();
+
+      const collectTeamSheetPayload = () => {
+        const assignments = [];
+        const sidework = [];
+        const outwork = [];
+        const rows = document.querySelectorAll('tr.section-row');
+        rows.forEach((row, index) => {
+          const sectionId = Number(row.dataset.sectionId);
+          const sectionLabel = row.querySelector('td')?.textContent?.trim() || '';
+          const serverZone = row.querySelector('[data-accept-type="server"]');
+          const sideworkZone = row.querySelector('[data-accept-type="sidework"]');
+          const outworkZone = row.querySelector('[data-accept-type="outwork"]');
+          const serverItem = getZoneItem(serverZone);
+          const serverId = serverItem?.item?.id;
+          const employeeId = Number.isFinite(Number(serverId)) ? Number(serverId) : null;
+          if (employeeId && Number.isFinite(sectionId)) {
+            assignments.push({
+              employee_id: employeeId,
+              section_id: sectionId,
+              role_label: sectionLabel || null,
+              order_index: index,
+            });
+          }
+          const sideItem = getZoneItem(sideworkZone);
+          if (sideItem?.item?.label) {
+            sidework.push({
+              label: buildTaskLabel(sectionId, sideItem.item.label),
+              description: null,
+              employee_ids: employeeId ? [employeeId] : [],
+            });
+          }
+          const outItem = getZoneItem(outworkZone);
+          if (outItem?.item?.label) {
+            outwork.push({
+              label: buildTaskLabel(sectionId, outItem.item.label),
+              description: null,
+              employee_ids: employeeId ? [employeeId] : [],
+            });
+          }
+        });
+        return {
+          title: buildShiftTitle(),
+          status: 'DRAFT',
+          assignments,
+          sidework,
+          outwork,
+        };
+      };
+
+      const saveTeamSheet = async () => {
+        const shift = await ensureShift();
+        const payload = collectTeamSheetPayload();
+        let response;
+        if (currentTeamSheetId) {
+          response = await authFetch(`/team-sheets/${currentTeamSheetId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          response = await authFetch('/team-sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shift_id: shift.id, ...payload }),
+          });
+        }
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(detail.detail || `Save failed (${response.status})`);
+        }
+        const saved = await response.json();
+        currentTeamSheetId = saved.id;
+        return saved;
+      };
+
+      const showJsonOutput = async () => {
+        if (!currentTeamSheetId) {
+          const saved = await saveTeamSheet();
+          currentTeamSheetId = saved.id;
+        }
+        const resp = await authFetch(`/team-sheets/${currentTeamSheetId}/export/json`);
+        if (!resp.ok) throw new Error(`JSON export failed (${resp.status})`);
+        const data = await resp.json();
+        jsonContent.textContent = JSON.stringify(data, null, 2);
+        jsonOutput.classList.remove('hidden');
+      };
+
+      const sectionPanel = document.getElementById('section-panel');
+      const sectionPanelTitle = document.getElementById('section-panel-title');
+      const sectionPanelRows = document.getElementById('section-panel-rows');
+      const closeSectionPanelBtn = document.getElementById('close-section-panel');
+      const addSectionRowBtn = document.getElementById('add-section-row');
+      const saveSectionsBtn = document.getElementById('save-sections');
+      const addTeamsheetBtn = document.getElementById('add-teamsheet-btn');
+      const changeTeamsheetBtn = document.getElementById('change-teamsheet-btn');
+
+      const openSectionPanel = (title) => {
+        if (!sectionPanel) return;
+        if (sectionPanelTitle) sectionPanelTitle.textContent = title;
+        sectionPanel.classList.remove('hidden');
+        buildSectionPanelRows();
+      };
+
+      const closeSectionPanel = () => {
+        if (!sectionPanel) return;
+        sectionPanel.classList.add('hidden');
+      };
+
+      const buildSectionRow = (section = {}) => {
+        const tr = document.createElement('tr');
+        if (section.id) tr.dataset.id = section.id;
+        const tablesValue = Array.isArray(section.tables) ? section.tables.join(', ') : (section.tables || '');
+        tr.innerHTML = `
+          <td><input data-field="name" value="${section.name || ''}" /></td>
+          <td><input data-field="tables" value="${tablesValue}" /></td>
+          <td><input data-field="max_guests" type="number" min="0" value="${section.max_guests ?? ''}" /></td>
+          <td><input data-field="cut_order" type="number" min="0" value="${section.cut_order ?? ''}" /></td>
+          <td><input data-field="tags" value="${(section.tags || []).join(', ')}" /></td>
+          <td><textarea data-field="sidework">${section.sidework || ''}</textarea></td>
+          <td><textarea data-field="outwork">${section.outwork || ''}</textarea></td>
+        `;
+        return tr;
+      };
+
+      const buildSectionPanelRows = () => {
+        if (!sectionPanelRows) return;
+        sectionPanelRows.innerHTML = '';
+        const list = sectionsData.length ? sectionsData : [];
+        list.forEach((section) => sectionPanelRows.appendChild(buildSectionRow(section)));
+        if (!list.length) {
+          sectionPanelRows.appendChild(buildSectionRow({}));
+        }
+      };
+
+      const parseTables = (value) => {
+        if (!value) return [];
+        return value
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      };
+
+      const collectSectionRows = () => {
+        if (!sectionPanelRows) return [];
+        return Array.from(sectionPanelRows.querySelectorAll('tr')).map((row) => {
+          const getValue = (field) => row.querySelector(`[data-field="${field}"]`)?.value?.trim() || '';
+          const name = getValue('name');
+          const tables = parseTables(getValue('tables'));
+          const tags = parseTables(getValue('tags'));
+          const maxGuestsValue = getValue('max_guests');
+          const cutOrderValue = getValue('cut_order');
+          return {
+            id: row.dataset.id ? Number(row.dataset.id) : null,
+            name,
+            label: name,
+            type: 'FLOOR',
+            tables,
+            tags,
+            max_guests: maxGuestsValue ? Number(maxGuestsValue) : null,
+            cut_order: cutOrderValue ? Number(cutOrderValue) : null,
+            sidework: getValue('sidework') || null,
+            outwork: getValue('outwork') || null,
+          };
+        });
+      };
+
+      const saveSections = async () => {
+        const rows = collectSectionRows();
+        const filtered = rows.filter((row) => row.name);
+        if (!filtered.length) {
+          alert('Add at least one section with a Section ID.');
+          return;
+        }
+        for (const row of filtered) {
+          const payload = {
+            name: row.name,
+            label: row.label || row.name,
+            type: row.type || 'FLOOR',
+            tables: row.tables,
+            tags: row.tags,
+            max_guests: row.max_guests,
+            cut_order: row.cut_order,
+            sidework: row.sidework,
+            outwork: row.outwork,
+            is_active: true,
+          };
+          if (row.id) {
+            const resp = await authFetch(`/sections/${row.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (!resp.ok) {
+              const detail = await resp.json().catch(() => ({}));
+              throw new Error(detail.detail || `Section update failed (${resp.status})`);
+            }
+          } else {
+            const resp = await authFetch('/sections', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (!resp.ok) {
+              const detail = await resp.json().catch(() => ({}));
+              throw new Error(detail.detail || `Section create failed (${resp.status})`);
+            }
+          }
+        }
+        await loadSections();
+        renderSections();
+      };
+
+      const calculateServerScore = (server) => {
+        const upsellComponent = ((server.upsellScore || 0) / 10) * WEIGHTS.blast;
+        const employmentComponent = Math.pow(
+          Math.max(server.length_of_employment || 1, 1),
+          1 / (3.5 * WEIGHTS.employment)
+        );
+        const pittyComponent = (server.pitty || 0) * WEIGHTS.pitty;
+        const capacityComponent = ((server.max_guests || 0) * WEIGHTS.capacity) / 2;
+        const randomComponent = Math.floor(Math.random() * (10 * WEIGHTS.random)) + 1;
+        const total = upsellComponent + employmentComponent + pittyComponent + capacityComponent + randomComponent;
+        return Number(total.toFixed(2));
+      };
+
+      const createDragItem = (item, type, options = {}) => {
+        const pill = document.createElement('div');
+        pill.className = options.className || 'drag-pill';
+        pill.draggable = true;
+        pill.dataset.dragType = type;
+        pill.dataset.item = JSON.stringify(item);
+        const payload = {
+          type,
+          item,
+          sourceKind: options.sourceKind || 'zone',
+          sourceZoneId: options.sourceZoneId || null,
+        };
+        pill.innerHTML = options.html || `<strong>${item.name || item.label || 'Item'}</strong>`;
+        pill.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('application/json', JSON.stringify(payload));
+          e.dataTransfer.effectAllowed = 'move';
+          pill.classList.add('dragging');
+        });
+        pill.addEventListener('dragend', () => pill.classList.remove('dragging'));
+        return pill;
+      };
+
+      const getZoneItem = (zone) => {
+        if (!zone || !zone.dataset.item) return null;
+        try {
+          const item = JSON.parse(zone.dataset.item);
+          const type = zone.dataset.itemType;
+          return { item, type };
+        } catch (err) {
+          return null;
+        }
+      };
+
+      const setZoneItem = (zone, item, type, options = {}) => {
+        if (!zone) return;
+        zone.dataset.item = JSON.stringify(item);
+        zone.dataset.itemType = type;
+        zone.innerHTML = '';
+        const html = options.html || `<strong>${item.name || item.label || 'Item'}</strong>`;
+        const pill = createDragItem(item, type, {
+          html,
+          sourceKind: 'zone',
+          sourceZoneId: zone.dataset.zoneId || null,
+        });
+        zone.appendChild(pill);
+      };
+
+      const clearZone = (zone) => {
+        if (!zone) return;
+        delete zone.dataset.item;
+        delete zone.dataset.itemType;
+        zone.innerHTML = '';
+      };
+
+      const updateHostQuals = (zone, item) => {
+        if (!zone) return;
+        const qualsCell = zone.parentElement?.querySelector('.dropzone-qualifications');
+        if (!qualsCell) return;
+        if (!item) {
+          qualsCell.textContent = '';
+          return;
+        }
+        qualsCell.textContent = (item.qualifications || []).join(', ');
+      };
+
+      const renderServers = () => {
+        serverListEl.innerHTML = '';
+        if (!activeServers.length) {
+          serverListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Import a CSV roster to load today\'s team.</p>';
+          return;
+        }
+        activeServers.forEach((srv) => {
+          const score = calculateServerScore(srv);
+          srv.currentScore = score;
+          const html = `
+            <strong>${srv.name}</strong>
+            <div class="server-meta">Upsell: <span style="color:#4df58c;">${srv.upsellScore}</span></div>
+            <div class="server-meta">In: ${srv.clockIn} | Hours: ${srv.hours}</div>
+            <div class="server-meta">Score: ${score}</div>
+          `;
+          const tooltip = [
+            `Server: ${srv.name}`,
+            `BLAST: ${srv.upsellScore ?? 0}`,
+            `Employment: ${srv.length_of_employment ?? '-'}`,
+            `Pity: ${srv.pitty ?? 0}`,
+            `Max Guests: ${srv.max_guests ?? '-'}`,
+          ].join('\n');
+          const card = createDragItem(srv, 'server', {
+            className: 'server-card',
+            html,
+            sourceKind: 'list',
+          });
+          card.dataset.tooltip = tooltip;
+          serverListEl.appendChild(card);
+        });
+      };
+
+      const renderSections = () => {
+        sectionRowsEl.innerHTML = '';
+        const sections = sectionsData.length
+          ? sectionsData.map((section) => ({
+              id: section.id,
+              label: section.label || section.name,
+              sidework: section.sidework || '',
+              outwork: section.outwork || '',
+            }))
+          : Array.from({ length: 23 }, (_, i) => {
+              const template = sectionTemplates[i % sectionTemplates.length];
+              return {
+                id: template.id + i * 100,
+                label: template.label,
+                sidework: template.sidework,
+                outwork: template.outwork,
+              };
+            });
+
+        sections.forEach((section, index) => {
+          const sideworkLabel = section.sidework || defaultSideworkTasks[index % defaultSideworkTasks.length];
+          const outworkLabel = section.outwork || defaultOutworkTasks[index % defaultOutworkTasks.length];
+          const tr = document.createElement('tr');
+          tr.className = 'section-row';
+          tr.dataset.sectionId = section.id;
+          tr.innerHTML = `
+            <td>${section.label}</td>
+            <td class="dropzone server-zone" data-accept-type="server" data-zone-id="section-${section.id}-server"></td>
+            <td class="dropzone" data-accept-type="sidework" data-zone-id="section-${section.id}-sidework"></td>
+            <td class="dropzone" data-accept-type="outwork" data-zone-id="section-${section.id}-outwork"></td>
+          `;
+          sectionRowsEl.appendChild(tr);
+          const zones = tr.querySelectorAll('.dropzone');
+          const sideworkZone = zones[1];
+          const outworkZone = zones[2];
+          setZoneItem(sideworkZone, { label: sideworkLabel }, 'sidework');
+          setZoneItem(outworkZone, { label: outworkLabel }, 'outwork');
+        });
+      };
+
+      const renderHosts = () => {
+        hostListEl.innerHTML = '';
+        if (!activeHosts.length) {
+          hostListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load host roster to begin.</p>';
+          return;
+        }
+        activeHosts.forEach((host) => {
+          const quals = (host.qualifications || []).join(', ');
+          const html = `
+            <strong>${host.name}</strong>
+            <div class="server-meta">${quals || 'General'}</div>
+          `;
+          const card = createDragItem(host, 'host', {
+            className: 'server-card',
+            html,
+            sourceKind: 'list',
+          });
+          hostListEl.appendChild(card);
+        });
+      };
+
+      const renderSas = () => {
+        sasListEl.innerHTML = '';
+        if (!activeSas.length) {
+          sasListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load SA roster to begin.</p>';
+          return;
+        }
+        activeSas.forEach((sa) => {
+          const html = `<strong>${sa.name}</strong>`;
+          const card = createDragItem(sa, 'sas', {
+            className: 'server-card',
+            html,
+            sourceKind: 'list',
+          });
+          sasListEl.appendChild(card);
+        });
+      };
+
+      const renderHostTables = () => {
+        hostRowsEl.innerHTML = '';
+        hostSlots.forEach((slot) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${slot.label}</td>
+            <td class="dropzone" data-accept-type="host" data-zone-id="${slot.id}"></td>
+            <td class="dropzone-qualifications" data-slot="${slot.id}-quals"></td>
+          `;
+          hostRowsEl.appendChild(tr);
+        });
+        sasRowsEl.innerHTML = '';
+        sasSlots.forEach((slot) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${slot.label}</td>
+            <td class="dropzone" data-accept-type="sas" data-zone-id="${slot.id}"></td>
+          `;
+          sasRowsEl.appendChild(tr);
+        });
+      };
+
+      const enableDragDrop = () => {
+        const dropzones = document.querySelectorAll('.dropzone');
+        dropzones.forEach((zone) => {
+          zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('over');
+          });
+          zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+          zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('over');
+            const data = e.dataTransfer.getData('application/json');
+            if (!data) return;
+            let payload;
+            try {
+              payload = JSON.parse(data);
+            } catch (err) {
+              return;
+            }
+            const accept = zone.dataset.acceptType;
+            if (accept && payload.type !== accept) {
+              alert('This slot is reserved for a different role.');
+              return;
+            }
+
+            const existing = getZoneItem(zone);
+            const sourceZone =
+              payload.sourceKind === 'zone' && payload.sourceZoneId
+                ? document.querySelector(`[data-zone-id="${payload.sourceZoneId}"]`)
+                : null;
+            if (sourceZone && sourceZone === zone) return;
+
+            if (existing) {
+              if (payload.type === 'sidework' || payload.type === 'outwork') {
+                if (!sourceZone) return;
+                const sourceExisting = getZoneItem(sourceZone);
+                if (!sourceExisting || sourceExisting.type !== payload.type) return;
+                setZoneItem(zone, sourceExisting.item, sourceExisting.type);
+                setZoneItem(sourceZone, existing.item, existing.type);
+                return;
+              }
+              if (payload.type === 'host' || payload.type === 'sas') {
+                if (payload.sourceKind === 'list') {
+                  alert('That slot is already filled. Move the assigned name first.');
+                  return;
+                }
+                if (sourceZone) {
+                  const sourceExisting = getZoneItem(sourceZone);
+                  if (sourceExisting) {
+                    setZoneItem(zone, sourceExisting.item, sourceExisting.type);
+                    setZoneItem(sourceZone, existing.item, existing.type);
+                    if (payload.type === 'host') {
+                      updateHostQuals(zone, sourceExisting.item);
+                      updateHostQuals(sourceZone, existing.item);
+                    }
+                  }
+                }
+                return;
+              }
+              if (payload.type === 'server') {
+                if (payload.sourceKind === 'list') {
+                  activeServers = activeServers.filter((srv) => `${srv.id}` !== `${payload.item.id}`);
+                  activeServers.push(existing.item);
+                  renderServers();
+                } else if (sourceZone) {
+                  const sourceExisting = getZoneItem(sourceZone);
+                  if (sourceExisting) {
+                    setZoneItem(zone, sourceExisting.item, sourceExisting.type);
+                    setZoneItem(sourceZone, existing.item, existing.type);
+                    return;
+                  }
+                }
+              }
+            }
+
+            if (payload.sourceKind === 'list') {
+              if (payload.type === 'server') {
+                activeServers = activeServers.filter((srv) => `${srv.id}` !== `${payload.item.id}`);
+                renderServers();
+              }
+              if (payload.type === 'host') {
+                activeHosts = activeHosts.filter((h) => `${h.id}` !== `${payload.item.id}`);
+                renderHosts();
+              }
+              if (payload.type === 'sas') {
+                activeSas = activeSas.filter((sa) => `${sa.id}` !== `${payload.item.id}`);
+                renderSas();
+              }
+            }
+
+            if (payload.sourceKind === 'zone' && sourceZone) {
+              clearZone(sourceZone);
+              if (payload.type === 'host') {
+                updateHostQuals(sourceZone, null);
+              }
+            }
+
+            setZoneItem(zone, payload.item, payload.type);
+            if (payload.type === 'host') {
+              updateHostQuals(zone, payload.item);
+            }
+          });
+        });
+
+        if (serverListEl) {
+          serverListEl.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            serverListEl.classList.add('over');
+          });
+          serverListEl.addEventListener('dragleave', () => serverListEl.classList.remove('over'));
+          serverListEl.addEventListener('drop', (e) => {
+            e.preventDefault();
+            serverListEl.classList.remove('over');
+            const data = e.dataTransfer.getData('application/json');
+            if (!data) return;
+            let payload;
+            try {
+              payload = JSON.parse(data);
+            } catch (err) {
+              return;
+            }
+            if (payload.type !== 'server' || payload.sourceKind !== 'zone') return;
+            const sourceZone = document.querySelector(`[data-zone-id="${payload.sourceZoneId}"]`);
+            if (!sourceZone) return;
+            clearZone(sourceZone);
+            activeServers.push(payload.item);
+            renderServers();
+          });
+        }
+      };
+
+      const autoAssign = () => {
+        if (!activeServers.length) {
+          alert('Upload a roster CSV or add servers for this shift.');
+          return;
+        }
+        const computed = activeServers.map((server) => ({
+          ...server,
+          autoScore: calculateServerScore(server),
+        }));
+        computed.sort((a, b) => b.autoScore - a.autoScore || a.name.localeCompare(b.name));
+        const dropzones = [...document.querySelectorAll('.dropzone')];
+        const assignedIds = new Set();
+        dropzones
+          .filter((zone) => zone.dataset.acceptType === 'server')
+          .forEach((zone, index) => {
+            const server = computed[index % computed.length];
+            assignedIds.add(`${server.id}`);
+            setZoneItem(zone, server, 'server', {
+              html: `<strong>${server.name}</strong><span>Score: ${server.autoScore}</span>`,
+            });
+          });
+        activeServers = activeServers.filter((srv) => !assignedIds.has(`${srv.id}`));
+        renderServers();
+      };
+
+      const removeAllServers = () => {
+        const serverZones = document.querySelectorAll('.dropzone[data-accept-type="server"]');
+        serverZones.forEach((zone) => {
+          const existing = getZoneItem(zone);
+          if (existing?.item) {
+            activeServers.push(existing.item);
+          }
+          clearZone(zone);
+        });
+        renderServers();
+      };
+
+      const showBuilder = (user) => {
+        loginView.classList.add('workspace-hidden');
+        builderView.style.display = 'flex';
+        const headerName = user?.full_name || currentUser?.full_name || 'Manager';
+        builderView.querySelector('.builder-header h1').textContent = `Team Sheet Studio - ${headerName}`;
+        renderServers();
+        renderHosts();
+        renderSas();
+        renderSections();
+        renderHostTables();
+        enableDragDrop();
+        if (shiftDateInput && !shiftDateInput.value) {
+          shiftDateInput.value = new Date().toISOString().split('T')[0];
+        }
+        refreshShiftOptions()
+          .then(() => refreshDailyRoster())
+          .then(() => loadShift())
+          .catch((err) => console.warn('Shift load skipped.', err));
+      };
+
+      const splitCsvLine = (line) => {
+        const cells = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+            continue;
+          }
+          if (char === ',' && !inQuotes) {
+            cells.push(current.trim());
+            current = '';
+            continue;
+          }
+          current += char;
+        }
+        cells.push(current.trim());
+        return cells;
+      };
+
+      const parseCsv = (text) => {
+        const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (!rows.length) return [];
+
+        const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const headersRaw = splitCsvLine(rows[0]);
+        const normalizedHeaders = headersRaw.map(normalizeHeader);
+        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
+        const hasHeader = normalizedHeaders.some((h) => expectedHeaders.includes(h));
+
+        const dataRows = hasHeader ? rows.slice(1) : rows;
+
+        const toNumber = (value) => {
+          if (value === undefined || value === null) return undefined;
+          const num = Number(String(value).trim());
+          return Number.isFinite(num) ? num : undefined;
+        };
+
+        const resolveField = (headers, cells, keys) => {
+          for (const key of keys) {
+            const idx = headers.indexOf(key);
+            if (idx !== -1) return cells[idx];
+          }
+          return undefined;
+        };
+
+        const extractName = (value) => (value || '').replace(/Hours?:?/i, '').trim();
+
+        return dataRows
+          .map((row) => {
+            const cells = splitCsvLine(row).map((cell) => cell.trim());
+            const headers = hasHeader ? normalizedHeaders : [];
+
+            const name = hasHeader ? resolveField(headers, cells, ['name']) : extractName(cells[0]);
+            const nickname = hasHeader ? resolveField(headers, cells, ['nickname']) : undefined;
+            const upsell_score = toNumber(resolveField(headers, cells, ['upsell_score', 'upsell']));
+            const pitty = toNumber(resolveField(headers, cells, ['pitty', 'pity']));
+            const employment_days = toNumber(resolveField(headers, cells, ['employment_days', 'employment']));
+            const max_guests = toNumber(resolveField(headers, cells, ['max_guests', 'capacity', 'max_section_load']));
+            const hours = toNumber(hasHeader ? resolveField(headers, cells, ['hours', 'hrs']) : cells[1]);
+
+            return {
+              name: name || '',
+              nickname,
+              upsell_score,
+              pitty,
+              employment_days,
+              max_guests,
+              hours,
+            };
+          })
+          .filter((item) => item.name);
+      };
+
+      const hydrateServersForShift = (roster) => {
+        const lookup = new Map(allServers.map((srv) => [srv.name.toLowerCase(), srv]));
+        const matched = [];
+        const missed = [];
+        roster.forEach((entry, index) => {
+          const base = lookup.get(entry.name.toLowerCase());
+          const mergedMetrics = {
+            upsellScore: entry.upsell_score ?? base?.upsellScore ?? 0,
+            length_of_employment: entry.employment_days ?? base?.length_of_employment ?? 1,
+            pitty: entry.pitty ?? base?.pitty ?? 0,
+            max_guests: entry.max_guests ?? base?.max_guests ?? 0,
+          };
+
+          if (base) {
+            matched.push({
+              ...base,
+              nickname: entry.nickname || base.nickname,
+              ...mergedMetrics,
+              hours: entry.hours ?? base.hours,
+              rosterName: entry.name,
+            });
+          } else {
+            missed.push(entry.name);
+            matched.push({
+              id: `csv-${Date.now()}-${index}`,
+              name: entry.name,
+              nickname: entry.nickname,
+              ...mergedMetrics,
+              hours: entry.hours ?? '-',
+              clockIn: '--:--',
+            });
+          }
+        });
+        activeServers = matched.filter((srv) => srv.name);
+        renderServers();
+        document.querySelectorAll('.dropzone').forEach((zone) => {
+          const accept = zone.dataset.acceptType;
+          if (accept === 'server' || accept === 'host' || accept === 'sas') {
+            clearZone(zone);
+          }
+        });
+        document.querySelectorAll('.dropzone-qualifications').forEach((cell) => (cell.textContent = ''));
+        if (missed.length) {
+          alert(`No data found for: ${missed.join(', ')}. Add them to the internal roster to enable scoring.`);
+        }
+      };
+
+      const uploadRosterCsv = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const resp = await authFetch('/imports/servers', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Import failed (${resp.status})`);
+        }
+        return resp.json();
+      };
+
+      const switchMode = (mode) => {
+        currentMode = mode;
+        if (mode === 'servers') {
+          serversBoard.style.display = 'grid';
+          hostsBoard.style.display = 'none';
+          autoAssignBtn.disabled = false;
+          renderServers();
+        } else {
+          serversBoard.style.display = 'none';
+          hostsBoard.style.display = 'grid';
+          autoAssignBtn.disabled = true;
+          renderHosts();
+          renderSas();
+        }
+        serversTab.classList.toggle('active', mode === 'servers');
+        hostsTab.classList.toggle('active', mode !== 'servers');
+      };
+      const authenticate = async (email, password) => {
+        const response = await authFetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${response.status}`);
+        }
+
+        await response.json().catch(() => ({}));
+        setStatus('Login successful.');
+
+        const meResp = await authFetch('/auth/me');
+        if (!meResp.ok) {
+          throw new Error('Could not load profile');
+        }
+        const me = await meResp.json();
+        currentUser = me;
+        setStatus(`Welcome, ${me.full_name} (${me.role})`);
+        await Promise.all([
+          loadInternalRoster(),
+          loadHostRoster(),
+          loadSasRoster(),
+          loadSections(),
+        ]);
+        await refreshDailyRoster();
+        activeHosts = [...allHosts];
+        activeSas = [...allSas];
+        showBuilder(currentUser);
+        switchMode('servers');
+      };
+
+      const registerAccount = async ({ email, password, full_name, role }) => {
+        const response = await authFetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, full_name, role }),
+        });
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${response.status}`);
+        }
+        return response.json();
+      };
+
+      const setAuthMode = (mode) => {
+        authMode = mode;
+        const isRegister = mode === 'register';
+        registerFields.classList.toggle('hidden', !isRegister);
+        document.getElementById('submit-btn').textContent = isRegister ? 'Create account' : 'Sign in';
+        toggleModeBtn.textContent = isRegister ? 'Have an account? Sign in' : 'Need an account? Register';
+        setStatus(isRegister ? 'Create a new account.' : 'Enter your credentials to continue.');
+      };
+
+      setAuthMode('login');
+
+      toggleModeBtn.addEventListener('click', () => {
+        setAuthMode(authMode === 'login' ? 'register' : 'login');
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        if (!email || !password) return;
+        tokenBox.classList.remove('active');
+        tokenBox.textContent = '';
+
+        try {
+          if (authMode === 'register') {
+            const full_name = fullNameInput.value.trim();
+            const role = roleSelect.value || 'MANAGER';
+            if (!full_name) {
+              setStatus('Please enter your full name to register.', true);
+              return;
+            }
+            setStatus('Creating your account...');
+            await registerAccount({ email, password, full_name, role });
+            setStatus('Account created. Signing you in...');
+          } else {
+            setStatus('Signing in...');
+          }
+          await authenticate(email, password);
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || 'Authentication failed', true);
+        }
+      });
+
+      autoAssignBtn.addEventListener('click', () => {
+        if (currentMode !== 'servers') return;
+        autoAssign();
+      });
+      if (removeServersBtn) {
+        removeServersBtn.addEventListener('click', () => {
+          if (currentMode !== 'servers') return;
+          removeAllServers();
+        });
+      }
+
+      serversTab.addEventListener('click', () => switchMode('servers'));
+      hostsTab.addEventListener('click', () => switchMode('hosts'));
+      importBtn.addEventListener('click', () => csvInput.click());
+      if (importDailyRosterBtn) {
+        importDailyRosterBtn.addEventListener('click', () => dailyRosterInput?.click());
+      }
+      if (storeNumberInput) {
+        storeNumberInput.addEventListener('change', () => {
+          refreshShiftOptions();
+          refreshDailyRoster();
+        });
+      }
+      if (shiftDateInput) {
+        shiftDateInput.addEventListener('change', () => {
+          refreshShiftOptions();
+          refreshDailyRoster();
+        });
+      }
+      if (loadShiftBtn) {
+        loadShiftBtn.addEventListener('click', async () => {
+          try {
+            await loadShift();
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to load shift.');
+          }
+        });
+      }
+      if (saveSheetBtn) {
+        saveSheetBtn.addEventListener('click', async () => {
+          try {
+            await saveTeamSheet();
+            alert('Team sheet saved.');
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to save team sheet.');
+          }
+        });
+      }
+      if (viewJsonBtn) {
+        viewJsonBtn.addEventListener('click', async () => {
+          if (!jsonOutput || !jsonContent) return;
+          if (!jsonOutput.classList.contains('hidden')) {
+            jsonOutput.classList.add('hidden');
+            return;
+          }
+          try {
+            await showJsonOutput();
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to load JSON.');
+          }
+        });
+      }
+      if (addTeamsheetBtn) {
+        addTeamsheetBtn.addEventListener('click', () => {
+          openSectionPanel('Add Teamsheet');
+        });
+      }
+      if (changeTeamsheetBtn) {
+        changeTeamsheetBtn.addEventListener('click', () => {
+          openSectionPanel('Change Teamsheet');
+        });
+      }
+      if (closeSectionPanelBtn) {
+        closeSectionPanelBtn.addEventListener('click', closeSectionPanel);
+      }
+      if (sectionPanel) {
+        sectionPanel.addEventListener('click', (event) => {
+          if (event.target === sectionPanel) closeSectionPanel();
+        });
+      }
+      if (addSectionRowBtn) {
+        addSectionRowBtn.addEventListener('click', () => {
+          if (!sectionPanelRows) return;
+          sectionPanelRows.appendChild(buildSectionRow({}));
+        });
+      }
+      if (saveSectionsBtn) {
+        saveSectionsBtn.addEventListener('click', async () => {
+          try {
+            await saveSections();
+            closeSectionPanel();
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to save sections.');
+          }
+        });
+      }
+
+      if (printSheetBtn) {
+        printSheetBtn.addEventListener('click', async () => {
+          try {
+            if (!currentTeamSheetId) {
+              const saved = await saveTeamSheet();
+              currentTeamSheetId = saved.id;
+            }
+            const printWindow = window.open(`/team-sheets/${currentTeamSheetId}/print`, '_blank');
+            if (!printWindow) {
+              alert('Pop-up blocked. Allow pop-ups to print.');
+              return;
+            }
+            printWindow.focus();
+            printWindow.addEventListener('load', () => {
+              printWindow.print();
+            });
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to print team sheet.');
+          }
+        });
+      }
+
+      csvInput.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const text = e.target?.result;
+          if (typeof text !== 'string') {
+            alert('Unable to read CSV file.');
+            return;
+          }
+          const roster = parseCsv(text);
+          if (!roster.length) {
+            alert('CSV appeared empty. Expected headers like name,nickname,upsell_score,pitty,employment_days,max_guests.');
+            return;
+          }
+            try {
+              const result = await uploadRosterCsv(file);
+              setStatus(`Imported roster: ${result.created} new, ${result.updated} updated.`);
+              await loadInternalRoster();
+            } catch (err) {
+              console.error(err);
+              alert(err.message || 'Import failed. Confirm you are logged in as a manager or admin.');
+            }
+          hydrateServersForShift(roster);
+        };
+        reader.readAsText(file);
+        csvInput.value = '';
+      });
+      if (dailyRosterInput) {
+        dailyRosterInput.addEventListener('change', async (event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          try {
+            await uploadDailyRosterCsv(file);
+            await refreshDailyRoster();
+            alert('Daily roster uploaded.');
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Daily roster upload failed.');
+          }
+          dailyRosterInput.value = '';
+        });
+      }
+
+      const ensureAuthenticated = async () => {
+        try {
+          const meResp = await authFetch('/auth/me');
+          if (!meResp.ok) {
+            window.location.href = '/static/login.html';
+            return;
+          }
+          currentUser = await meResp.json();
+          await Promise.all([loadInternalRoster(), loadHostRoster(), loadSasRoster(), loadSections()]);
+          await refreshDailyRoster();
+          activeHosts = [...allHosts];
+          activeSas = [...allSas];
+          showBuilder(currentUser);
+          switchMode('servers');
+        } catch (err) {
+          console.error('Session check failed', err);
+          window.location.href = '/static/login.html';
+        }
+      };
+
+      ensureAuthenticated();
+
+      const returnToHub = () => {
+        window.location.href = '/static/index.html';
+      };
+    </script>
+  </body>
+</html>

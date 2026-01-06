@@ -8,7 +8,9 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Float,
     Integer,
+    JSON,
     String,
     Text,
 )
@@ -100,6 +102,13 @@ class Section(Base):
     name: Mapped[str] = mapped_column(String(100))
     label: Mapped[str] = mapped_column(String(100))
     type: Mapped[SectionType] = mapped_column(Enum(SectionType))
+    tables: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    cut_order: Mapped[int | None]
+    sidework: Mapped[str | None] = mapped_column(Text, nullable=True)
+    outwork: Mapped[str | None] = mapped_column(Text, nullable=True)
+    max_capacity: Mapped[int | None]
+    expected_out_time: Mapped[str | None] = mapped_column(String(50))
     max_guests: Mapped[int | None]
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -313,3 +322,125 @@ class Season(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     year: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, index=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+
+class StorePreference(Base, TimestampMixin):
+    __tablename__ = "store_preferences"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    store_number: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
+    daily_schedule: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
+
+
+class POSOrderStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+    VOIDED = "VOIDED"
+
+
+class MenuCategory(Base):
+    __tablename__ = "menu_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    items = relationship("MenuItem", back_populates="category")
+
+
+class MenuItem(Base):
+    __tablename__ = "menu_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("menu_categories.id"))
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    category = relationship("MenuCategory", back_populates="items")
+    recipe_items = relationship("RecipeItem", back_populates="menu_item", cascade="all, delete-orphan")
+
+
+class Ingredient(Base):
+    __tablename__ = "ingredients"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
+    unit: Mapped[str] = mapped_column(String(50), nullable=False, default="unit")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    recipe_items = relationship("RecipeItem", back_populates="ingredient")
+    stock_movements = relationship("StockMovement", back_populates="ingredient")
+
+
+class RecipeItem(Base):
+    __tablename__ = "recipe_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"))
+    quantity: Mapped[float] = mapped_column(Float, default=1)
+
+    menu_item = relationship("MenuItem", back_populates="recipe_items")
+    ingredient = relationship("Ingredient", back_populates="recipe_items")
+
+
+class POSOrder(Base, TimestampMixin):
+    __tablename__ = "pos_orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[POSOrderStatus] = mapped_column(Enum(POSOrderStatus), default=POSOrderStatus.OPEN)
+    shift_id: Mapped[int | None] = mapped_column(ForeignKey("shifts.id"))
+    server_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"))
+    table_label: Mapped[str | None] = mapped_column(String(50))
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    items = relationship("POSOrderItem", back_populates="order", cascade="all, delete-orphan")
+    payments = relationship("POSPayment", back_populates="order", cascade="all, delete-orphan")
+
+
+class POSOrderItem(Base, TimestampMixin):
+    __tablename__ = "pos_order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("pos_orders.id"))
+    menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    order = relationship("POSOrder", back_populates="items")
+    menu_item = relationship("MenuItem")
+
+
+class POSPayment(Base, TimestampMixin):
+    __tablename__ = "pos_payments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("pos_orders.id"))
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    method: Mapped[str] = mapped_column(String(50), default="CARD")
+
+    order = relationship("POSOrder", back_populates="payments")
+
+
+class StockMovement(Base, TimestampMixin):
+    __tablename__ = "stock_movements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"))
+    quantity_change: Mapped[float] = mapped_column(Float, default=0)
+    reason: Mapped[str] = mapped_column(String(100))
+    order_item_id: Mapped[int | None] = mapped_column(ForeignKey("pos_order_items.id"))
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    ingredient = relationship("Ingredient", back_populates="stock_movements")
+
+
+class DailyRoster(Base, TimestampMixin):
+    __tablename__ = "daily_rosters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    store_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    entries: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)

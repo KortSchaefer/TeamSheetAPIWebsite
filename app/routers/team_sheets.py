@@ -11,12 +11,14 @@ from app.core.security import get_current_manager_or_admin, get_current_user
 from app.database import get_db
 from app.models import (
     Shift,
+    Section,
     TeamSheet,
     TeamSheetAssignment,
     TeamSheetStatus,
     User,
     SideworkTask,
     OutworkTask,
+    StorePreference,
 )
 from app.services import team_sheets as team_sheet_service
 
@@ -190,18 +192,103 @@ def print_team_sheet(
     if not team_sheet:
         raise HTTPException(status_code=404, detail="Team sheet not found")
     data = team_sheet_service.serialize_team_sheet(team_sheet)
+    shift = db.query(Shift).filter(Shift.id == team_sheet.shift_id).first()
+    in_time = ""
+    if shift and shift.store_id:
+        store_pref = (
+            db.query(StorePreference)
+            .filter(StorePreference.store_number == str(shift.store_id))
+            .first()
+        )
+        if store_pref and store_pref.daily_schedule:
+            day_name = shift.date.strftime("%A")
+            entry = next(
+                (item for item in store_pref.daily_schedule if (item.get("day") or "").lower() == day_name.lower()),
+                None,
+            )
+            if entry:
+                if shift.time_period.value == "DINNER":
+                    in_time = entry.get("second_shift_in") or entry.get("open_time") or ""
+                else:
+                    in_time = entry.get("first_shift_in") or entry.get("open_time") or ""
+
+    def format_time(value: str) -> str:
+        if not value:
+            return ""
+        parts = value.split(":")
+        if len(parts) < 2:
+            return value
+        try:
+            hour = int(parts[0])
+            minute = int(parts[1])
+        except ValueError:
+            return value
+        suffix = "AM" if hour < 12 else "PM"
+        hour = hour % 12 or 12
+        return f"{hour}:{minute:02d} {suffix}"
+
+    def normalize_task_label(label: str) -> str:
+        if not label:
+            return ""
+        prefix = "] "
+        if label.startswith("[Section:") and prefix in label:
+            return label.split(prefix, 1)[1].strip()
+        return label.strip()
+
+    sidework_by_employee = {}
+    for task in team_sheet.sidework_tasks:
+        label = normalize_task_label(task.label or "")
+        for assignment in task.assignments:
+            sidework_by_employee.setdefault(assignment.employee_id, []).append(label)
+
+    outwork_by_employee = {}
+    for task in team_sheet.outwork_tasks:
+        label = normalize_task_label(task.label or "")
+        for assignment in task.assignments:
+            outwork_by_employee.setdefault(assignment.employee_id, []).append(label)
+
+    section_map = {
+        section.id: (section.label or section.name)
+        for section in db.query(Section).all()
+    }
     rows = "".join(
-        f"<tr><td>{item.section_label or ''}</td><td>{item.employee_name or ''}</td><td>{item.role_label or ''}</td></tr>"
+        "<tr>"
+        f"<td>{format_time(in_time)}</td>"
+        f"<td>{item.section_label or item.role_label or section_map.get(item.section_id, '')}</td>"
+        f"<td>{item.employee_name or ''}</td>"
+        f"<td>{'; '.join(sidework_by_employee.get(item.employee_id, []))}</td>"
+        f"<td>{'; '.join(outwork_by_employee.get(item.employee_id, []))}</td>"
+        "</tr>"
         for item in data.assignments
     )
+    shift_label = shift.time_period.value if shift else ""
+    shift_date = shift.date.strftime("%Y-%m-%d") if shift else ""
+    store_label = f"Store {shift.store_id}" if shift and shift.store_id else ""
     html = f"""
-    <html><head><title>{data.title}</title></head>
+    <html>
+    <head>
+      <title>{data.title}</title>
+      <style>
+        body {{ font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #111; }}
+        h1 {{ margin: 0 0 6px; }}
+        .meta {{ color: #444; margin-bottom: 16px; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
+        th, td {{ border: 1px solid #444; padding: 6px 8px; text-align: left; vertical-align: top; }}
+        th {{ background: #efefef; text-transform: uppercase; font-size: 12px; letter-spacing: .04em; }}
+      </style>
+    </head>
     <body>
       <h1>{data.title}</h1>
-      <p>Status: {data.status}</p>
-      <p>Notes: {data.notes or ''}</p>
+      <div class="meta">Status: {data.status} {shift_date} {shift_label} {store_label}</div>
+      <div class="meta">Notes: {data.notes or ''}</div>
       <table border="1" cellpadding="4" cellspacing="0">
-        <tr><th>Section</th><th>Employee</th><th>Role</th></tr>
+        <tr>
+          <th>In Time</th>
+          <th>Section</th>
+          <th>Employee</th>
+          <th>Sidework</th>
+          <th>Outwork</th>
+        </tr>
         {rows}
       </table>
     </body></html>

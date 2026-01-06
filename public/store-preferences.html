@@ -1,0 +1,296 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Team Sheet Studio - Store Preferences</title>
+    <style>
+      :root { color-scheme: dark; font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #112850, #070c1a 55%);
+        color: #f5f7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .shell {
+        width: min(1100px, 100%);
+        background: rgba(10, 18, 35, 0.9);
+        border-radius: 32px;
+        padding: 2.5rem;
+        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
+      }
+      .back-btn {
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 1.9rem;
+      }
+      .panel {
+        background: #050919;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid #1f2a46;
+      }
+      .panel h2 {
+        margin: 0 0 1rem;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #8ea7ff;
+      }
+      .form-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      label {
+        font-weight: 600;
+        font-size: .85rem;
+        color: #9fb1e1;
+      }
+      input, select {
+        padding: .6rem .8rem;
+        border-radius: 10px;
+        border: 1px solid #202a48;
+        background: #050919;
+        color: #f5f7ff;
+        font-size: .95rem;
+      }
+      input:focus {
+        outline: none;
+        border-color: #4b7bff;
+      }
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: .65rem 1rem;
+        font-size: .9rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        color: #fff;
+      }
+      .btn.secondary {
+        background: #0f1831;
+        border: 1px solid #243258;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #dbe3ff;
+      }
+      th, td {
+        border: 1px solid #10172c;
+        padding: .7rem .8rem;
+        text-align: left;
+      }
+      thead th {
+        background: #0f1f40;
+        text-transform: uppercase;
+        font-size: .8rem;
+        letter-spacing: .05em;
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.01);
+      }
+      .status {
+        min-height: 1.25rem;
+        margin-top: .75rem;
+        font-size: .9rem;
+        color: #9fb1e1;
+      }
+      .status.error { color: #ff8b8b; }
+      .status.success { color: #65f5b6; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="header">
+        <a class="back-btn" href="/static/index.html">Back</a>
+        <h1>Store Preferences</h1>
+        <div></div>
+      </div>
+
+      <div class="panel">
+        <h2>Daily Schedule</h2>
+        <div class="form-row">
+          <div>
+            <label for="store-number">Store Number</label>
+            <input id="store-number" type="text" value="1" />
+          </div>
+          <button class="btn secondary" id="load-btn" type="button">Load</button>
+          <button class="btn" id="save-btn" type="button">Save Schedule</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Open Time</th>
+              <th>Close Time</th>
+              <th>First Shift In</th>
+              <th>Second Shift In</th>
+              <th>Number of Shifts</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-rows"></tbody>
+        </table>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+
+    <script>
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      const rowsEl = document.getElementById('schedule-rows');
+      const storeNumberEl = document.getElementById('store-number');
+      const loadBtn = document.getElementById('load-btn');
+      const saveBtn = document.getElementById('save-btn');
+      const statusEl = document.getElementById('status');
+
+      const authFetch = (url, options = {}) => {
+        return fetch(url, { ...options, credentials: 'include' });
+      };
+
+      const setStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = 'status ' + (isError ? 'error' : 'success');
+      };
+
+      const buildRow = (day) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${day}</td>
+          <td><input type="time" data-field="open_time" /></td>
+          <td><input type="time" data-field="close_time" /></td>
+          <td><input type="time" data-field="first_shift_in" /></td>
+          <td><input type="time" data-field="second_shift_in" /></td>
+          <td>
+            <select data-field="number_of_shifts">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+            </select>
+          </td>
+        `;
+        return tr;
+      };
+
+      const buildTable = () => {
+        rowsEl.innerHTML = '';
+        days.forEach((day) => {
+          const row = buildRow(day);
+          row.dataset.day = day;
+          rowsEl.appendChild(row);
+        });
+      };
+
+      const collectSchedule = () => {
+        const schedule = [];
+        rowsEl.querySelectorAll('tr').forEach((row) => {
+          const entry = { day: row.dataset.day };
+          row.querySelectorAll('input, select').forEach((input) => {
+            if (input.tagName === 'SELECT') {
+              entry[input.dataset.field] = Number(input.value) || 1;
+              return;
+            }
+            entry[input.dataset.field] = input.value || null;
+          });
+          schedule.push(entry);
+        });
+        return schedule;
+      };
+
+      const applySchedule = (schedule = []) => {
+        schedule.forEach((entry) => {
+          const row = rowsEl.querySelector(`tr[data-day="${entry.day}"]`);
+          if (!row) return;
+          row.querySelectorAll('input, select').forEach((input) => {
+            const value = entry[input.dataset.field];
+            if (input.tagName === 'SELECT') {
+              input.value = value ? String(value) : '2';
+              return;
+            }
+            input.value = value || '';
+          });
+        });
+      };
+
+      const loadSchedule = async () => {
+        const storeNumber = storeNumberEl.value.trim();
+        if (!storeNumber) {
+          setStatus('Enter a store number to load.', true);
+          return;
+        }
+        setStatus('Loading schedule...');
+        try {
+          const resp = await authFetch(`/store-preferences?store_number=${encodeURIComponent(storeNumber)}`);
+          if (!resp.ok) throw new Error(`Load failed (${resp.status})`);
+          const data = await resp.json();
+          const pref = data[0];
+          buildTable();
+          applySchedule(pref?.daily_schedule || []);
+          setStatus(pref ? 'Schedule loaded.' : 'No schedule saved yet. Fill in and save.');
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || 'Unable to load schedule.', true);
+        }
+      };
+
+      const saveSchedule = async () => {
+        const storeNumber = storeNumberEl.value.trim();
+        if (!storeNumber) {
+          setStatus('Enter a store number to save.', true);
+          return;
+        }
+        const payload = {
+          store_number: storeNumber,
+          daily_schedule: collectSchedule(),
+        };
+        setStatus('Saving schedule...');
+        try {
+          const resp = await authFetch('/store-preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            const detail = await resp.json().catch(() => ({}));
+            throw new Error(detail.detail || `Save failed (${resp.status})`);
+          }
+          await resp.json();
+          setStatus('Schedule saved.');
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || 'Unable to save schedule.', true);
+        }
+      };
+
+      loadBtn.addEventListener('click', loadSchedule);
+      saveBtn.addEventListener('click', saveSchedule);
+
+      buildTable();
+      loadSchedule();
+    </script>
+  </body>
+</html>

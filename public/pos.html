@@ -1,0 +1,312 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Team Sheet Studio - POS</title>
+    <style>
+      :root { color-scheme: dark; font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #112850, #070c1a 55%);
+        color: #f5f7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .shell {
+        width: min(1200px, 100%);
+        background: rgba(10, 18, 35, 0.9);
+        border-radius: 32px;
+        padding: 2.5rem;
+        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      .back-btn {
+        border: 1px solid #243258;
+        background: rgba(10, 18, 35, 0.85);
+        color: #9bb0ff;
+        padding: .45rem .75rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 1.5rem;
+      }
+      .panel {
+        background: #050919;
+        border-radius: 20px;
+        padding: 1.2rem;
+        border: 1px solid #1f2a46;
+      }
+      .panel h2 {
+        margin-top: 0;
+        font-size: 1.05rem;
+        letter-spacing: .05em;
+        color: #7b8bb3;
+        text-transform: uppercase;
+      }
+      .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: .9rem;
+      }
+      .menu-card {
+        background: #0f1a33;
+        border: 1px solid #1f2d51;
+        border-radius: 16px;
+        padding: .9rem;
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+      }
+      .menu-card button {
+        border: none;
+        border-radius: 12px;
+        padding: .5rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        color: #fff;
+      }
+      .order-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+      }
+      .order-item {
+        background: #0f1a33;
+        border: 1px solid #1f2d51;
+        border-radius: 12px;
+        padding: .7rem .8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .muted { color: #8ea7ff; font-size: .85rem; }
+      .row {
+        display: flex;
+        gap: .6rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      input, select {
+        padding: .5rem .7rem;
+        border-radius: 10px;
+        border: 1px solid #202a48;
+        background: #050919;
+        color: #f5f7ff;
+        font-size: .9rem;
+      }
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: .6rem .9rem;
+        font-size: .9rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        color: #fff;
+      }
+      .btn.secondary {
+        background: #0f1831;
+        border: 1px solid #243258;
+      }
+      .status {
+        min-height: 1.2rem;
+        margin-top: .6rem;
+        font-size: .9rem;
+        color: #9fb1e1;
+      }
+      .status.error { color: #ff8b8b; }
+      .status.success { color: #65f5b6; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="header">
+        <a class="back-btn" href="/static/index.html">Back</a>
+        <h1>POS Workspace</h1>
+        <div></div>
+      </div>
+
+      <div class="layout">
+        <div class="panel">
+          <h2>Menu</h2>
+          <div class="menu-grid" id="menu-grid"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Current Ticket</h2>
+          <div class="row" style="margin-bottom:.8rem;">
+            <input id="table-label" placeholder="Table (optional)" />
+            <button class="btn secondary" id="new-order-btn">New Ticket</button>
+          </div>
+          <ul class="order-list" id="order-items"></ul>
+          <div class="row">
+            <select id="payment-method">
+              <option value="CARD">Card</option>
+              <option value="CASH">Cash</option>
+            </select>
+            <input id="payment-amount" type="number" min="0" placeholder="Amount (cents)" />
+            <button class="btn" id="close-order-btn">Close Ticket</button>
+          </div>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const menuGrid = document.getElementById('menu-grid');
+      const orderItemsEl = document.getElementById('order-items');
+      const newOrderBtn = document.getElementById('new-order-btn');
+      const closeOrderBtn = document.getElementById('close-order-btn');
+      const tableInput = document.getElementById('table-label');
+      const paymentMethod = document.getElementById('payment-method');
+      const paymentAmount = document.getElementById('payment-amount');
+      const statusEl = document.getElementById('status');
+
+      let currentOrderId = null;
+      let menuItems = [];
+      let ticketItems = [];
+
+      const authFetch = (url, options = {}) => fetch(url, { ...options, credentials: 'include' });
+
+      const setStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = 'status ' + (isError ? 'error' : 'success');
+      };
+
+      const renderMenu = () => {
+        menuGrid.innerHTML = '';
+        if (!menuItems.length) {
+          menuGrid.innerHTML = '<p class="muted">No menu items yet.</p>';
+          return;
+        }
+        menuItems.forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'menu-card';
+          card.innerHTML = `
+            <strong>${item.name}</strong>
+            <div class="muted">$${(item.price_cents / 100).toFixed(2)}</div>
+            <button type="button">Add</button>
+          `;
+          card.querySelector('button').addEventListener('click', () => addToOrder(item));
+          menuGrid.appendChild(card);
+        });
+      };
+
+      const renderTicket = () => {
+        orderItemsEl.innerHTML = '';
+        if (!ticketItems.length) {
+          orderItemsEl.innerHTML = '<li class="muted">No items yet.</li>';
+          return;
+        }
+        ticketItems.forEach((item) => {
+          const li = document.createElement('li');
+          li.className = 'order-item';
+          li.innerHTML = `<span>${item.name} x${item.quantity}</span><span>$${(item.price_cents / 100).toFixed(2)}</span>`;
+          orderItemsEl.appendChild(li);
+        });
+      };
+
+      const loadMenu = async () => {
+        try {
+          const resp = await authFetch('/pos/menu-items?active=true');
+          if (!resp.ok) throw new Error(`Menu load failed (${resp.status})`);
+          menuItems = await resp.json();
+          renderMenu();
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || 'Unable to load menu.', true);
+        }
+      };
+
+      const createOrder = async () => {
+        const payload = { table_label: tableInput.value.trim() || null };
+        const resp = await authFetch('/pos/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Order create failed (${resp.status})`);
+        }
+        const order = await resp.json();
+        currentOrderId = order.id;
+        ticketItems = [];
+        renderTicket();
+      };
+
+      const addToOrder = async (menuItem) => {
+        if (!currentOrderId) {
+          await createOrder();
+        }
+        const resp = await authFetch(`/pos/orders/${currentOrderId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ menu_item_id: menuItem.id, quantity: 1, price_cents: menuItem.price_cents }),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Add item failed (${resp.status})`);
+        }
+        ticketItems.push({ name: menuItem.name, quantity: 1, price_cents: menuItem.price_cents });
+        renderTicket();
+      };
+
+      const closeOrder = async () => {
+        if (!currentOrderId) {
+          setStatus('Create a ticket first.', true);
+          return;
+        }
+        const amount = Number(paymentAmount.value || 0);
+        const resp = await authFetch(`/pos/orders/${currentOrderId}/close`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment: { amount_cents: amount, method: paymentMethod.value } }),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Close failed (${resp.status})`);
+        }
+        await resp.json();
+        setStatus('Ticket closed.');
+        currentOrderId = null;
+        ticketItems = [];
+        renderTicket();
+      };
+
+      newOrderBtn.addEventListener('click', () => {
+        createOrder().catch((err) => setStatus(err.message || 'Unable to create ticket.', true));
+      });
+      closeOrderBtn.addEventListener('click', () => {
+        closeOrder().catch((err) => setStatus(err.message || 'Unable to close ticket.', true));
+      });
+
+      loadMenu();
+    </script>
+  </body>
+</html>

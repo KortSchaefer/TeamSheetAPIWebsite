@@ -1,0 +1,4 @@
+'          <button id="change-teamsheet-btn" class="ghost-btn">Change Teamsheet</button>'
+'          <button id="import-btn">Import Data ▼</button>'
+"      const importBtn = document.getElementById('import-btn');"
+"      const changeTeamsheetBtn = document.getElementById('change-teamsheet-btn');"

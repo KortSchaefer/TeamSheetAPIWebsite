@@ -11,6 +11,7 @@ from app.models import (
     TeamSheetStatus,
     UserRole,
     PayoutType,
+    POSOrderStatus,
 )
 
 
@@ -85,6 +86,13 @@ class SectionBase(BaseModel):
     name: str
     label: str
     type: SectionType
+    tables: Optional[list[str]] = None
+    tags: Optional[list[str]] = None
+    cut_order: Optional[int] = None
+    sidework: Optional[str] = None
+    outwork: Optional[str] = None
+    max_capacity: Optional[int] = None
+    expected_out_time: Optional[str] = None
     max_guests: Optional[int] = None
     is_active: bool = True
 
@@ -97,6 +105,13 @@ class SectionUpdate(BaseModel):
     name: Optional[str] = None
     label: Optional[str] = None
     type: Optional[SectionType] = None
+    tables: Optional[list[str]] = None
+    tags: Optional[list[str]] = None
+    cut_order: Optional[int] = None
+    sidework: Optional[str] = None
+    outwork: Optional[str] = None
+    max_capacity: Optional[int] = None
+    expected_out_time: Optional[str] = None
     max_guests: Optional[int] = None
     is_active: Optional[bool] = None
 
@@ -341,5 +356,185 @@ class GiftTrackerUpsertRequest(BaseModel):
 class GiftTrackerEntryRead(GiftTrackerEntryPayload, TimestampModel):
     id: int
     week_number: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DailyScheduleEntry(BaseModel):
+    day: str
+    open_time: Optional[str] = None
+    close_time: Optional[str] = None
+    first_shift_in: Optional[str] = None
+    second_shift_in: Optional[str] = None
+    number_of_shifts: Optional[int] = Field(default=None, ge=1, le=2)
+
+
+class StorePreferenceBase(BaseModel):
+    store_number: str
+    daily_schedule: List[DailyScheduleEntry] = Field(default_factory=list)
+
+
+class StorePreferenceCreate(StorePreferenceBase):
+    pass
+
+
+class StorePreferenceRead(StorePreferenceBase, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MenuCategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    active: bool = True
+
+
+class MenuCategoryCreate(MenuCategoryBase):
+    pass
+
+
+class MenuCategoryRead(MenuCategoryBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MenuItemBase(BaseModel):
+    name: str
+    category_id: Optional[int] = None
+    price_cents: int = Field(ge=0)
+    active: bool = True
+
+
+class MenuItemCreate(MenuItemBase):
+    pass
+
+
+class MenuItemRead(MenuItemBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IngredientBase(BaseModel):
+    name: str
+    unit: str = "unit"
+    active: bool = True
+
+
+class IngredientCreate(IngredientBase):
+    pass
+
+
+class IngredientRead(IngredientBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecipeItemBase(BaseModel):
+    menu_item_id: int
+    ingredient_id: int
+    quantity: float = Field(gt=0)
+
+
+class RecipeItemCreate(RecipeItemBase):
+    pass
+
+
+class RecipeItemRead(RecipeItemBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class POSOrderItemBase(BaseModel):
+    menu_item_id: int
+    quantity: int = Field(ge=1)
+    price_cents: int = Field(ge=0)
+
+
+class POSOrderItemCreate(POSOrderItemBase):
+    pass
+
+
+class POSOrderItemRead(POSOrderItemBase, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class POSOrderBase(BaseModel):
+    shift_id: Optional[int] = None
+    server_id: Optional[int] = None
+    table_label: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class POSOrderCreate(POSOrderBase):
+    pass
+
+
+class POSOrderRead(POSOrderBase, TimestampModel):
+    id: int
+    status: POSOrderStatus
+    items: List[POSOrderItemRead] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class POSPaymentCreate(BaseModel):
+    amount_cents: int = Field(ge=0)
+    method: str = "CARD"
+
+
+class POSPaymentRead(POSPaymentCreate, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class POSCloseRequest(BaseModel):
+    payment: POSPaymentCreate
+
+
+class StockMovementBase(BaseModel):
+    ingredient_id: int
+    quantity_change: float
+    reason: str
+    notes: Optional[str] = None
+
+
+class StockMovementCreate(StockMovementBase):
+    order_item_id: Optional[int] = None
+
+
+class StockMovementRead(StockMovementBase, TimestampModel):
+    id: int
+    order_item_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StockLevelRead(BaseModel):
+    ingredient_id: int
+    name: str
+    unit: str
+    quantity_on_hand: float
+
+
+class DailyRosterEntry(BaseModel):
+    name: str
+
+
+class DailyRosterCreate(BaseModel):
+    date: date
+    store_id: Optional[int] = None
+    entries: List[DailyRosterEntry] = Field(default_factory=list)
+
+
+class DailyRosterRead(DailyRosterCreate, TimestampModel):
+    id: int
 
     model_config = ConfigDict(from_attributes=True)
