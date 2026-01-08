@@ -98,6 +98,58 @@
       .hidden {
         display: none !important;
       }
+      .auth-gate {
+        position: fixed;
+        inset: 0;
+        background: rgba(7, 13, 25, 0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        z-index: 50;
+      }
+      .auth-panel {
+        width: min(420px, 90vw);
+        background: #0a1326;
+        border: 1px solid #26345c;
+        border-radius: 20px;
+        padding: 1.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+      }
+      .auth-panel h2 {
+        margin: 0;
+      }
+      .auth-panel form {
+        display: flex;
+        flex-direction: column;
+        gap: .7rem;
+      }
+      .auth-panel label {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+        font-size: .85rem;
+        color: #9bb0ff;
+      }
+      .auth-panel input {
+        border-radius: 10px;
+        border: 1px solid #243258;
+        background: #050b1c;
+        color: #f5f7ff;
+        padding: .55rem .6rem;
+        font-size: 1rem;
+      }
+      .auth-status {
+        min-height: 1.4rem;
+        font-size: .9rem;
+        color: #9bb0ff;
+      }
+      .auth-status.error {
+        color: #ff9b9b;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -697,6 +749,26 @@
         </div>
       </section>
     </div>
+    <div id="auth-gate" class="auth-gate hidden">
+      <div class="auth-panel">
+        <div>
+          <h2>Sign in required</h2>
+          <p>Log in to access gift card data.</p>
+        </div>
+        <form id="auth-gate-form">
+          <label>
+            Email
+            <input id="auth-email" type="email" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Password
+            <input id="auth-password" type="password" placeholder="Your password" required />
+          </label>
+          <button type="submit" class="primary-btn">Sign in</button>
+        </form>
+        <div id="auth-gate-status" class="auth-status"></div>
+      </div>
+    </div>
     <script>
       const UNIVERSAL_GOAL = 4000;
       const LOGO_PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
@@ -1052,6 +1124,80 @@
           localStorage.setItem('tss_refresh_token', refresh);
         }
       };
+
+      const authGate = document.getElementById('auth-gate');
+      const authGateForm = document.getElementById('auth-gate-form');
+      const authGateStatus = document.getElementById('auth-gate-status');
+      const authEmailInput = document.getElementById('auth-email');
+      const authPasswordInput = document.getElementById('auth-password');
+
+      const setAuthGateStatus = (message, isError = false) => {
+        if (!authGateStatus) return;
+        authGateStatus.textContent = message || '';
+        authGateStatus.className = `auth-status ${isError ? 'error' : 'success'}`;
+      };
+
+      const showAuthGate = (message) => {
+        if (!authGate) return;
+        authGate.classList.remove('hidden');
+        setAuthGateStatus(message || 'Please sign in to continue.', false);
+      };
+
+      const hideAuthGate = () => {
+        if (!authGate) return;
+        authGate.classList.add('hidden');
+        setAuthGateStatus('', false);
+      };
+
+      const loginFromGate = async (email, password) => {
+        const resp = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json().catch(() => ({}));
+        if (data?.access_token) {
+          setStoredTokens(data.access_token, data.refresh_token);
+        }
+      };
+
+      const ensureAuthenticated = async () => {
+        try {
+          const resp = await authFetch('/auth/me');
+          if (!resp.ok) throw new Error('Not authenticated');
+          hideAuthGate();
+          return true;
+        } catch (err) {
+          showAuthGate('Session missing or expired. Sign in again.');
+          return false;
+        }
+      };
+
+      if (authGateForm) {
+        authGateForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const email = authEmailInput?.value.trim();
+          const password = authPasswordInput?.value;
+          if (!email || !password) return;
+          try {
+            setAuthGateStatus('Signing in...');
+            await loginFromGate(email, password);
+            const ok = await ensureAuthenticated();
+            if (ok) {
+              setAuthGateStatus('Signed in.', false);
+              hideAuthGate();
+              await initialize();
+            }
+          } catch (err) {
+            setAuthGateStatus(err.message || 'Sign-in failed.', true);
+          }
+        });
+      }
 
       const initData = (names) => {
         giftData = {};
@@ -2363,7 +2509,12 @@
 
       toggleView('weekly');
       updateSortIndicators();
-      init();
+      const initialize = async () => {
+        const ok = await ensureAuthenticated();
+        if (!ok) return;
+        await init();
+      };
+      initialize();
     </script>
 
   </body>
