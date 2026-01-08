@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Local seed scripts
+scripts/seed_sections.py
+scripts/seed_menu.py
+
 # C extensions
 *.so
 
