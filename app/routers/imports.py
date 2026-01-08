@@ -111,6 +111,7 @@ async def import_daily_roster(
 
     headers = {h.lower() for h in reader.fieldnames}
     name_key = "name" if "name" in headers else None
+    has_in_time = "in_time" in headers
     if not name_key:
         raise HTTPException(status_code=400, detail="CSV must include a 'name' column.")
 
@@ -119,7 +120,12 @@ async def import_daily_roster(
         name = row.get("name") or row.get("Name")
         if not name:
             continue
-        entries.append({"name": name.strip()})
+        entry = {"name": name.strip()}
+        if has_in_time:
+            in_time = row.get("in_time") or row.get("In_time") or row.get("In Time")
+            if in_time:
+                entry["in_time"] = str(in_time).strip()
+        entries.append(entry)
 
     roster = (
         db.query(DailyRoster)

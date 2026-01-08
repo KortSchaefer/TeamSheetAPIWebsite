@@ -526,6 +526,7 @@ class StockLevelRead(BaseModel):
 
 class DailyRosterEntry(BaseModel):
     name: str
+    in_time: Optional[str] = None
 
 
 class DailyRosterCreate(BaseModel):
@@ -535,6 +536,22 @@ class DailyRosterCreate(BaseModel):
 
 
 class DailyRosterRead(DailyRosterCreate, TimestampModel):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TeamSheetPresetBase(BaseModel):
+    name: str
+    store_id: Optional[int] = None
+    data_json: List[dict] = Field(default_factory=list)
+
+
+class TeamSheetPresetCreate(TeamSheetPresetBase):
+    pass
+
+
+class TeamSheetPresetRead(TeamSheetPresetBase, TimestampModel):
     id: int
 
     model_config = ConfigDict(from_attributes=True)

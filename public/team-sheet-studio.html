@@ -255,6 +255,8 @@
         border: 1px solid #243258;
         padding: 1.5rem 1.8rem 1.8rem;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        max-height: 85vh;
+        overflow: auto;
       }
       .panel-header {
         display: flex;
@@ -526,7 +528,6 @@
           <button id="hosts-tab">Hosts & SAS</button>
           <button id="auto-assign-btn">Auto-Assign</button>
           <button id="remove-servers-btn">Remove All</button>
-          <button id="add-teamsheet-btn" class="ghost-btn">Add Teamsheet</button>
           <button id="change-teamsheet-btn" class="ghost-btn">Change Teamsheet</button>
           <button id="import-daily-roster-btn" class="ghost-btn">Daily Roster</button>
           <button id="import-btn">Import Data</button>
@@ -562,6 +563,20 @@
           <div class="panel-header">
             <h2 id="section-panel-title">Manage Sections</h2>
             <button id="close-section-panel" class="ghost-btn" type="button">Close</button>
+          </div>
+          <div class="panel-header" style="margin-bottom:1.2rem;gap:1rem;">
+            <div style="flex:1;">
+              <label style="display:block;margin-bottom:.3rem;color:#8ea7ff;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">Preset</label>
+              <select id="preset-select" class="compact-input" style="width:100%;"></select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;margin-bottom:.3rem;color:#8ea7ff;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">Preset Name</label>
+              <input id="preset-name" class="compact-input" placeholder="Weekday Floor" />
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:flex-end;">
+              <button id="load-preset" class="ghost-btn" type="button">Load</button>
+              <button id="save-preset" type="button">Save</button>
+            </div>
           </div>
           <table class="panel-table">
             <thead>
@@ -904,7 +919,8 @@
         activeServers = dailyRoster.map((entry, index) => {
           const name = (entry.name || '').trim();
           const base = lookup.get(name.toLowerCase());
-          if (base) return { ...base };
+          const inTime = entry.in_time || entry.inTime || null;
+          if (base) return { ...base, in_time: inTime || base.in_time || null };
           return {
             id: `roster-${index}-${Date.now()}`,
             name,
@@ -914,6 +930,7 @@
             max_guests: 0,
             hours: '-',
             clockIn: '--:--',
+            in_time: inTime,
           };
         }).filter((srv) => srv.name);
         renderServers();
@@ -1175,10 +1192,15 @@
       const sectionPanel = document.getElementById('section-panel');
       const sectionPanelTitle = document.getElementById('section-panel-title');
       const sectionPanelRows = document.getElementById('section-panel-rows');
+      const presetSelect = document.getElementById('preset-select');
+      const presetNameInput = document.getElementById('preset-name');
+      const loadPresetBtn = document.getElementById('load-preset');
+      const savePresetBtn = document.getElementById('save-preset');
+      let presets = [];
+
       const closeSectionPanelBtn = document.getElementById('close-section-panel');
       const addSectionRowBtn = document.getElementById('add-section-row');
       const saveSectionsBtn = document.getElementById('save-sections');
-      const addTeamsheetBtn = document.getElementById('add-teamsheet-btn');
       const changeTeamsheetBtn = document.getElementById('change-teamsheet-btn');
 
       const openSectionPanel = (title) => {
@@ -1186,6 +1208,7 @@
         if (sectionPanelTitle) sectionPanelTitle.textContent = title;
         sectionPanel.classList.remove('hidden');
         buildSectionPanelRows();
+        loadPresets().catch((err) => console.warn('Preset load failed', err));
       };
 
       const closeSectionPanel = () => {
@@ -1249,6 +1272,60 @@
             outwork: getValue('outwork') || null,
           };
         });
+      };
+
+      const loadPresets = async () => {
+        const storeId = toStoreId();
+        const params = storeId != null ? `?store_id=${storeId}` : '';
+        const resp = await authFetch(`/teamsheet-presets${params}`);
+        if (!resp.ok) throw new Error(`Preset load failed (${resp.status})`);
+        presets = await resp.json();
+        if (!presetSelect) return;
+        presetSelect.innerHTML = '';
+        presets.forEach((preset) => {
+          const option = document.createElement('option');
+          option.value = preset.id;
+          option.textContent = preset.name;
+          presetSelect.appendChild(option);
+        });
+      };
+
+      const applyPresetData = (data) => {
+        if (!sectionPanelRows) return;
+        sectionPanelRows.innerHTML = '';
+        (data || []).forEach((section) => {
+          sectionPanelRows.appendChild(buildSectionRow(section));
+        });
+        if (!(data || []).length) {
+          sectionPanelRows.appendChild(buildSectionRow({}));
+        }
+      };
+
+      const savePreset = async () => {
+        if (!presetNameInput) return;
+        const name = presetNameInput.value.trim();
+        if (!name) throw new Error('Enter a preset name.');
+        const data_json = collectSectionRows();
+        const payload = { name, store_id: toStoreId(), data_json };
+        const resp = await authFetch('/teamsheet-presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `Preset save failed (${resp.status})`);
+        }
+        await loadPresets();
+      };
+
+      const loadPreset = () => {
+        if (!presetSelect) return;
+        const presetId = Number(presetSelect.value);
+        const preset = presets.find((p) => p.id === presetId);
+        if (!preset) return;
+        if (presetNameInput) presetNameInput.value = preset.name;
+        applyPresetData(preset.data_json || []);
       };
 
       const saveSections = async () => {
@@ -1384,14 +1461,16 @@
         activeServers.forEach((srv) => {
           const score = calculateServerScore(srv);
           srv.currentScore = score;
+          const inTimeLabel = srv.in_time ? `In: ${srv.in_time} | ` : 'In: -- | ';
           const html = `
             <strong>${srv.name}</strong>
             <div class="server-meta">Upsell: <span style="color:#4df58c;">${srv.upsellScore}</span></div>
-            <div class="server-meta">In: ${srv.clockIn} | Hours: ${srv.hours}</div>
+            <div class="server-meta">${inTimeLabel}Hours: ${srv.hours}</div>
             <div class="server-meta">Score: ${score}</div>
           `;
           const tooltip = [
             `Server: ${srv.name}`,
+            `In Time: ${srv.in_time || '-'}`,
             `BLAST: ${srv.upsellScore ?? 0}`,
             `Employment: ${srv.length_of_employment ?? '-'}`,
             `Pity: ${srv.pitty ?? 0}`,
@@ -2010,11 +2089,6 @@
           }
         });
       }
-      if (addTeamsheetBtn) {
-        addTeamsheetBtn.addEventListener('click', () => {
-          openSectionPanel('Add Teamsheet');
-        });
-      }
       if (changeTeamsheetBtn) {
         changeTeamsheetBtn.addEventListener('click', () => {
           openSectionPanel('Change Teamsheet');
@@ -2034,6 +2108,28 @@
           sectionPanelRows.appendChild(buildSectionRow({}));
         });
       }
+      if (loadPresetBtn) {
+        loadPresetBtn.addEventListener('click', () => {
+          try {
+            loadPreset();
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to load preset.');
+          }
+        });
+      }
+      if (savePresetBtn) {
+        savePresetBtn.addEventListener('click', async () => {
+          try {
+            await savePreset();
+            alert('Preset saved.');
+          } catch (err) {
+            console.error(err);
+            alert(err.message || 'Unable to save preset.');
+          }
+        });
+      }
+
       if (saveSectionsBtn) {
         saveSectionsBtn.addEventListener('click', async () => {
           try {

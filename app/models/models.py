@@ -444,3 +444,12 @@ class DailyRoster(Base, TimestampMixin):
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     store_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     entries: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
+
+
+class TeamSheetPreset(Base, TimestampMixin):
+    __tablename__ = "teamsheet_presets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    store_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    data_json: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
