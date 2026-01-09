@@ -352,6 +352,16 @@
       .table-scroll {
         overflow-x: auto;
       }
+      .split-table {
+        margin-top: 1rem;
+      }
+      .split-title {
+        margin: 0 0 .5rem;
+        font-size: .95rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #9bb0ff;
+      }
       .cobrands-table th[data-sort] {
         cursor: pointer;
         user-select: none;
@@ -545,29 +555,37 @@
         </div>
         <div class="tabs" id="tabs"></div>
         <div class="actions-row">
+          <label style="color:#9bb0ff;">Roster date:</label>
+          <input id="roster-date" type="date" style="background:#050b1c;border:1px solid #243258;border-radius:10px;color:#fff;padding:.4rem .6rem;" />
+          <label style="color:#9bb0ff;">Store:</label>
+          <input id="roster-store" type="number" min="1" value="1" style="width:80px;background:#050b1c;border:1px solid #243258;border-radius:10px;color:#fff;padding:.4rem .6rem;" />
+          <button class="ghost-btn" type="button" id="load-roster-btn">Load Roster</button>
+          <div class="status" id="roster-status"></div>
+        </div>
+        <div class="actions-row">
           <button class="primary-btn" type="button" id="save-week-btn">Save Week</button>
           <button class="ghost-btn" type="button" id="refresh-week-btn">Reload Week</button>
           <div class="status" id="weekly-status"></div>
         </div>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Server</th>
-                <th>Tuesday</th>
-                <th>Wednesday</th>
-                <th>Thursday</th>
-                <th>Friday</th>
-                <th>Saturday</th>
-                <th>Sunday</th>
-                <th>Monday</th>
-                <th>This Week</th>
-                <th>YTD</th>
-                <th>Goal</th>
-              </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-          </table>
+        <div class="table-scroll">
+          <div class="split-table">
+            <div class="split-title">Active roster</div>
+            <table>
+              <thead>
+                <tr class="weekly-head-row" id="weekly-head-row-active"></tr>
+              </thead>
+              <tbody id="table-body-active"></tbody>
+            </table>
+          </div>
+          <div class="split-table hidden" id="inactive-roster-section">
+            <div class="split-title">Other servers</div>
+            <table>
+              <thead>
+                <tr class="weekly-head-row" id="weekly-head-row-inactive"></tr>
+              </thead>
+              <tbody id="table-body-inactive"></tbody>
+            </table>
+          </div>
         </div>
       </section>
       <section id="cobrands-view" class="hidden">
@@ -784,8 +802,14 @@
       const weeksCount = 8;
 
       const tabsEl = document.getElementById('tabs');
-      const tbody = document.getElementById('table-body');
-      const weeklyHeadRow = document.getElementById('weekly-head-row') || document.querySelector('#weekly-view thead tr');
+      const weeklyHeadRows = Array.from(document.querySelectorAll('.weekly-head-row'));
+      const activeTbody = document.getElementById('table-body-active');
+      const inactiveTbody = document.getElementById('table-body-inactive');
+      const inactiveRosterSection = document.getElementById('inactive-roster-section');
+      const rosterDateInput = document.getElementById('roster-date');
+      const rosterStoreInput = document.getElementById('roster-store');
+      const loadRosterBtn = document.getElementById('load-roster-btn');
+      const rosterStatus = document.getElementById('roster-status');
       const modePill = document.getElementById('mode-pill');
       const modeSubtitle = document.getElementById('mode-subtitle');
       const statusMsg = document.createElement('div');
@@ -869,6 +893,7 @@
       let seasons = [];
       let selectedSeasonYear = null;
       let weeklySort = { field: null, direction: 'desc' };
+      let activeRosterNames = null;
 
       const dayKeys = ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday'];
       const christmasDays = Array.from({ length: 12 }, (_, idx) => {
@@ -1004,7 +1029,7 @@
       };
 
       const renderWeeklyHeadLabels = () => {
-        if (!weeklyHeadRow) return;
+        if (!weeklyHeadRows.length) return;
         const sortIndicator = (key) => {
           if (weeklySort.field !== key) return '';
           return weeklySort.direction === 'asc' ? ' ▲' : ' ▼';
@@ -1013,13 +1038,16 @@
           const dateLabel = getDateLabelFor(currentWeek, idx);
           return `${d}${dateLabel ? ` (${dateLabel})` : ''}`;
         });
-        weeklyHeadRow.innerHTML = `
+        const headerHtml = `
           <th data-sort="name" class="sortable">Server${sortIndicator('name')}</th>
           ${labels.map((l, idx) => `<th data-sort="${days[idx]}" class="sortable">${l}${sortIndicator(days[idx])}</th>`).join('')}
           <th data-sort="week" class="sortable">This Week${sortIndicator('week')}</th>
           <th data-sort="ytd" class="sortable">YTD${sortIndicator('ytd')}</th>
           <th data-sort="goal" class="sortable">Goal${sortIndicator('goal')}</th>
         `;
+        weeklyHeadRows.forEach((row) => {
+          row.innerHTML = headerHtml;
+        });
       };
 
       const getSeasonStartDate = () => {
@@ -1294,6 +1322,45 @@
         return data.map((emp) => `${emp.first_name} ${emp.last_name}`.trim());
       };
 
+      const normalizeName = (value) => (value || '').trim().toLowerCase();
+
+      const loadDailyRoster = async () => {
+        if (!rosterDateInput) return;
+        const dateVal = rosterDateInput.value;
+        if (!dateVal) {
+          activeRosterNames = null;
+          setStatus(rosterStatus, 'Select a roster date.');
+          renderTable();
+          return;
+        }
+        const params = new URLSearchParams();
+        params.append('date', dateVal);
+        const storeVal = rosterStoreInput?.value;
+        if (storeVal) params.append('store_id', storeVal);
+        setStatus(rosterStatus, 'Loading roster...');
+        try {
+          const resp = await authFetch(`/daily-rosters?${params.toString()}`);
+          if (resp.status === 401) throw new Error('Unauthorized. Log in again.');
+          if (!resp.ok) throw new Error(`Roster fetch failed (${resp.status})`);
+          const data = await resp.json();
+          if (!Array.isArray(data) || !data.length) {
+            activeRosterNames = null;
+            setStatus(rosterStatus, 'No roster found for that date.');
+            renderTable();
+            return;
+          }
+          const roster = data[0];
+          const entries = Array.isArray(roster.entries) ? roster.entries : [];
+          activeRosterNames = new Set(entries.map((entry) => normalizeName(entry.name)));
+          setStatus(rosterStatus, `Loaded ${activeRosterNames.size} rostered server${activeRosterNames.size === 1 ? '' : 's'}.`);
+        } catch (err) {
+          console.error(err);
+          activeRosterNames = null;
+          setStatus(rosterStatus, err.message || 'Unable to load roster.', true);
+        }
+        renderTable();
+      };
+
       const renderTabs = () => {
         tabsEl.innerHTML = '';
         for (let w = 1; w <= weeksCount; w++) {
@@ -1418,9 +1485,14 @@
           });
         }
 
-        tbody.innerHTML = '';
-        rows.forEach((entry) => {
-          const { row, rowIndex, nameKey, dailyBonuses, weekTotal, ytd, goal } = entry;
+        if (!activeTbody) return;
+        const totalColumns = days.length + 4;
+        const renderEmpty = (target, message) => {
+          if (!target) return;
+          target.innerHTML = `<tr><td colspan="${totalColumns}" style="text-align:center;color:#8ea0d6;">${message}</td></tr>`;
+        };
+        const buildRow = (entry) => {
+          const { row, rowIndex, dailyBonuses, weekTotal, ytd, goal } = entry;
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td style="text-align:left;font-weight:600;">${row.name}</td>
@@ -1439,11 +1511,51 @@
             <td>${ytd}</td>
             <td>${goal}</td>
           `;
-          tbody.appendChild(tr);
-        });
+          return tr;
+        };
+
+        const activeRows = [];
+        const inactiveRows = [];
+        if (activeRosterNames && activeRosterNames.size) {
+          rows.forEach((entry) => {
+            if (activeRosterNames.has(entry.nameKey)) {
+              activeRows.push(entry);
+            } else {
+              inactiveRows.push(entry);
+            }
+          });
+        } else {
+          activeRows.push(...rows);
+        }
+
+        activeTbody.innerHTML = '';
+        if (activeRows.length) {
+          activeRows.forEach((entry) => {
+            activeTbody.appendChild(buildRow(entry));
+          });
+        } else {
+          renderEmpty(activeTbody, 'No servers match the active roster.');
+        }
+
+        if (inactiveRosterSection && inactiveTbody) {
+          if (activeRosterNames && activeRosterNames.size) {
+            inactiveRosterSection.classList.remove('hidden');
+            inactiveTbody.innerHTML = '';
+            if (inactiveRows.length) {
+              inactiveRows.forEach((entry) => {
+                inactiveTbody.appendChild(buildRow(entry));
+              });
+            } else {
+              renderEmpty(inactiveTbody, 'No other servers outside the roster.');
+            }
+          } else {
+            inactiveRosterSection.classList.add('hidden');
+            inactiveTbody.innerHTML = '';
+          }
+        }
 
         if (isAdmin) {
-          tbody.querySelectorAll('input').forEach((input) => {
+          document.querySelectorAll('#table-body-active input, #table-body-inactive input').forEach((input) => {
             input.addEventListener('change', (e) => {
               const rowIdx = Number(e.target.dataset.row);
               const day = e.target.dataset.day;
@@ -2272,8 +2384,8 @@
         });
       }
 
-      if (weeklyHeadRow) {
-        weeklyHeadRow.addEventListener('click', (event) => {
+      weeklyHeadRows.forEach((headRow) => {
+        headRow.addEventListener('click', (event) => {
           const th = event.target.closest('th[data-sort]');
           if (!th) return;
           const field = th.dataset.sort;
@@ -2287,7 +2399,7 @@
           renderWeeklyHeadLabels();
           renderTable();
         });
-      }
+      });
 
       if (cobrandTableHead) {
         cobrandTableHead.addEventListener('click', (event) => {
@@ -2308,6 +2420,21 @@
         refreshWeekBtn.addEventListener('click', () => {
           loadGiftTrackerData();
           loadCobrandTotalsForTracker();
+        });
+      }
+      if (loadRosterBtn) {
+        loadRosterBtn.addEventListener('click', () => {
+          loadDailyRoster();
+        });
+      }
+      if (rosterDateInput) {
+        rosterDateInput.addEventListener('change', () => {
+          loadDailyRoster();
+        });
+      }
+      if (rosterStoreInput) {
+        rosterStoreInput.addEventListener('change', () => {
+          loadDailyRoster();
         });
       }
 
@@ -2492,13 +2619,20 @@
           initData(serverNames);
           initChristmasData(serverNames);
         } else {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff9b9b;">No roster data loaded. Please log in as an authenticated user.</td></tr>';
+          if (activeTbody) {
+            activeTbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff9b9b;">No roster data loaded. Please log in as an authenticated user.</td></tr>';
+          }
+          if (inactiveRosterSection) inactiveRosterSection.classList.add('hidden');
           renderTabs();
           return;
         }
         renderTabs();
         renderSeasonSelect();
         renderWeeklyHeadLabels();
+        if (rosterDateInput && !rosterDateInput.value) {
+          rosterDateInput.value = new Date().toISOString().split('T')[0];
+        }
+        await loadDailyRoster();
         await loadGiftTrackerData();
         await loadCobrandTotalsForTracker();
         renderChristmasHead();
