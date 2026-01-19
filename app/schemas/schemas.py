@@ -12,6 +12,8 @@ from app.models import (
     UserRole,
     PayoutType,
     POSOrderStatus,
+    PyosShift,
+    PyosStatus,
 )
 
 
@@ -33,6 +35,7 @@ class UserRead(TimestampModel):
     email: EmailStr
     full_name: str
     role: UserRole
+    employee_id: Optional[int] = None
 
 
 class TokenResponse(BaseModel):
@@ -44,6 +47,10 @@ class TokenResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserEmployeeLink(BaseModel):
+    employee_id: int
 
 
 class EmployeeBase(BaseModel):
@@ -555,3 +562,62 @@ class TeamSheetPresetRead(TeamSheetPresetBase, TimestampModel):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PyosCreditRead(TimestampModel):
+    id: int
+    employee_id: int
+    balance: int
+
+
+class PyosCreditGrant(BaseModel):
+    employee_id: int
+    delta: int = Field(gt=0)
+    note: Optional[str] = None
+
+
+class PyosRequestCreate(BaseModel):
+    section_id: int
+    date: date
+    shift: PyosShift
+    notes: Optional[str] = None
+
+
+class PyosRequestManualCreate(BaseModel):
+    employee_id: int
+    section_id: int
+    date: date
+    shift: PyosShift
+    notes: Optional[str] = None
+
+
+class PyosRequestAction(BaseModel):
+    notes: Optional[str] = None
+
+
+class PyosRequestRead(TimestampModel):
+    id: int
+    employee_id: int
+    section_id: int
+    date: date
+    shift: PyosShift
+    status: PyosStatus
+    notes: Optional[str] = None
+    created_by_user_id: int
+    approved_by_user_id: Optional[int] = None
+    denied_by_user_id: Optional[int] = None
+    revoked_by_user_id: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    denied_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    employee_name: Optional[str] = None
+    section_label: Optional[str] = None
+
+
+class PyosAuditRead(TimestampModel):
+    id: int
+    actor_user_id: int
+    employee_id: Optional[int] = None
+    action: str
+    delta: Optional[int] = None
+    details_json: Optional[dict] = None

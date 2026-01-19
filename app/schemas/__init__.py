@@ -46,6 +46,13 @@ from .schemas import (
     DailyRosterRead,
     TeamSheetPresetCreate,
     TeamSheetPresetRead,
+    PyosAuditRead,
+    PyosCreditGrant,
+    PyosCreditRead,
+    PyosRequestAction,
+    PyosRequestCreate,
+    PyosRequestManualCreate,
+    PyosRequestRead,
     SectionCreate,
     SectionRead,
     SectionUpdate,
@@ -61,6 +68,7 @@ from .schemas import (
     TokenResponse,
     UserCreate,
     UserRead,
+    UserEmployeeLink,
 )
 
 __all__ = [
@@ -84,6 +92,7 @@ __all__ = [
     "SeasonRead",
     "UserCreate",
     "UserRead",
+    "UserEmployeeLink",
     "TokenResponse",
     "LoginRequest",
     "EmployeeCreate",
@@ -126,4 +135,11 @@ __all__ = [
     "DailyRosterRead",
     "TeamSheetPresetCreate",
     "TeamSheetPresetRead",
+    "PyosAuditRead",
+    "PyosCreditGrant",
+    "PyosCreditRead",
+    "PyosRequestAction",
+    "PyosRequestCreate",
+    "PyosRequestManualCreate",
+    "PyosRequestRead",
 ]

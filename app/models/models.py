@@ -13,6 +13,7 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -54,6 +55,18 @@ class TeamSheetStatus(str, enum.Enum):
     ARCHIVED = "ARCHIVED"
 
 
+class PyosShift(str, enum.Enum):
+    AM = "AM"
+    PM = "PM"
+
+
+class PyosStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    DENIED = "DENIED"
+    REVOKED = "REVOKED"
+
+
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
@@ -71,9 +84,11 @@ class User(Base, TimestampMixin):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.SERVER)
+    employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"))
 
     shifts = relationship("Shift", back_populates="creator")
     team_sheets = relationship("TeamSheet", back_populates="creator")
+    employee = relationship("Employee")
 
 
 class Employee(Base, TimestampMixin):
@@ -251,6 +266,60 @@ class GiftTrackerEntry(Base, TimestampMixin):
     __table_args__ = (
         {"sqlite_autoincrement": True},
     )
+
+
+class PyosCredit(Base, TimestampMixin):
+    __tablename__ = "pyos_credits"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), unique=True, nullable=False)
+    balance: Mapped[int] = mapped_column(Integer, default=0)
+
+    employee = relationship("Employee")
+
+
+class PyosRequest(Base, TimestampMixin):
+    __tablename__ = "pyos_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
+    section_id: Mapped[int] = mapped_column(ForeignKey("sections.id"), nullable=False)
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    shift: Mapped[PyosShift] = mapped_column(Enum(PyosShift), nullable=False)
+    status: Mapped[PyosStatus] = mapped_column(Enum(PyosStatus), default=PyosStatus.PENDING)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    approved_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    denied_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    revoked_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    denied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    employee = relationship("Employee")
+    section = relationship("Section")
+    created_by = relationship("User", foreign_keys=[created_by_user_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_user_id])
+    denied_by = relationship("User", foreign_keys=[denied_by_user_id])
+    revoked_by = relationship("User", foreign_keys=[revoked_by_user_id])
+
+    __table_args__ = (
+        UniqueConstraint("section_id", "date", "shift", name="uq_pyos_section_date_shift"),
+    )
+
+
+class PyosAudit(Base, TimestampMixin):
+    __tablename__ = "pyos_audit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"))
+    action: Mapped[str] = mapped_column(String(50))
+    delta: Mapped[int | None] = mapped_column(Integer)
+    details_json: Mapped[dict | None] = mapped_column(JSON)
+
+    actor = relationship("User")
+    employee = relationship("Employee")
 
 
 class PayoutType(str, enum.Enum):

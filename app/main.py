@@ -6,8 +6,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import Base, engine, ensure_sqlite_sections_columns
-from app.routers import auth, employees, imports, sections, shifts, team_sheets, cobrands, gift_tracker, payouts, seasons, store_preferences, pos, inventory, daily_rosters, teamsheet_presets
+from app.database import Base, engine, ensure_sqlite_sections_columns, ensure_sqlite_user_columns
+from app.routers import auth, employees, imports, sections, shifts, team_sheets, cobrands, gift_tracker, payouts, seasons, store_preferences, pos, inventory, daily_rosters, teamsheet_presets, pyos
 
 PUBLIC_DIR = Path(__file__).resolve().parent.parent / "public"
 
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(inventory.router)
     app.include_router(daily_rosters.router)
     app.include_router(teamsheet_presets.router)
+    app.include_router(pyos.router)
 
     @app.get("/health")
     def health():
@@ -54,4 +55,5 @@ def create_app() -> FastAPI:
 
 Base.metadata.create_all(bind=engine)
 ensure_sqlite_sections_columns()
+ensure_sqlite_user_columns()
 app = create_app()

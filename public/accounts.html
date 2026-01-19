@@ -33,12 +33,38 @@
         font-weight: 600;
         text-decoration: none;
       }
+      .logout-btn {
+        border: 1px solid #4b7bff;
+        background: linear-gradient(135deg, #1f3568, #2f6bff);
+        color: #fff;
+        padding: .6rem 1.2rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 1rem;
+      }
     </style>
   </head>
   <body>
     <div class="shell">
       <a class="back-btn" href="/static/index.html">← Back</a>
       <h1>Accounts</h1>
+      <button class="logout-btn" id="logout-btn" type="button">Log out</button>
     </div>
+    <script>
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          try {
+            await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+          } catch (err) {
+            console.warn('Logout request failed.', err);
+          }
+          localStorage.removeItem('tss_access_token');
+          localStorage.removeItem('tss_refresh_token');
+          window.location.href = '/static/login.html';
+        });
+      }
+    </script>
   </body>
 </html>

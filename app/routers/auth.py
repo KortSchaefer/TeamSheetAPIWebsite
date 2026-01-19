@@ -96,3 +96,33 @@ def login_token(
 @router.get("/me", response_model=schemas.UserRead)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/link-employee/{user_id}", response_model=schemas.UserRead)
+def link_employee(
+    user_id: int,
+    payload: schemas.UserEmployeeLink,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_manager_or_admin),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    from app.models import Employee
+
+    employee = db.query(Employee).filter(Employee.id == payload.employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    user.employee_id = employee.id
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response, request: Request):
+    secure_cookie = request.url.scheme == "https"
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.delete_cookie("tss_access_token", path="/", samesite="lax", secure=secure_cookie)
+    response.delete_cookie("tss_refresh_token", path="/", samesite="lax", secure=secure_cookie)
+    return response

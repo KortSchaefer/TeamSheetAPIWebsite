@@ -1,26 +1,29 @@
+﻿
 <!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Pick Your Own Sections</title>
+    <title>Pick Your Own Section</title>
     <style>
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: radial-gradient(circle at 70% 10%, #2b3f76, #0a1223 60%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 20% 20%, #1f2b55, #080d1c 60%);
         color: #f5f7ff;
         font-family: "Inter", "Segoe UI", system-ui, sans-serif;
       }
-      .card {
-        width: min(900px, 90vw);
-        background: rgba(10, 18, 35, 0.85);
-        border-radius: 28px;
-        padding: 2.5rem;
-        border: 1px solid #1f2d51;
-        text-align: center;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      .hidden {
+        display: none !important;
+      }
+      .status {
+        color: #9bb0ff;
+        font-size: .95rem;
+      }
+      .status.error {
+        color: #ff9b9b;
       }
       .back-btn {
         position: fixed;
@@ -38,26 +41,851 @@
         color: #cfe0ff;
         border-color: #4b7bff;
       }
+      .card {
+        width: min(1200px, 96vw);
+        background: rgba(10, 18, 35, 0.85);
+        border-radius: 28px;
+        padding: 2rem;
+        border: 1px solid #1f2d51;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
       h1 {
-        margin: 0 0 .6rem;
-        font-size: 2.2rem;
+        margin: 0;
+        font-size: 2rem;
       }
       p {
         margin: 0;
         color: #a4b6e6;
       }
-      a {
-        color: #77b0ff;
-        text-decoration: none;
+      .mode-pill {
+        align-self: flex-start;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+        border: 1px solid #2a365a;
+        background: rgba(255,255,255,0.05);
+        color: #9bb0ff;
         font-weight: 600;
+        font-size: .9rem;
+      }
+      .panel {
+        background: rgba(7, 14, 28, 0.6);
+        border: 1px solid #1d2747;
+        border-radius: 22px;
+        padding: 1.5rem;
+        margin-top: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .panel-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .6rem;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .panel h2 {
+        margin: 0;
+        font-size: 1.3rem;
+      }
+      .panel-subtitle {
+        margin: 0;
+        color: #91a3de;
+        font-size: .95rem;
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+      }
+      .form-field label {
+        text-transform: uppercase;
+        font-size: .8rem;
+        letter-spacing: .08em;
+        color: #9bb0ff;
+      }
+      .form-field input,
+      .form-field select {
+        border-radius: 10px;
+        border: 1px solid #243258;
+        background: #050b1c;
+        color: #f5f7ff;
+        padding: .5rem .6rem;
+        font-size: 1rem;
+      }
+      .primary-btn {
+        background: linear-gradient(135deg, #4b63f7, #47a0ff);
+        border: none;
+        color: #fff;
+        border-radius: 12px;
+        padding: .6rem 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .ghost-btn {
+        border: 1px solid #2c3c68;
+        background: transparent;
+        color: #dbe3ff;
+        border-radius: 12px;
+        padding: .4rem 1rem;
+        cursor: pointer;
+      }
+      .pyos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+      .pyos-card {
+        background: rgba(7, 14, 28, 0.6);
+        border: 1px solid #1d2747;
+        border-radius: 20px;
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: .8rem;
+      }
+      .pyos-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .pyos-list {
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+      }
+      .pyos-item {
+        border: 1px solid #25345b;
+        border-radius: 14px;
+        padding: .6rem .8rem;
+        background: rgba(10, 18, 35, 0.6);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .6rem;
+      }
+      .pyos-item small {
+        color: #9bb0ff;
+      }
+      .auth-gate {
+        position: fixed;
+        inset: 0;
+        background: rgba(7, 13, 25, 0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        z-index: 50;
+      }
+      .auth-panel {
+        width: min(420px, 90vw);
+        background: #0a1326;
+        border: 1px solid #26345c;
+        border-radius: 20px;
+        padding: 1.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+      }
+      .auth-panel h2 {
+        margin: 0;
+      }
+      .auth-panel form {
+        display: flex;
+        flex-direction: column;
+        gap: .7rem;
+      }
+      .auth-panel label {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+        font-size: .85rem;
+        color: #9bb0ff;
+      }
+      .auth-panel input {
+        border-radius: 10px;
+        border: 1px solid #243258;
+        background: #050b1c;
+        color: #f5f7ff;
+        padding: .55rem .6rem;
+        font-size: 1rem;
+      }
+      .auth-status {
+        min-height: 1.4rem;
+        font-size: .9rem;
+        color: #9bb0ff;
+      }
+      .auth-status.error {
+        color: #ff9b9b;
       }
     </style>
   </head>
   <body>
-    <button class="back-btn" onclick="window.location.href='/static/index.html'">← Back</button>
+    <button class="back-btn" onclick="window.location.href='/static/index.html'">Back</button>
     <div class="card">
-      <h1>Pick Your Own Sections</h1>
-      <p>Placeholder page. Build draft/selection UI here.</p>
+      <div class="header-row">
+        <div>
+          <h1>Pick Your Own Section</h1>
+          <p id="mode-subtitle">Loading role...</p>
+        </div>
+        <div id="mode-pill" class="mode-pill">Checking role...</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>PYOS Dashboard</h2>
+            <p class="panel-subtitle">Use credits to reserve your section for a shift.</p>
+          </div>
+        </div>
+        <div id="pyos-server-view" class="pyos-grid hidden">
+          <div class="pyos-card">
+            <h3>My Credits</h3>
+            <div style="font-size:2rem;font-weight:700;" id="pyos-credit-balance">0</div>
+            <div class="status" id="pyos-credit-status"></div>
+          </div>
+          <div class="pyos-card">
+            <h3>Request a Section</h3>
+            <div class="form-field">
+              <label for="pyos-date">Date</label>
+              <input id="pyos-date" type="date" />
+            </div>
+            <div class="form-field">
+              <label for="pyos-shift">Shift</label>
+              <select id="pyos-shift">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="pyos-section">Section</label>
+              <select id="pyos-section"></select>
+            </div>
+            <button class="primary-btn" type="button" id="pyos-submit">Submit Request</button>
+            <div class="status" id="pyos-submit-status"></div>
+          </div>
+          <div class="pyos-card">
+            <h3>My Requests</h3>
+            <div class="pyos-list" id="pyos-my-requests"></div>
+          </div>
+        </div>
+        <div id="pyos-manager-view" class="pyos-grid hidden">
+          <div class="pyos-card">
+            <h3>Grant Credits</h3>
+            <div class="form-field">
+              <label for="pyos-credit-employee">Server</label>
+              <select id="pyos-credit-employee"></select>
+            </div>
+            <div class="form-field">
+              <label for="pyos-credit-amount">Credits</label>
+              <input id="pyos-credit-amount" type="number" min="1" value="1" />
+            </div>
+            <div class="form-field">
+              <label for="pyos-credit-note">Note</label>
+              <input id="pyos-credit-note" type="text" />
+            </div>
+            <button class="primary-btn" type="button" id="pyos-grant-credit">Grant</button>
+            <div class="status" id="pyos-credit-manager-status"></div>
+          </div>
+          <div class="pyos-card">
+            <h3>Manual Assign</h3>
+            <div class="form-field">
+              <label for="pyos-manual-employee">Server</label>
+              <select id="pyos-manual-employee"></select>
+            </div>
+            <div class="form-field">
+              <label for="pyos-manual-date">Date</label>
+              <input id="pyos-manual-date" type="date" />
+            </div>
+            <div class="form-field">
+              <label for="pyos-manual-shift">Shift</label>
+              <select id="pyos-manual-shift">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="pyos-manual-section">Section</label>
+              <select id="pyos-manual-section"></select>
+            </div>
+            <div class="form-field">
+              <label for="pyos-manual-note">Note</label>
+              <input id="pyos-manual-note" type="text" />
+            </div>
+            <button class="primary-btn" type="button" id="pyos-manual-submit">Assign</button>
+            <div class="status" id="pyos-manual-status"></div>
+          </div>
+          <div class="pyos-card">
+            <h3>Approval Queue</h3>
+            <div class="pyos-list" id="pyos-queue"></div>
+          </div>
+          <div class="pyos-card">
+            <h3>All Picks</h3>
+            <div class="form-field">
+              <label for="pyos-filter-date">Date</label>
+              <input id="pyos-filter-date" type="date" />
+            </div>
+            <div class="form-field">
+              <label for="pyos-filter-shift">Shift</label>
+              <select id="pyos-filter-shift">
+                <option value="">Any</option>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <button class="ghost-btn" type="button" id="pyos-filter-refresh">Refresh</button>
+            <div class="pyos-list" id="pyos-all-requests"></div>
+          </div>
+        </div>
+      </div>
     </div>
+    <div id="auth-gate" class="auth-gate hidden">
+      <div class="auth-panel">
+        <div>
+          <h2>Sign in required</h2>
+          <p>Log in to access PYOS.</p>
+        </div>
+        <form id="auth-gate-form">
+          <label>
+            Email
+            <input id="auth-email" type="email" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Password
+            <input id="auth-password" type="password" placeholder="Your password" required />
+          </label>
+          <button type="submit" class="primary-btn">Sign in</button>
+        </form>
+        <div id="auth-gate-status" class="auth-status"></div>
+      </div>
+    </div>
+    <script>
+      const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+      const modePill = document.getElementById('mode-pill');
+      const modeSubtitle = document.getElementById('mode-subtitle');
+      const pyosServerView = document.getElementById('pyos-server-view');
+      const pyosManagerView = document.getElementById('pyos-manager-view');
+      const pyosCreditBalance = document.getElementById('pyos-credit-balance');
+      const pyosCreditStatus = document.getElementById('pyos-credit-status');
+      const pyosDateInput = document.getElementById('pyos-date');
+      const pyosShiftSelect = document.getElementById('pyos-shift');
+      const pyosSectionSelect = document.getElementById('pyos-section');
+      const pyosSubmitBtn = document.getElementById('pyos-submit');
+      const pyosSubmitStatus = document.getElementById('pyos-submit-status');
+      const pyosMyRequests = document.getElementById('pyos-my-requests');
+      const pyosCreditEmployee = document.getElementById('pyos-credit-employee');
+      const pyosCreditAmount = document.getElementById('pyos-credit-amount');
+      const pyosCreditNote = document.getElementById('pyos-credit-note');
+      const pyosGrantCreditBtn = document.getElementById('pyos-grant-credit');
+      const pyosCreditManagerStatus = document.getElementById('pyos-credit-manager-status');
+      const pyosManualEmployee = document.getElementById('pyos-manual-employee');
+      const pyosManualDate = document.getElementById('pyos-manual-date');
+      const pyosManualShift = document.getElementById('pyos-manual-shift');
+      const pyosManualSection = document.getElementById('pyos-manual-section');
+      const pyosManualNote = document.getElementById('pyos-manual-note');
+      const pyosManualSubmit = document.getElementById('pyos-manual-submit');
+      const pyosManualStatus = document.getElementById('pyos-manual-status');
+      const pyosQueue = document.getElementById('pyos-queue');
+      const pyosFilterDate = document.getElementById('pyos-filter-date');
+      const pyosFilterShift = document.getElementById('pyos-filter-shift');
+      const pyosFilterRefresh = document.getElementById('pyos-filter-refresh');
+      const pyosAllRequests = document.getElementById('pyos-all-requests');
+      const authGate = document.getElementById('auth-gate');
+      const authGateForm = document.getElementById('auth-gate-form');
+      const authGateStatus = document.getElementById('auth-gate-status');
+      const authEmailInput = document.getElementById('auth-email');
+      const authPasswordInput = document.getElementById('auth-password');
+
+      let isAdmin = false;
+      let pyosSections = [];
+      let pyosEmployees = [];
+
+      const setStatus = (node, message, isError = false) => {
+        if (!node) return;
+        if (!message) {
+          node.textContent = '';
+          node.classList.remove('error');
+          return;
+        }
+        node.textContent = message;
+        node.classList.toggle('error', Boolean(isError));
+      };
+
+      const getStoredToken = () => {
+        const cookieMatch = document.cookie
+          .split(';')
+          .map((c) => c.trim())
+          .find((c) => c.startsWith('tss_access_token='));
+        if (cookieMatch) return cookieMatch.split('=')[1];
+        return localStorage.getItem('tss_access_token');
+      };
+
+      const authFetch = (url, options = {}) => {
+        const headers = { ...(options.headers || {}) };
+        const token = getStoredToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return fetch(url, { ...options, headers, credentials: 'include' });
+      };
+
+      const setStoredTokens = (access, refresh) => {
+        if (access) {
+          document.cookie = `tss_access_token=${access}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+          localStorage.setItem('tss_access_token', access);
+        }
+        if (refresh) {
+          document.cookie = `tss_refresh_token=${refresh}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+          localStorage.setItem('tss_refresh_token', refresh);
+        }
+      };
+
+      const setAuthGateStatus = (message, isError = false) => {
+        if (!authGateStatus) return;
+        authGateStatus.textContent = message || '';
+        authGateStatus.className = `auth-status ${isError ? 'error' : 'success'}`;
+      };
+
+      const showAuthGate = (message) => {
+        if (!authGate) return;
+        authGate.classList.remove('hidden');
+        setAuthGateStatus(message || 'Please sign in to continue.', false);
+      };
+
+      const hideAuthGate = () => {
+        if (!authGate) return;
+        authGate.classList.add('hidden');
+        setAuthGateStatus('', false);
+      };
+
+      const loginFromGate = async (email, password) => {
+        const resp = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json().catch(() => ({}));
+        if (data?.access_token) {
+          setStoredTokens(data.access_token, data.refresh_token);
+        }
+      };
+
+      const ensureAuthenticated = async () => {
+        try {
+          const resp = await authFetch('/auth/me');
+          if (!resp.ok) throw new Error('Not authenticated');
+          hideAuthGate();
+          return true;
+        } catch (err) {
+          showAuthGate('Session missing or expired. Sign in again.');
+          return false;
+        }
+      };
+
+      const determineRole = async () => {
+        const resp = await authFetch('/auth/me');
+        if (!resp.ok) throw new Error('Not authenticated');
+        const me = await resp.json();
+        isAdmin = me.role === 'ADMIN' || me.role === 'MANAGER';
+        modePill.textContent = isAdmin ? 'Manager view' : 'Server view';
+        modeSubtitle.textContent = isAdmin
+          ? 'Approve PYOS requests and grant credits.'
+          : 'Use your credits to reserve a section.';
+      };
+      const loadPyosSections = async () => {
+        if (pyosSections.length) return;
+        const resp = await authFetch('/sections');
+        if (!resp.ok) throw new Error(`Unable to load sections (${resp.status})`);
+        const data = await resp.json();
+        pyosSections = Array.isArray(data) ? data : [];
+      };
+
+      const loadPyosEmployees = async () => {
+        if (pyosEmployees.length) return;
+        const resp = await authFetch('/employees?role=SERVER&active=true');
+        if (!resp.ok) throw new Error(`Unable to load servers (${resp.status})`);
+        const data = await resp.json();
+        pyosEmployees = Array.isArray(data) ? data : [];
+      };
+
+      const loadPyosCredits = async () => {
+        try {
+          const resp = await authFetch('/pyos/credits/me');
+          if (!resp.ok) throw new Error(`Unable to load credits (${resp.status})`);
+          const data = await resp.json();
+          if (pyosCreditBalance) pyosCreditBalance.textContent = data.balance ?? 0;
+          setStatus(pyosCreditStatus, '');
+        } catch (err) {
+          console.error(err);
+          setStatus(pyosCreditStatus, err.message || 'Unable to load credits', true);
+        }
+      };
+
+      const renderPyosSelectOptions = (selectEl, options, placeholder = 'Select') => {
+        if (!selectEl) return;
+        selectEl.innerHTML = '';
+        const ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = placeholder;
+        selectEl.appendChild(ph);
+        options.forEach((opt) => {
+          const o = document.createElement('option');
+          o.value = opt.value;
+          o.textContent = opt.label;
+          selectEl.appendChild(o);
+        });
+      };
+
+      const refreshPyosSectionOptions = async () => {
+        if (!pyosDateInput || !pyosShiftSelect) return;
+        const dateVal = pyosDateInput.value;
+        const shiftVal = pyosShiftSelect.value;
+        if (!dateVal || !shiftVal) {
+          renderPyosSelectOptions(pyosSectionSelect, []);
+          return;
+        }
+        try {
+          const resp = await authFetch(`/pyos/occupied?date=${encodeURIComponent(dateVal)}&shift=${encodeURIComponent(shiftVal)}`);
+          if (!resp.ok) throw new Error(`Unable to load availability (${resp.status})`);
+          const occupied = new Set((await resp.json()).map((id) => Number(id)));
+          const available = pyosSections.filter((section) => !occupied.has(section.id));
+          renderPyosSelectOptions(
+            pyosSectionSelect,
+            available.map((section) => ({ value: section.id, label: section.label || section.name })),
+            available.length ? 'Choose section' : 'No sections available',
+          );
+        } catch (err) {
+          console.error(err);
+          renderPyosSelectOptions(pyosSectionSelect, []);
+        }
+      };
+
+      const refreshPyosManualSections = async () => {
+        if (!pyosManualDate || !pyosManualShift) return;
+        const dateVal = pyosManualDate.value;
+        const shiftVal = pyosManualShift.value;
+        if (!dateVal || !shiftVal) {
+          renderPyosSelectOptions(pyosManualSection, []);
+          return;
+        }
+        try {
+          const resp = await authFetch(`/pyos/occupied?date=${encodeURIComponent(dateVal)}&shift=${encodeURIComponent(shiftVal)}`);
+          if (!resp.ok) throw new Error(`Unable to load availability (${resp.status})`);
+          const occupied = new Set((await resp.json()).map((id) => Number(id)));
+          const available = pyosSections.filter((section) => !occupied.has(section.id));
+          renderPyosSelectOptions(
+            pyosManualSection,
+            available.map((section) => ({ value: section.id, label: section.label || section.name })),
+            available.length ? 'Choose section' : 'No sections available',
+          );
+        } catch (err) {
+          console.error(err);
+          renderPyosSelectOptions(pyosManualSection, []);
+        }
+      };
+      const renderPyosRequests = (target, requests, showActions) => {
+        if (!target) return;
+        if (!requests.length) {
+          target.innerHTML = '<div style="color:#8ea0d6;">No requests yet.</div>';
+          return;
+        }
+        target.innerHTML = '';
+        requests.forEach((req) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'pyos-item';
+          wrapper.innerHTML = `
+            <div>
+              <strong>${req.employee_name || 'Server'}</strong>
+              <div><small>${req.section_label || 'Section'} · ${req.date} · ${req.shift}</small></div>
+              <div><small>Status: ${req.status}</small></div>
+            </div>
+          `;
+          if (showActions) {
+            const actions = document.createElement('div');
+            actions.style.display = 'flex';
+            actions.style.gap = '.4rem';
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'ghost-btn';
+            approveBtn.textContent = 'Approve';
+            approveBtn.addEventListener('click', () => handlePyosApprove(req.id));
+            const denyBtn = document.createElement('button');
+            denyBtn.className = 'ghost-btn';
+            denyBtn.textContent = 'Deny';
+            denyBtn.addEventListener('click', () => handlePyosDeny(req.id));
+            actions.appendChild(approveBtn);
+            actions.appendChild(denyBtn);
+            wrapper.appendChild(actions);
+          } else if (req.status === 'APPROVED' && isAdmin) {
+            const revokeBtn = document.createElement('button');
+            revokeBtn.className = 'ghost-btn';
+            revokeBtn.textContent = 'Revoke';
+            revokeBtn.addEventListener('click', () => handlePyosRevoke(req.id));
+            wrapper.appendChild(revokeBtn);
+          }
+          target.appendChild(wrapper);
+        });
+      };
+
+      const loadPyosMyRequests = async () => {
+        const resp = await authFetch('/pyos/requests');
+        if (!resp.ok) throw new Error(`Unable to load requests (${resp.status})`);
+        const data = await resp.json();
+        renderPyosRequests(pyosMyRequests, Array.isArray(data) ? data : [], false);
+      };
+
+      const loadPyosQueue = async () => {
+        const resp = await authFetch('/pyos/requests?status=PENDING');
+        if (!resp.ok) throw new Error(`Unable to load queue (${resp.status})`);
+        const data = await resp.json();
+        renderPyosRequests(pyosQueue, Array.isArray(data) ? data : [], true);
+      };
+
+      const loadPyosAllRequests = async () => {
+        if (!pyosAllRequests) return;
+        const params = new URLSearchParams();
+        if (pyosFilterDate?.value) params.append('date', pyosFilterDate.value);
+        if (pyosFilterShift?.value) params.append('shift', pyosFilterShift.value);
+        const resp = await authFetch(`/pyos/requests?${params.toString()}`);
+        if (!resp.ok) throw new Error(`Unable to load picks (${resp.status})`);
+        const data = await resp.json();
+        renderPyosRequests(pyosAllRequests, Array.isArray(data) ? data : [], false);
+      };
+
+      const handlePyosApprove = async (id) => {
+        const resp = await authFetch(`/pyos/requests/${id}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (!resp.ok) return;
+        await refreshPyosManagerView();
+      };
+
+      const handlePyosDeny = async (id) => {
+        const resp = await authFetch(`/pyos/requests/${id}/deny`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (!resp.ok) return;
+        await refreshPyosManagerView();
+      };
+
+      const handlePyosRevoke = async (id) => {
+        const resp = await authFetch(`/pyos/requests/${id}/revoke`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (!resp.ok) return;
+        await refreshPyosManagerView();
+      };
+
+      const refreshPyosManagerView = async () => {
+        try {
+          await loadPyosQueue();
+          await loadPyosAllRequests();
+          await refreshPyosManualSections();
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      const renderPyosEmployeeOptions = () => {
+        const options = pyosEmployees.map((emp) => ({
+          value: emp.id,
+          label: `${emp.first_name} ${emp.last_name}`.trim(),
+        }));
+        renderPyosSelectOptions(pyosCreditEmployee, options, 'Select server');
+        renderPyosSelectOptions(pyosManualEmployee, options, 'Select server');
+      };
+
+      const refreshPyosView = async () => {
+        const today = new Date().toISOString().split('T')[0];
+        if (pyosDateInput) {
+          pyosDateInput.min = today;
+          if (!pyosDateInput.value) pyosDateInput.value = today;
+        }
+        if (pyosManualDate && !pyosManualDate.value) {
+          pyosManualDate.value = today;
+        }
+        if (pyosFilterDate && !pyosFilterDate.value) {
+          pyosFilterDate.value = today;
+        }
+        await loadPyosSections();
+        if (isAdmin) {
+          if (pyosServerView) pyosServerView.classList.add('hidden');
+          if (pyosManagerView) pyosManagerView.classList.remove('hidden');
+          await loadPyosEmployees();
+          renderPyosEmployeeOptions();
+          await refreshPyosManagerView();
+        } else {
+          if (pyosManagerView) pyosManagerView.classList.add('hidden');
+          if (pyosServerView) pyosServerView.classList.remove('hidden');
+          await loadPyosCredits();
+          await loadPyosMyRequests();
+          await refreshPyosSectionOptions();
+        }
+      };
+      if (authGateForm) {
+        authGateForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const email = authEmailInput?.value.trim();
+          const password = authPasswordInput?.value;
+          if (!email || !password) return;
+          try {
+            setAuthGateStatus('Signing in...');
+            await loginFromGate(email, password);
+            const ok = await ensureAuthenticated();
+            if (ok) {
+              setAuthGateStatus('Signed in.', false);
+              hideAuthGate();
+              await initialize();
+            }
+          } catch (err) {
+            setAuthGateStatus(err.message || 'Sign-in failed.', true);
+          }
+        });
+      }
+
+      if (pyosDateInput) {
+        pyosDateInput.addEventListener('change', () => {
+          refreshPyosSectionOptions();
+        });
+      }
+      if (pyosShiftSelect) {
+        pyosShiftSelect.addEventListener('change', () => {
+          refreshPyosSectionOptions();
+        });
+      }
+      if (pyosManualDate) {
+        pyosManualDate.addEventListener('change', () => {
+          refreshPyosManualSections();
+        });
+      }
+      if (pyosManualShift) {
+        pyosManualShift.addEventListener('change', () => {
+          refreshPyosManualSections();
+        });
+      }
+      if (pyosFilterRefresh) {
+        pyosFilterRefresh.addEventListener('click', () => {
+          loadPyosAllRequests();
+        });
+      }
+      if (pyosSubmitBtn) {
+        pyosSubmitBtn.addEventListener('click', async () => {
+          const dateVal = pyosDateInput?.value;
+          const shiftVal = pyosShiftSelect?.value;
+          const sectionVal = pyosSectionSelect?.value;
+          if (!dateVal || !shiftVal || !sectionVal) {
+            setStatus(pyosSubmitStatus, 'Choose date, shift, and section.', true);
+            return;
+          }
+          try {
+            const resp = await authFetch('/pyos/requests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                date: dateVal,
+                shift: shiftVal,
+                section_id: Number(sectionVal),
+              }),
+            });
+            if (!resp.ok) {
+              const detail = await resp.json().catch(() => ({}));
+              throw new Error(detail.detail || `Unable to submit (${resp.status})`);
+            }
+            setStatus(pyosSubmitStatus, 'Request submitted.');
+            await loadPyosCredits();
+            await loadPyosMyRequests();
+            await refreshPyosSectionOptions();
+          } catch (err) {
+            console.error(err);
+            setStatus(pyosSubmitStatus, err.message || 'Unable to submit', true);
+          }
+        });
+      }
+      if (pyosGrantCreditBtn) {
+        pyosGrantCreditBtn.addEventListener('click', async () => {
+          const employeeId = Number(pyosCreditEmployee?.value || 0);
+          const delta = Number(pyosCreditAmount?.value || 0);
+          if (!employeeId || delta < 1) {
+            setStatus(pyosCreditManagerStatus, 'Select a server and credit amount.', true);
+            return;
+          }
+          try {
+            const resp = await authFetch('/pyos/credits/grant', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                employee_id: employeeId,
+                delta,
+                note: pyosCreditNote?.value || '',
+              }),
+            });
+            if (!resp.ok) throw new Error(`Unable to grant (${resp.status})`);
+            setStatus(pyosCreditManagerStatus, 'Credits granted.');
+          } catch (err) {
+            console.error(err);
+            setStatus(pyosCreditManagerStatus, err.message || 'Unable to grant credits', true);
+          }
+        });
+      }
+      if (pyosManualSubmit) {
+        pyosManualSubmit.addEventListener('click', async () => {
+          const employeeId = Number(pyosManualEmployee?.value || 0);
+          const dateVal = pyosManualDate?.value;
+          const shiftVal = pyosManualShift?.value;
+          const sectionVal = pyosManualSection?.value;
+          if (!employeeId || !dateVal || !shiftVal || !sectionVal) {
+            setStatus(pyosManualStatus, 'Complete all manual fields.', true);
+            return;
+          }
+          try {
+            const resp = await authFetch('/pyos/requests/manual', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                employee_id: employeeId,
+                section_id: Number(sectionVal),
+                date: dateVal,
+                shift: shiftVal,
+                notes: pyosManualNote?.value || '',
+              }),
+            });
+            if (!resp.ok) {
+              const detail = await resp.json().catch(() => ({}));
+              throw new Error(detail.detail || `Unable to assign (${resp.status})`);
+            }
+            setStatus(pyosManualStatus, 'Assigned successfully.');
+            await refreshPyosManagerView();
+          } catch (err) {
+            console.error(err);
+            setStatus(pyosManualStatus, err.message || 'Unable to assign', true);
+          }
+        });
+      }
+
+      const initialize = async () => {
+        const ok = await ensureAuthenticated();
+        if (!ok) return;
+        await determineRole();
+        await refreshPyosView();
+      };
+
+      initialize();
+    </script>
   </body>
 </html>

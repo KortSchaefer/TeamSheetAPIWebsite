@@ -40,6 +40,18 @@ def ensure_sqlite_sections_columns():
         conn.commit()
 
 
+def ensure_sqlite_user_columns():
+    if not settings.database_url.startswith("sqlite"):
+        return
+    from sqlalchemy import text
+
+    with engine.connect() as conn:
+        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(users)"))]
+        if "employee_id" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN employee_id INTEGER"))
+        conn.commit()
+
+
 def get_db():
     db = SessionLocal()
     try:
