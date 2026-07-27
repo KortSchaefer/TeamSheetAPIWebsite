@@ -83,7 +83,9 @@ secrets.yaml
 # Database files
 *.db
 *.sqlite3
-!team_sheet.db
+
+# Local voice recordings
+voice_audio/
 
 # Coverage and profiling
 coverage/

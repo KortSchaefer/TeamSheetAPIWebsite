@@ -12,3 +12,6 @@ httpx
 requests
 pytest
 pytest-asyncio
+openai
+openpyxl
+boto3

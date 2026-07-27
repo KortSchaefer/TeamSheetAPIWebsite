@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime, date
+from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
@@ -11,6 +12,7 @@ from sqlalchemy import (
     Float,
     Integer,
     JSON,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -438,9 +440,62 @@ class Ingredient(Base):
     name: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     unit: Mapped[str] = mapped_column(String(50), nullable=False, default="unit")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    external_id: Mapped[str | None] = mapped_column(String(150), nullable=True, unique=True, index=True)
+    normalized_name: Mapped[str | None] = mapped_column(String(150), nullable=True, index=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    stage: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    process: Mapped[str | None] = mapped_column(Text, nullable=True)
+    added_to_complete_lineage: Mapped[bool] = mapped_column(Boolean, default=False)
+    source_correction: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_needed: Mapped[str | None] = mapped_column(Text, nullable=True)
+    catalog_schema_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    catalog_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     recipe_items = relationship("RecipeItem", back_populates="ingredient")
     stock_movements = relationship("StockMovement", back_populates="ingredient")
+    inventory_items = relationship("InventoryItem", back_populates="ingredient")
+    parent_links = relationship(
+        "IngredientLineage",
+        foreign_keys="IngredientLineage.child_ingredient_id",
+        back_populates="child",
+        cascade="all, delete-orphan",
+    )
+    child_links = relationship(
+        "IngredientLineage",
+        foreign_keys="IngredientLineage.parent_ingredient_id",
+        back_populates="parent",
+    )
+
+
+class IngredientLineage(Base):
+    __tablename__ = "ingredient_lineage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    child_ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"), nullable=False, index=True)
+    parent_ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"), nullable=False, index=True)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+
+    child = relationship("Ingredient", foreign_keys=[child_ingredient_id], back_populates="parent_links")
+    parent = relationship("Ingredient", foreign_keys=[parent_ingredient_id], back_populates="child_links")
+    __table_args__ = (
+        UniqueConstraint(
+            "child_ingredient_id",
+            "parent_ingredient_id",
+            name="uq_ingredient_lineage_child_parent",
+        ),
+    )
+
+
+class IngredientCatalogImport(Base, TimestampMixin):
+    __tablename__ = "ingredient_catalog_imports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    schema_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    source_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    relationship_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    catalog_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class RecipeItem(Base):
@@ -498,12 +553,434 @@ class StockMovement(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"))
+    inventory_item_id: Mapped[int | None] = mapped_column(ForeignKey("inventory_items.id"), nullable=True, index=True)
+    location_id: Mapped[int | None] = mapped_column(ForeignKey("inventory_locations.id"), nullable=True, index=True)
     quantity_change: Mapped[float] = mapped_column(Float, default=0)
     reason: Mapped[str] = mapped_column(String(100))
     order_item_id: Mapped[int | None] = mapped_column(ForeignKey("pos_order_items.id"))
+    source_event_key: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    lot_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    expiration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text)
 
     ingredient = relationship("Ingredient", back_populates="stock_movements")
+
+
+class InventoryLocation(Base, TimestampMixin):
+    __tablename__ = "inventory_locations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class InventoryItem(Base, TimestampMixin):
+    __tablename__ = "inventory_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ingredients.id"), unique=True, nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    sku: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True, index=True)
+    base_unit: Mapped[str] = mapped_column(String(30), default="unit")
+    purchase_unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    purchase_to_base: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=1)
+    default_location_id: Mapped[int | None] = mapped_column(ForeignKey("inventory_locations.id"), nullable=True)
+    cost_cents: Mapped[int] = mapped_column(Integer, default=0)
+    shelf_life_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    default_location = relationship("InventoryLocation")
+    ingredient = relationship("Ingredient", back_populates="inventory_items")
+    balances = relationship("InventoryBalance", back_populates="item", cascade="all, delete-orphan")
+    vendor_items = relationship("VendorItem", back_populates="item", cascade="all, delete-orphan")
+
+
+class InventoryBalance(Base, TimestampMixin):
+    __tablename__ = "inventory_balances"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    location_id: Mapped[int] = mapped_column(ForeignKey("inventory_locations.id"), nullable=False)
+    quantity_on_hand: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    minimum_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    par_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    maximum_quantity: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+
+    item = relationship("InventoryItem", back_populates="balances")
+    location = relationship("InventoryLocation")
+    __table_args__ = (UniqueConstraint("inventory_item_id", "location_id", name="uq_inventory_balance_item_location"),)
+
+
+class Vendor(Base, TimestampMixin):
+    __tablename__ = "inventory_vendors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    contact_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    lead_time_days: Mapped[int] = mapped_column(Integer, default=1)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    items = relationship("VendorItem", back_populates="vendor", cascade="all, delete-orphan")
+
+
+class VendorItem(Base, TimestampMixin):
+    __tablename__ = "inventory_vendor_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vendor_id: Mapped[int] = mapped_column(ForeignKey("inventory_vendors.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    vendor_sku: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
+    pack_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=1)
+    preferred: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    vendor = relationship("Vendor", back_populates="items")
+    item = relationship("InventoryItem", back_populates="vendor_items")
+    __table_args__ = (UniqueConstraint("vendor_id", "inventory_item_id", name="uq_vendor_inventory_item"),)
+
+
+class PurchaseOrderStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    PARTIALLY_RECEIVED = "PARTIALLY_RECEIVED"
+    RECEIVED = "RECEIVED"
+    CANCELLED = "CANCELLED"
+
+
+class PurchaseOrder(Base, TimestampMixin):
+    __tablename__ = "inventory_purchase_orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vendor_id: Mapped[int] = mapped_column(ForeignKey("inventory_vendors.id"), nullable=False)
+    status: Mapped[PurchaseOrderStatus] = mapped_column(Enum(PurchaseOrderStatus), default=PurchaseOrderStatus.DRAFT)
+    expected_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    vendor = relationship("Vendor")
+    lines = relationship("PurchaseOrderLine", back_populates="purchase_order", cascade="all, delete-orphan")
+
+
+class PurchaseOrderLine(Base):
+    __tablename__ = "inventory_purchase_order_lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    purchase_order_id: Mapped[int] = mapped_column(ForeignKey("inventory_purchase_orders.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    ordered_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
+    received_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+
+    purchase_order = relationship("PurchaseOrder", back_populates="lines")
+    item = relationship("InventoryItem")
+
+
+class InventoryCountStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    APPROVED = "APPROVED"
+    POSTED = "POSTED"
+    REJECTED = "REJECTED"
+
+
+class InventoryCount(Base, TimestampMixin):
+    __tablename__ = "inventory_counts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    location_id: Mapped[int] = mapped_column(ForeignKey("inventory_locations.id"), nullable=False)
+    status: Mapped[InventoryCountStatus] = mapped_column(Enum(InventoryCountStatus), default=InventoryCountStatus.DRAFT)
+    counted_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    reviewed_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    location = relationship("InventoryLocation")
+    lines = relationship("InventoryCountLine", back_populates="count", cascade="all, delete-orphan")
+
+
+class InventoryCountLine(Base):
+    __tablename__ = "inventory_count_lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    count_id: Mapped[int] = mapped_column(ForeignKey("inventory_counts.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    counted_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    expected_quantity: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    count = relationship("InventoryCount", back_populates="lines")
+    item = relationship("InventoryItem")
+    __table_args__ = (UniqueConstraint("count_id", "inventory_item_id", name="uq_inventory_count_line"),)
+
+
+class InventoryVoiceSessionStatus(str, enum.Enum):
+    CREATED = "CREATED"
+    LISTENING = "LISTENING"
+    PAUSED = "PAUSED"
+    OFFLINE = "OFFLINE"
+    NEEDS_REVIEW = "NEEDS_REVIEW"
+    FINISHED = "FINISHED"
+    ABANDONED = "ABANDONED"
+
+
+class InventoryVoiceUtteranceStatus(str, enum.Enum):
+    RECEIVED = "RECEIVED"
+    TRANSCRIBED = "TRANSCRIBED"
+    NORMALIZED = "NORMALIZED"
+    NEEDS_CLARIFICATION = "NEEDS_CLARIFICATION"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    FAILED = "FAILED"
+
+
+class InventoryVoiceEntryAction(str, enum.Enum):
+    SET = "SET"
+    ADD = "ADD"
+    REPLACE = "REPLACE"
+    REMOVE = "REMOVE"
+    NOTE = "NOTE"
+    SWITCH_LOCATION = "SWITCH_LOCATION"
+
+
+class InventoryVoiceReviewStatus(str, enum.Enum):
+    AUTO_ACCEPTED = "AUTO_ACCEPTED"
+    NEEDS_REVIEW = "NEEDS_REVIEW"
+    CORRECTED = "CORRECTED"
+    REJECTED = "REJECTED"
+
+
+class InventoryAliasSource(str, enum.Enum):
+    CATALOG = "CATALOG"
+    MANUAL = "MANUAL"
+    LEARNED = "LEARNED"
+
+
+class InventoryVoiceSession(Base, TimestampMixin):
+    __tablename__ = "inventory_voice_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_session_id: Mapped[str] = mapped_column(
+        String(36), unique=True, nullable=False, index=True
+    )
+    manager_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"), nullable=False, index=True
+    )
+    status: Mapped[InventoryVoiceSessionStatus] = mapped_column(
+        Enum(InventoryVoiceSessionStatus),
+        default=InventoryVoiceSessionStatus.CREATED,
+        nullable=False,
+        index=True,
+    )
+    current_location_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=False
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_client_sequence: Mapped[int] = mapped_column(Integer, default=0)
+    device_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    transcription_model: Mapped[str] = mapped_column(
+        String(100), default="gpt-realtime-whisper"
+    )
+    normalization_model: Mapped[str] = mapped_column(
+        String(100), default="gpt-5.6-luna"
+    )
+    prompt_version: Mapped[str] = mapped_column(String(50), default="voice-inventory-v1")
+    audio_delete_after: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    manager = relationship("User")
+    current_location = relationship("InventoryLocation")
+    utterances = relationship(
+        "InventoryVoiceUtterance",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="InventoryVoiceUtterance.sequence",
+    )
+    entries = relationship(
+        "InventoryVoiceEntry",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="InventoryVoiceEntry.id",
+    )
+    count_links = relationship(
+        "InventoryVoiceSessionCount",
+        back_populates="session",
+        cascade="all, delete-orphan",
+    )
+
+
+class InventoryVoiceUtterance(Base, TimestampMixin):
+    __tablename__ = "inventory_voice_utterances"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_voice_sessions.id"), nullable=False, index=True
+    )
+    client_event_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    realtime_item_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ended_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    transcript: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    status: Mapped[InventoryVoiceUtteranceStatus] = mapped_column(
+        Enum(InventoryVoiceUtteranceStatus),
+        default=InventoryVoiceUtteranceStatus.RECEIVED,
+        nullable=False,
+        index=True,
+    )
+    audio_object_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    audio_missing: Mapped[bool] = mapped_column(Boolean, default=False)
+    error_details: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    session = relationship("InventoryVoiceSession", back_populates="utterances")
+    entries = relationship(
+        "InventoryVoiceEntry",
+        back_populates="utterance",
+        cascade="all, delete-orphan",
+    )
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id", "client_event_id", name="uq_voice_utterance_client_event"
+        ),
+        UniqueConstraint("session_id", "sequence", name="uq_voice_utterance_sequence"),
+    )
+
+
+class InventoryVoiceEntry(Base, TimestampMixin):
+    __tablename__ = "inventory_voice_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_voice_sessions.id"), nullable=False, index=True
+    )
+    utterance_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_voice_utterances.id"), nullable=False, index=True
+    )
+    location_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=False, index=True
+    )
+    inventory_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("inventory_items.id"), nullable=True, index=True
+    )
+    action: Mapped[InventoryVoiceEntryAction] = mapped_column(
+        Enum(InventoryVoiceEntryAction), nullable=False
+    )
+    spoken_item: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    spoken_quantity: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 4), nullable=True
+    )
+    spoken_unit: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    normalized_quantity: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 4), nullable=True
+    )
+    evidence: Mapped[str] = mapped_column(Text, nullable=False)
+    ambiguity_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    review_status: Mapped[InventoryVoiceReviewStatus] = mapped_column(
+        Enum(InventoryVoiceReviewStatus),
+        default=InventoryVoiceReviewStatus.NEEDS_REVIEW,
+        nullable=False,
+        index=True,
+    )
+    supersedes_entry_id: Mapped[int | None] = mapped_column(
+        ForeignKey("inventory_voice_entries.id"), nullable=True
+    )
+
+    session = relationship("InventoryVoiceSession", back_populates="entries")
+    utterance = relationship("InventoryVoiceUtterance", back_populates="entries")
+    location = relationship("InventoryLocation")
+    item = relationship("InventoryItem")
+    supersedes_entry = relationship("InventoryVoiceEntry", remote_side=[id])
+
+
+class InventoryItemAlias(Base, TimestampMixin):
+    __tablename__ = "inventory_item_aliases"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    inventory_item_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_items.id"), nullable=False, index=True
+    )
+    normalized_alias: Mapped[str] = mapped_column(
+        String(200), nullable=False, index=True
+    )
+    source: Mapped[InventoryAliasSource] = mapped_column(
+        Enum(InventoryAliasSource), default=InventoryAliasSource.MANUAL
+    )
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    item = relationship("InventoryItem")
+    __table_args__ = (
+        UniqueConstraint(
+            "inventory_item_id", "normalized_alias", name="uq_inventory_item_alias"
+        ),
+    )
+
+
+class InventoryVoiceSessionCount(Base, TimestampMixin):
+    __tablename__ = "inventory_voice_session_counts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_voice_sessions.id"), nullable=False, index=True
+    )
+    location_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=False
+    )
+    inventory_count_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_counts.id"), nullable=False, unique=True
+    )
+
+    session = relationship("InventoryVoiceSession", back_populates="count_links")
+    location = relationship("InventoryLocation")
+    inventory_count = relationship("InventoryCount")
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id", "location_id", name="uq_voice_session_count_location"
+        ),
+    )
+
+
+class InventoryReceiving(Base, TimestampMixin):
+    __tablename__ = "inventory_receiving"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    purchase_order_id: Mapped[int] = mapped_column(ForeignKey("inventory_purchase_orders.id"), nullable=False)
+    received_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    invoice_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    purchase_order = relationship("PurchaseOrder")
+    lines = relationship("InventoryReceivingLine", back_populates="receiving", cascade="all, delete-orphan")
+
+
+class InventoryReceivingLine(Base):
+    __tablename__ = "inventory_receiving_lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    receiving_id: Mapped[int] = mapped_column(ForeignKey("inventory_receiving.id"), nullable=False)
+    inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    location_id: Mapped[int] = mapped_column(ForeignKey("inventory_locations.id"), nullable=False)
+    received_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
+    lot_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    expiration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    receiving = relationship("InventoryReceiving", back_populates="lines")
+    item = relationship("InventoryItem")
+    location = relationship("InventoryLocation")
 
 
 class DailyRoster(Base, TimestampMixin):

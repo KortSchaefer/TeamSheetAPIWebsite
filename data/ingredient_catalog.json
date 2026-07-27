@@ -1,0 +1,3095 @@
+{
+  "inventory_process_model": {
+    "schema_version": "1.0",
+    "stage_definitions": {
+      "raw_material": "A basic agricultural, animal, seafood, or mineral ingredient with minimal processing.",
+      "purchased_processed": "An item normally purchased after commercial processing.",
+      "in_house_prepared": "An item mixed, cut, marinated, assembled, or otherwise prepared in the restaurant.",
+      "portioned_raw": "A raw product cut or weighed into a menu portion.",
+      "ready_to_cook": "An assembled or coated item awaiting cooking.",
+      "cooked_component": "A cooked item that may be served directly or used in another item.",
+      "ready_to_serve": "A final inventory or menu-use form requiring little or no further preparation.",
+      "non_food_supply": "A disposable or operating supply with no food-processing lineage.",
+      "unresolved": "An entry whose identity cannot be determined confidently from the original wording."
+    },
+    "relationship_rules": {
+      "parent_ids": "Immediate ingredients or source products used to produce the item.",
+      "conceptual_parent": "The parent describes product lineage, even when processing occurs at a supplier.",
+      "inventory_parent": "The parent is likely stocked and transformed inside the restaurant.",
+      "multiple_parents": "Recipes and assembled products may have several parent ingredients."
+    },
+    "items": [
+      {
+        "id": "water",
+        "name": "Water",
+        "category": "Basic Ingredients",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Source ingredient",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ice",
+        "name": "Ice",
+        "category": "Basic Ingredients",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "water"
+        ],
+        "process": "Water frozen into cubes or machine ice",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "salt",
+        "name": "Salt",
+        "category": "Seasonings",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Mined or evaporated mineral seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "black_peppercorn",
+        "name": "Black Peppercorn",
+        "category": "Seasonings",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Dried pepper fruit",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "black_pepper",
+        "name": "Ground Black Pepper",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "black_peppercorn"
+        ],
+        "process": "Peppercorns dried and ground",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "white_peppercorn",
+        "name": "White Peppercorn",
+        "category": "Seasonings",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Ripe pepper fruit with outer skin removed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "white_pepper",
+        "name": "Ground White Pepper",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "white_peppercorn"
+        ],
+        "process": "White peppercorns dried and ground",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "mustard_seed",
+        "name": "Mustard Seed",
+        "category": "Seasonings",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Dried mustard seed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "mustard_powder",
+        "name": "Mustard Powder",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mustard_seed"
+        ],
+        "process": "Mustard seeds dried and ground",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "yellow_mustard",
+        "name": "Yellow Mustard",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mustard_powder",
+          "vinegar",
+          "water",
+          "salt"
+        ],
+        "process": "Mustard powder blended with acid, water, and seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "creole_mustard",
+        "name": "Creole Mustard",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mustard_seed",
+          "vinegar",
+          "water",
+          "salt",
+          "cajun_seasoning"
+        ],
+        "process": "Coarse mustard blended with vinegar and Creole-style seasonings",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "vinegar",
+        "name": "Vinegar",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [],
+        "process": "Fermented acidic liquid",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "vegetable_oil",
+        "name": "Vegetable or Frying Oil",
+        "category": "Oils and Fats",
+        "stage": "purchased_processed",
+        "parent_ids": [],
+        "process": "Commercially refined cooking oil",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "salad_oil",
+        "name": "Salad Oil",
+        "category": "Oils and Fats",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "vegetable_oil"
+        ],
+        "process": "Neutral oil designated for dressings and cold preparation",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "beef_fat",
+        "name": "Raw Beef Fat",
+        "category": "Oils and Fats",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fat trimmed from beef",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "beef_tallow",
+        "name": "Beef Tallow",
+        "category": "Oils and Fats",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_fat"
+        ],
+        "process": "Beef fat rendered and filtered",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fresh_dill",
+        "name": "Fresh Dill",
+        "category": "Herbs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh herb",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "dill_weed",
+        "name": "Dill Weed",
+        "category": "Herbs",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "fresh_dill"
+        ],
+        "process": "Dill leaves dried and crumbled",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fresh_oregano",
+        "name": "Fresh Oregano",
+        "category": "Herbs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh herb",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "oregano",
+        "name": "Dried Oregano",
+        "category": "Herbs",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "fresh_oregano"
+        ],
+        "process": "Oregano leaves dried and crumbled",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fresh_thyme",
+        "name": "Fresh Thyme",
+        "category": "Herbs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh herb",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "thyme",
+        "name": "Dried Thyme",
+        "category": "Herbs",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "fresh_thyme"
+        ],
+        "process": "Thyme leaves dried",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fresh_basil",
+        "name": "Fresh Basil",
+        "category": "Herbs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh herb",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "basil",
+        "name": "Dried Basil",
+        "category": "Herbs",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "fresh_basil"
+        ],
+        "process": "Basil leaves dried and crumbled",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "bay_plant",
+        "name": "Bay Plant Leaves",
+        "category": "Herbs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh bay leaves",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "bay_leaf",
+        "name": "Dried Bay Leaf",
+        "category": "Herbs",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "bay_plant"
+        ],
+        "process": "Bay leaves dried whole",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "parsley",
+        "name": "Fresh Parsley",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh herb",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "chopped_parsley",
+        "name": "Chopped Parsley",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "parsley"
+        ],
+        "process": "Washed, stemmed, and chopped",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cayenne_pepper",
+        "name": "Cayenne Pepper",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh or dried cayenne chile",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ground_cayenne",
+        "name": "Ground Cayenne",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cayenne_pepper"
+        ],
+        "process": "Cayenne peppers dried and ground",
+        "added_to_complete_lineage": false,
+        "source_correction": "Interpreted from the original entry 'ground cyan'."
+      },
+      {
+        "id": "chili_peppers",
+        "name": "Dried Chili Peppers",
+        "category": "Seasonings",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole dried chile peppers",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chili_powder",
+        "name": "Chili Powder",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "chili_peppers",
+          "oregano",
+          "ground_cayenne"
+        ],
+        "process": "Dried chiles ground and blended with seasonings",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cajun_seasoning",
+        "name": "Cajun Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "ground_cayenne",
+          "chili_powder",
+          "oregano",
+          "thyme"
+        ],
+        "process": "Spices and herbs blended into a Cajun-style seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sirloin_seasoning",
+        "name": "Sirloin Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Salt, pepper, and proprietary spices blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fish_seasoning",
+        "name": "Fish Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "cajun_seasoning"
+        ],
+        "process": "Seasonings blended for seafood",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "rib_seasoning",
+        "name": "Rib Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "chili_powder"
+        ],
+        "process": "Salt, spices, and sweet or savory ingredients blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "prime_rib_seasoning",
+        "name": "Prime Rib Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "oregano",
+          "thyme"
+        ],
+        "process": "Salt, pepper, herbs, and proprietary spices blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "herb_chicken_seasoning",
+        "name": "Herb Chicken Seasoning",
+        "category": "Seasoning Blends",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "oregano",
+          "thyme",
+          "basil"
+        ],
+        "process": "Herbs and spices blended for chicken",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "strawberries",
+        "name": "Whole Strawberries",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole fruit",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sliced_strawberries",
+        "name": "Sliced Strawberries",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "strawberries"
+        ],
+        "process": "Washed, hulled, and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pineapple",
+        "name": "Whole or Bulk Pineapple",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh fruit or supplier-packed fruit",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pineapple_chunks",
+        "name": "Pineapple Chunks",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "pineapple"
+        ],
+        "process": "Peeled, cored, and cut into chunks",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "apple",
+        "name": "Whole Apples",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole fruit",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "peeled_sliced_apples",
+        "name": "Peeled and Sliced Apples",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "apple"
+        ],
+        "process": "Apples washed, peeled, cored, and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "applesauce",
+        "name": "Applesauce",
+        "category": "Prepared Sides",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "apple",
+          "water",
+          "sugar"
+        ],
+        "process": "Apples cooked and pureed",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "apple_pie_filling",
+        "name": "Apple Pie Filling",
+        "category": "Dessert Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "peeled_sliced_apples",
+          "sugar",
+          "cornstarch",
+          "cinnamon"
+        ],
+        "process": "Apples cooked or packed with sweetened thickened syrup",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "apple_pie",
+        "name": "Apple Pie",
+        "category": "Desserts",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "apple_pie_filling",
+          "pie_crust"
+        ],
+        "process": "Apple filling enclosed in pastry crust",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "lemon",
+        "name": "Whole Lemons",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole citrus fruit",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "lemon_wedges",
+        "name": "Lemon Wedges",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "lemon"
+        ],
+        "process": "Lemons washed and cut into wedges",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "lemon_juice",
+        "name": "Lemon Juice",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "lemon"
+        ],
+        "process": "Lemons squeezed and strained",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "lime",
+        "name": "Whole Limes",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole citrus fruit",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "lime_wedges",
+        "name": "Lime Wedges",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "lime"
+        ],
+        "process": "Limes washed and cut into wedges",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "lime_juice",
+        "name": "Lime Juice",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "lime"
+        ],
+        "process": "Limes squeezed and strained",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "orange",
+        "name": "Whole Oranges",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole citrus fruit",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "orange_slices",
+        "name": "Orange Slices",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "orange"
+        ],
+        "process": "Oranges washed and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "potato",
+        "name": "Russet Potatoes",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole potatoes",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "washed_potato",
+        "name": "Washed Potatoes",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "potato"
+        ],
+        "process": "Potatoes washed and inspected",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "baked_potato",
+        "name": "Baked Potato",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "washed_potato"
+        ],
+        "process": "Whole potato baked",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "mashed_potatoes",
+        "name": "Mashed Potatoes",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "potato",
+          "milk",
+          "butter",
+          "salt",
+          "white_pepper"
+        ],
+        "process": "Potatoes cooked, mashed, and blended with dairy and seasoning",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "sweet_potato",
+        "name": "Sweet Potatoes",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole sweet potatoes",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "baked_sweet_potato",
+        "name": "Baked Sweet Potato",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "sweet_potato"
+        ],
+        "process": "Whole sweet potato baked",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "loaded_sweet_potato",
+        "name": "Loaded Sweet Potato",
+        "category": "Prepared Sides",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "baked_sweet_potato",
+          "cinnamon_butter",
+          "brown_sugar",
+          "marshmallows"
+        ],
+        "process": "Baked sweet potato topped with sweet butter, sugar, and marshmallows",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "carrot",
+        "name": "Whole Carrots",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole carrots",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cut_carrots",
+        "name": "Cut Carrots",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "carrot"
+        ],
+        "process": "Carrots washed, peeled, and cut",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cooked_carrots",
+        "name": "Cooked Carrots",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "cut_carrots",
+          "butter",
+          "sugar",
+          "salt"
+        ],
+        "process": "Carrots cooked and seasoned",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "corn",
+        "name": "Corn",
+        "category": "Produce",
+        "stage": "purchased_processed",
+        "parent_ids": [],
+        "process": "Kernels removed from cob and commonly frozen or canned",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "seasoned_corn",
+        "name": "Seasoned Cooked Corn",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "corn",
+          "butter",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Corn heated and seasoned",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "broccoli",
+        "name": "Broccoli",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh or frozen broccoli crowns or florets",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "broccoli_florets",
+        "name": "Broccoli Florets",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "broccoli"
+        ],
+        "process": "Broccoli washed and cut into florets",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cooked_broccoli",
+        "name": "Cooked Broccoli",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "broccoli_florets",
+          "butter",
+          "salt"
+        ],
+        "process": "Broccoli steamed or cooked and seasoned",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "green_beans_raw",
+        "name": "Green Beans",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh, frozen, or canned green beans",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "seasoned_green_beans",
+        "name": "Seasoned Green Beans",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "green_beans_raw",
+          "bacon",
+          "onion",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Green beans cooked with bacon, onion, and seasoning",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cabbage",
+        "name": "Cabbage",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole cabbage",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "shredded_cabbage",
+        "name": "Shredded Cabbage",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "cabbage"
+        ],
+        "process": "Cabbage washed and shredded",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "celery",
+        "name": "Celery",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh celery stalks",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "diced_celery",
+        "name": "Diced Celery",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "celery"
+        ],
+        "process": "Celery washed, trimmed, and diced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "lettuce",
+        "name": "Whole-Leaf Lettuce",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole heads or bulk leaves",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "romaine_lettuce",
+        "name": "Romaine Lettuce",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole romaine heads or hearts",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "salad_mix",
+        "name": "House Salad Mix",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "lettuce",
+          "shredded_cabbage",
+          "carrot"
+        ],
+        "process": "Lettuce and vegetables washed, cut, and blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "caesar_mix",
+        "name": "Caesar Salad Mix",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "romaine_lettuce"
+        ],
+        "process": "Romaine washed, dried, and cut",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "mushroom",
+        "name": "Button Mushrooms",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole mushrooms",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sliced_mushrooms",
+        "name": "Sliced Mushrooms",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "mushroom"
+        ],
+        "process": "Mushrooms cleaned and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "portobello_mushroom",
+        "name": "Portobello Mushrooms",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh portobello mushroom caps",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "onion",
+        "name": "Whole Onions",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole onions",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "diced_onion",
+        "name": "Diced Onions",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "onion"
+        ],
+        "process": "Onions peeled and diced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "sliced_onion",
+        "name": "Sliced Onions",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "onion"
+        ],
+        "process": "Onions peeled and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "red_pepper",
+        "name": "Red Bell Peppers",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole peppers",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "green_pepper",
+        "name": "Green Bell Peppers",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole peppers",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cut_peppers",
+        "name": "Cut Bell Peppers",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "red_pepper",
+          "green_pepper"
+        ],
+        "process": "Peppers washed, seeded, and cut",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "tomato",
+        "name": "Whole Tomatoes",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh whole tomatoes",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sliced_tomato",
+        "name": "Sliced Tomatoes",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "tomato"
+        ],
+        "process": "Tomatoes washed and sliced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "diced_tomato",
+        "name": "Diced Tomatoes",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "tomato"
+        ],
+        "process": "Tomatoes washed and diced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "kebab_vegetables",
+        "name": "Kebab Vegetables",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "cut_peppers",
+          "onion",
+          "mushroom",
+          "tomato"
+        ],
+        "process": "Vegetables cut into grilling portions and mixed or skewered",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pickle_cucumber",
+        "name": "Pickling Cucumbers",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh cucumbers intended for pickling",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "whole_pickles",
+        "name": "Whole Pickles",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pickle_cucumber",
+          "vinegar",
+          "water",
+          "salt",
+          "dill_weed"
+        ],
+        "process": "Cucumbers preserved in seasoned brine",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pickle_chips",
+        "name": "Pickle Chips",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "whole_pickles"
+        ],
+        "process": "Pickles cut crosswise into chips",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pickle_spears",
+        "name": "Pickle Spears",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "whole_pickles"
+        ],
+        "process": "Pickles cut lengthwise into spears",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "horseradish_root",
+        "name": "Horseradish Root",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh root",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "raw_horseradish",
+        "name": "Prepared Raw Horseradish",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "horseradish_root",
+          "vinegar",
+          "salt"
+        ],
+        "process": "Horseradish root peeled, ground, and stabilized with vinegar",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "raw_milk",
+        "name": "Raw Milk",
+        "category": "Dairy Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Milk as produced before commercial standardization",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "milk",
+        "name": "Milk",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "raw_milk"
+        ],
+        "process": "Milk pasteurized and standardized",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cream",
+        "name": "Cream",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "raw_milk"
+        ],
+        "process": "Higher-fat portion separated from milk",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "half_and_half",
+        "name": "Half-and-Half",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "cream"
+        ],
+        "process": "Milk and cream blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "heavy_whipping_cream",
+        "name": "Heavy Whipping Cream",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cream"
+        ],
+        "process": "Cream standardized to high butterfat content",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "buttermilk",
+        "name": "Buttermilk",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk"
+        ],
+        "process": "Milk cultured and acidified",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "butter",
+        "name": "Butter",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cream"
+        ],
+        "process": "Cream churned until milk fat separates",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sour_cream",
+        "name": "Sour Cream",
+        "category": "Dairy",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cream"
+        ],
+        "process": "Cream cultured and thickened",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cheddar",
+        "name": "Cheddar Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "salt"
+        ],
+        "process": "Milk cultured, coagulated, pressed, salted, and aged",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "shredded_cheddar",
+        "name": "Shredded Cheddar Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cheddar"
+        ],
+        "process": "Cheddar cheese shredded",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "parmesan",
+        "name": "Parmesan Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "salt"
+        ],
+        "process": "Milk cultured, coagulated, pressed, salted, and aged",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "grated_parmesan",
+        "name": "Grated Parmesan",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "parmesan"
+        ],
+        "process": "Parmesan cheese grated",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "jack_cheese",
+        "name": "Monterey Jack Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "salt"
+        ],
+        "process": "Milk cultured, coagulated, pressed, and salted",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "shredded_jack_cheese",
+        "name": "Shredded Monterey Jack Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "jack_cheese"
+        ],
+        "process": "Monterey Jack cheese shredded",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "mozzarella_cheese",
+        "name": "Mozzarella Cheese",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "salt"
+        ],
+        "process": "Milk cultured, coagulated, and stretched into mozzarella",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "queso",
+        "name": "Queso Cheese Sauce",
+        "category": "Sauces",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "cheddar",
+          "jack_cheese",
+          "milk",
+          "cream",
+          "salt"
+        ],
+        "process": "Cheese melted or emulsified with dairy and seasonings",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "ice_cream_base",
+        "name": "Ice Cream Base",
+        "category": "Dessert Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "cream",
+          "sugar"
+        ],
+        "process": "Dairy, sugar, and flavoring blended",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ice_cream",
+        "name": "Ice Cream",
+        "category": "Desserts",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "ice_cream_base"
+        ],
+        "process": "Ice cream base churned and frozen",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "wheat",
+        "name": "Wheat",
+        "category": "Grains",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole cereal grain",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "flour",
+        "name": "Wheat Flour",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "wheat"
+        ],
+        "process": "Wheat milled into flour",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "sugar_cane_or_beet",
+        "name": "Sugar Cane or Sugar Beets",
+        "category": "Agricultural Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Sugar-producing crop",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "sugar",
+        "name": "Granulated Sugar",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "sugar_cane_or_beet"
+        ],
+        "process": "Plant juice extracted, refined, crystallized, and dried",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "molasses",
+        "name": "Molasses",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "sugar_cane_or_beet"
+        ],
+        "process": "Syrup remaining from sugar refining",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "brown_sugar",
+        "name": "Brown Sugar",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "sugar",
+          "molasses"
+        ],
+        "process": "Refined sugar blended with molasses",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cornstarch",
+        "name": "Cornstarch",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "corn"
+        ],
+        "process": "Starch separated from corn and dried",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "yeast",
+        "name": "Baker's Yeast",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [],
+        "process": "Cultured yeast prepared for baking",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "bread_mix",
+        "name": "Bread or Roll Mix",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "sugar",
+          "salt"
+        ],
+        "process": "Dry baking ingredients blended",
+        "added_to_complete_lineage": true,
+        "source_correction": "A likely interpretation of the original generic entry 'mix'."
+      },
+      {
+        "id": "bread_dough",
+        "name": "Bread or Roll Dough",
+        "category": "Bakery Components",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "bread_mix",
+          "yeast",
+          "water"
+        ],
+        "process": "Dry mix combined with water and yeast, then mixed and proofed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "bread",
+        "name": "Dinner Rolls or Bread",
+        "category": "Bakery",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "bread_dough"
+        ],
+        "process": "Dough portioned, proofed, and baked",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "burger_bun",
+        "name": "Burger Buns",
+        "category": "Bakery",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "yeast",
+          "water",
+          "sugar",
+          "salt"
+        ],
+        "process": "Enriched bread dough formed and baked into buns",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "hot_dog_bun",
+        "name": "Hot Dog Buns",
+        "category": "Bakery",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "yeast",
+          "water",
+          "sugar",
+          "salt"
+        ],
+        "process": "Enriched bread dough formed and baked into elongated buns",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pasta_dough",
+        "name": "Pasta Dough",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "water"
+        ],
+        "process": "Flour and water mixed into dough",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "dry_pasta",
+        "name": "Pasta",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pasta_dough"
+        ],
+        "process": "Pasta dough shaped and dried",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cooked_pasta",
+        "name": "Cooked Pasta",
+        "category": "Prepared Sides",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "dry_pasta",
+          "water",
+          "salt"
+        ],
+        "process": "Dry pasta boiled and drained",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "bread_crumbs",
+        "name": "Bread Crumbs",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "bread"
+        ],
+        "process": "Bread dried and ground",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pie_crust",
+        "name": "Pie Crust",
+        "category": "Dessert Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "butter",
+          "water",
+          "salt"
+        ],
+        "process": "Flour and fat formed into pastry dough",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "marshmallow_base",
+        "name": "Marshmallow Base",
+        "category": "Dessert Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "sugar",
+          "water"
+        ],
+        "process": "Sweet syrup blended with a gelling and aerating agent",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "marshmallows",
+        "name": "Marshmallows",
+        "category": "Dessert Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "marshmallow_base"
+        ],
+        "process": "Marshmallow mixture aerated, set, and cut",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "egg",
+        "name": "Eggs",
+        "category": "Dairy and Eggs",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole shell eggs or pasteurized egg product",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "mayonnaise",
+        "name": "Mayonnaise",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "egg",
+          "vegetable_oil",
+          "vinegar",
+          "salt",
+          "mustard_powder"
+        ],
+        "process": "Oil emulsified with egg and acid",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "honey",
+        "name": "Honey",
+        "category": "Sweeteners",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Honey collected and filtered",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cinnamon",
+        "name": "Ground Cinnamon",
+        "category": "Seasonings",
+        "stage": "purchased_processed",
+        "parent_ids": [],
+        "process": "Cinnamon bark dried and ground",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "cinnamon_butter",
+        "name": "Cinnamon Honey Butter",
+        "category": "Prepared Sauces and Spreads",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "butter",
+          "honey",
+          "cinnamon",
+          "sugar"
+        ],
+        "process": "Butter whipped with honey, cinnamon, and sugar",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "garlic",
+        "name": "Garlic",
+        "category": "Produce",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Fresh garlic cloves",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "minced_garlic",
+        "name": "Minced Garlic",
+        "category": "Prepared Produce",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "garlic"
+        ],
+        "process": "Garlic peeled and minced",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "garlic_butter",
+        "name": "Garlic Butter",
+        "category": "Prepared Sauces and Spreads",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "butter",
+          "minced_garlic",
+          "salt",
+          "parsley"
+        ],
+        "process": "Butter blended with garlic and seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "lemon_pepper_butter",
+        "name": "Lemon Pepper Butter",
+        "category": "Prepared Sauces and Spreads",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "butter",
+          "lemon_juice",
+          "black_pepper",
+          "salt"
+        ],
+        "process": "Butter blended with lemon and pepper",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "ranch_dry_mix",
+        "name": "Ranch Seasoning Mix",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salt",
+          "black_pepper",
+          "dill_weed",
+          "mustard_powder"
+        ],
+        "process": "Dry herbs, seasonings, and stabilizers blended",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ranch",
+        "name": "Ranch Dressing",
+        "category": "Dressings",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "ranch_dry_mix",
+          "mayonnaise",
+          "buttermilk",
+          "sour_cream"
+        ],
+        "process": "Ranch mix blended with mayonnaise and cultured dairy",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "low_fat_mayonnaise",
+        "name": "Low-Fat Mayonnaise Base",
+        "category": "Condiments",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "egg",
+          "vegetable_oil",
+          "vinegar",
+          "water"
+        ],
+        "process": "Reduced-fat emulsified dressing base",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "low_fat_ranch",
+        "name": "Low-Fat Ranch Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "ranch_dry_mix",
+          "low_fat_mayonnaise",
+          "buttermilk"
+        ],
+        "process": "Reduced-fat base blended with ranch seasoning and dairy",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "honey_mustard",
+        "name": "Honey Mustard Dressing",
+        "category": "Dressings",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "honey",
+          "yellow_mustard",
+          "mayonnaise"
+        ],
+        "process": "Honey, mustard, and mayonnaise blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "creamy_horseradish",
+        "name": "Creamy Horseradish Sauce",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "raw_horseradish",
+          "sour_cream",
+          "mayonnaise",
+          "salt"
+        ],
+        "process": "Prepared horseradish blended with a creamy base",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "tartar_sauce",
+        "name": "Tartar Sauce",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "mayonnaise",
+          "pickle_chips",
+          "yellow_mustard",
+          "lemon_juice"
+        ],
+        "process": "Mayonnaise blended with chopped pickles, acid, and seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "french_dressing",
+        "name": "French Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "vegetable_oil",
+          "vinegar",
+          "sugar",
+          "tomato",
+          "mustard_powder"
+        ],
+        "process": "Oil, vinegar, tomato, sugar, and seasonings emulsified",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "italian_dressing",
+        "name": "Italian Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salad_oil",
+          "vinegar",
+          "oregano",
+          "basil",
+          "garlic",
+          "salt"
+        ],
+        "process": "Oil and vinegar blended with Italian-style herbs",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "low_fat_italian",
+        "name": "Low-Fat Italian Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "water",
+          "vinegar",
+          "vegetable_oil",
+          "oregano",
+          "basil",
+          "garlic"
+        ],
+        "process": "Reduced-oil vinaigrette blended with herbs and stabilizers",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "blue_cheese",
+        "name": "Blue Cheese Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mayonnaise",
+          "sour_cream",
+          "milk",
+          "blue_cheese_crumbles",
+          "vinegar"
+        ],
+        "process": "Creamy base blended with blue cheese",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "blue_cheese_crumbles",
+        "name": "Blue Cheese Crumbles",
+        "category": "Cheese",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "milk",
+          "salt"
+        ],
+        "process": "Blue-veined cheese cultured, aged, and crumbled",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "thousand_island",
+        "name": "Thousand Island Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mayonnaise",
+          "tomato",
+          "pickle_chips",
+          "vinegar",
+          "sugar"
+        ],
+        "process": "Mayonnaise-based dressing blended with tomato and relish",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "caesar_dressing",
+        "name": "Caesar Dressing",
+        "category": "Dressings",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "vegetable_oil",
+          "egg",
+          "parmesan",
+          "lemon_juice",
+          "garlic",
+          "black_pepper"
+        ],
+        "process": "Oil emulsified with egg, cheese, citrus, garlic, and seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "barbecue_sauce",
+        "name": "Barbecue Sauce",
+        "category": "Sauces",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "tomato",
+          "vinegar",
+          "sugar",
+          "molasses",
+          "mustard_powder",
+          "chili_powder"
+        ],
+        "process": "Tomato, sweeteners, acid, and spices cooked into sauce",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "beef_stock",
+        "name": "Beef Stock",
+        "category": "Sauce Bases",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_bones",
+          "water",
+          "onion",
+          "carrot",
+          "celery"
+        ],
+        "process": "Beef bones and aromatics simmered and strained",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "au_jus",
+        "name": "Au Jus",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "beef_stock",
+          "prime_rib_drippings",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Beef stock combined with seasoned meat drippings",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "peppercorn_sauce",
+        "name": "Peppercorn Sauce",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "beef_stock",
+          "heavy_whipping_cream",
+          "black_peppercorn",
+          "butter"
+        ],
+        "process": "Stock reduced with cream, butter, and peppercorns",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cream_gravy",
+        "name": "Cream Gravy",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "milk",
+          "flour",
+          "butter",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Fat and flour cooked into roux, then blended with milk",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "brown_gravy",
+        "name": "Brown Gravy",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "beef_stock",
+          "flour",
+          "beef_tallow",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Beef stock thickened with roux and seasoning",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "portobello_mushroom_sauce",
+        "name": "Portobello Mushroom Sauce",
+        "category": "Sauces",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "portobello_mushroom",
+          "beef_stock",
+          "heavy_whipping_cream",
+          "butter",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Mushrooms cooked and combined with stock and creamy sauce base",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "buttermilk_batter_dry_mix",
+        "name": "Buttermilk Batter Dry Mix",
+        "category": "Dry Goods",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "flour",
+          "salt",
+          "black_pepper",
+          "cajun_seasoning"
+        ],
+        "process": "Flour and dry seasonings blended",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "buttermilk_batter",
+        "name": "Buttermilk Batter",
+        "category": "Prepared Coatings",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "buttermilk_batter_dry_mix",
+          "buttermilk"
+        ],
+        "process": "Dry batter mix combined with buttermilk",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "beef_animal",
+        "name": "Beef Animal or Carcass",
+        "category": "Protein Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Primary source of beef cuts",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "beef_bones",
+        "name": "Beef Bones",
+        "category": "Protein Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Bones separated during fabrication",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "sirloin_subprimal",
+        "name": "Sirloin Subprimal",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Sirloin section separated from beef carcass",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "six_oz_sirloin",
+        "name": "6 oz Sirloin",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin trimmed and portioned to 6 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "eight_oz_sirloin",
+        "name": "8 oz Sirloin",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin trimmed and portioned to 8 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "eleven_oz_sirloin",
+        "name": "11 oz Sirloin",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin trimmed and portioned to 11 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sixteen_oz_sirloin",
+        "name": "16 oz Sirloin",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin trimmed and portioned to 16 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "tenderloin_subprimal",
+        "name": "Beef Tenderloin",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Tenderloin separated and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "six_oz_filet",
+        "name": "6 oz Filet",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "tenderloin_subprimal"
+        ],
+        "process": "Tenderloin trimmed and portioned to 6 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "eight_oz_filet",
+        "name": "8 oz Filet",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "tenderloin_subprimal"
+        ],
+        "process": "Tenderloin trimmed and portioned to 8 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "filet_medallions",
+        "name": "Filet Medallions",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "tenderloin_subprimal"
+        ],
+        "process": "Tenderloin cut into smaller medallion portions",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "strip_loin_subprimal",
+        "name": "Strip Loin Subprimal",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Strip loin separated and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "eight_oz_new_york_strip",
+        "name": "8 oz New York Strip",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "strip_loin_subprimal"
+        ],
+        "process": "Strip loin cut and portioned to 8 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "twelve_oz_new_york_strip",
+        "name": "12 oz New York Strip",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "strip_loin_subprimal"
+        ],
+        "process": "Strip loin cut and portioned to 12 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "short_loin_subprimal",
+        "name": "Short Loin Subprimal",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Short loin separated from carcass",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "twenty_three_oz_porterhouse",
+        "name": "23 oz Porterhouse",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "short_loin_subprimal",
+          "strip_loin_subprimal",
+          "tenderloin_subprimal"
+        ],
+        "process": "Bone-in short loin steak cut to target portion with strip and tenderloin sections",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "rib_subprimal",
+        "name": "Beef Rib Subprimal",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_animal"
+        ],
+        "process": "Rib section separated from beef carcass",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ribeye_roll",
+        "name": "Boneless Ribeye Roll",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "rib_subprimal"
+        ],
+        "process": "Rib section deboned and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "twelve_oz_ribeye",
+        "name": "12 oz Ribeye",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "ribeye_roll"
+        ],
+        "process": "Ribeye roll cut and portioned to 12 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fourteen_oz_ribeye",
+        "name": "14 oz Ribeye",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "ribeye_roll"
+        ],
+        "process": "Ribeye roll cut and portioned to 14 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sixteen_oz_ribeye",
+        "name": "16 oz Ribeye",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "ribeye_roll"
+        ],
+        "process": "Ribeye roll cut and portioned to 16 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "bone_in_ribeye",
+        "name": "Bone-In Ribeye",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "rib_subprimal"
+        ],
+        "process": "Rib steak cut while retaining the rib bone",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "prime_rib_log",
+        "name": "Prime Rib Log",
+        "category": "Raw Beef",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "rib_subprimal",
+          "prime_rib_seasoning"
+        ],
+        "process": "Rib roast trimmed and seasoned for roasting",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cooked_prime_rib_log",
+        "name": "Cooked Prime Rib Log",
+        "category": "Cooked Beef",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "prime_rib_log"
+        ],
+        "process": "Seasoned rib roast slow-roasted",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "prime_rib_drippings",
+        "name": "Prime Rib Drippings",
+        "category": "Sauce Bases",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "cooked_prime_rib_log"
+        ],
+        "process": "Cooking juices and rendered fat collected from roasted prime rib",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "twelve_oz_prime_rib",
+        "name": "12 oz Prime Rib",
+        "category": "Portioned Beef",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "cooked_prime_rib_log"
+        ],
+        "process": "Cooked prime rib sliced to 12 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "fourteen_oz_prime_rib",
+        "name": "14 oz Prime Rib",
+        "category": "Portioned Beef",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "cooked_prime_rib_log"
+        ],
+        "process": "Cooked prime rib sliced to 14 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "sixteen_oz_prime_rib",
+        "name": "16 oz Prime Rib",
+        "category": "Portioned Beef",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "cooked_prime_rib_log"
+        ],
+        "process": "Cooked prime rib sliced to 16 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "beef_trimmings",
+        "name": "Beef Trimmings",
+        "category": "Raw Beef",
+        "stage": "raw_material",
+        "parent_ids": [
+          "sirloin_subprimal",
+          "ribeye_roll",
+          "strip_loin_subprimal",
+          "tenderloin_subprimal"
+        ],
+        "process": "Usable trim collected during steak fabrication",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "ground_beef",
+        "name": "Ground Beef",
+        "category": "Raw Beef",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "beef_trimmings"
+        ],
+        "process": "Beef trim ground and blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "burger_patty",
+        "name": "Burger Patty",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "ground_beef"
+        ],
+        "process": "Ground beef weighed and formed into patties",
+        "added_to_complete_lineage": false,
+        "source_correction": "The original entry 'burger' is treated as a raw burger patty."
+      },
+      {
+        "id": "roadkill_patty",
+        "name": "Roadkill Chopped-Steak Patty",
+        "category": "Portioned Beef",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "ground_beef",
+          "sirloin_seasoning"
+        ],
+        "process": "Seasoned ground beef formed into a chopped-steak patty",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "roadkill",
+        "name": "Roadkill Prepared Entrée Component",
+        "category": "Prepared Beef",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "roadkill_patty",
+          "sliced_mushrooms",
+          "sliced_onion",
+          "jack_cheese"
+        ],
+        "process": "Chopped-steak patty cooked and topped with mushrooms, onions, and cheese",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "chili_base",
+        "name": "Chili Base",
+        "category": "Prepared Components",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "diced_tomato",
+          "diced_onion",
+          "chili_powder",
+          "ground_cayenne",
+          "salt",
+          "black_pepper"
+        ],
+        "process": "Tomato, onion, and seasonings combined and cooked",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chili",
+        "name": "Beef Chili",
+        "category": "Prepared Foods",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "ground_beef",
+          "chili_base",
+          "beef_stock"
+        ],
+        "process": "Ground beef cooked with seasoned chili base and stock",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "beef_tip_meat",
+        "name": "Uncooked Beef Tip Meat",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin cut into bite-sized pieces",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "beef_tips",
+        "name": "Beef Tips",
+        "category": "Prepared Beef",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "beef_tip_meat",
+          "sirloin_seasoning"
+        ],
+        "process": "Portioned beef pieces seasoned for cooking",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "steak_kebab_meat",
+        "name": "Steak Kebab Meat",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin cut into uniform cubes",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "kebab_marinade",
+        "name": "Kebab Marinade",
+        "category": "Marinades",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "vegetable_oil",
+          "vinegar",
+          "salt",
+          "black_pepper",
+          "garlic",
+          "oregano"
+        ],
+        "process": "Oil, acid, and seasonings blended",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "marinated_kebab_meat",
+        "name": "Marinated Steak Kebab Meat",
+        "category": "Prepared Beef",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "steak_kebab_meat",
+          "kebab_marinade"
+        ],
+        "process": "Steak cubes held in seasoned marinade",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "steak_kebabs",
+        "name": "Steak Kebabs",
+        "category": "Prepared Beef",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "marinated_kebab_meat",
+          "kebab_vegetables"
+        ],
+        "process": "Marinated steak and vegetables assembled for grilling",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cube_steak",
+        "name": "Tenderized Sirloin or Cube Steak",
+        "category": "Portioned Beef",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "sirloin_subprimal"
+        ],
+        "process": "Sirloin portion mechanically tenderized",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "breaded_country_fried_sirloin",
+        "name": "Breaded Country-Fried Sirloin",
+        "category": "Prepared Beef",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "cube_steak",
+          "buttermilk_batter",
+          "bread_crumbs"
+        ],
+        "process": "Tenderized sirloin battered and breaded",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "country_fried_sirloin",
+        "name": "Country-Fried Sirloin",
+        "category": "Prepared Beef",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "breaded_country_fried_sirloin",
+          "vegetable_oil"
+        ],
+        "process": "Breaded sirloin fried until cooked",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pig",
+        "name": "Pork Animal or Carcass",
+        "category": "Protein Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Primary source of pork cuts",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pork_belly",
+        "name": "Pork Belly",
+        "category": "Raw Pork",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pig"
+        ],
+        "process": "Pork belly separated from carcass",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "bacon",
+        "name": "Bacon",
+        "category": "Processed Pork",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pork_belly",
+          "salt",
+          "sugar"
+        ],
+        "process": "Pork belly cured, smoked, and sliced",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cooked_bacon",
+        "name": "Cooked Bacon",
+        "category": "Prepared Pork",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "bacon"
+        ],
+        "process": "Bacon cooked and drained",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pork_shoulder",
+        "name": "Pork Shoulder",
+        "category": "Raw Pork",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pig"
+        ],
+        "process": "Shoulder separated and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "seasoned_pork_shoulder",
+        "name": "Seasoned Pork Shoulder",
+        "category": "Prepared Pork",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "pork_shoulder",
+          "rib_seasoning"
+        ],
+        "process": "Pork shoulder coated with seasoning",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pulled_pork",
+        "name": "Pulled Pork",
+        "category": "Prepared Pork",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "seasoned_pork_shoulder",
+          "barbecue_sauce"
+        ],
+        "process": "Pork shoulder slow-cooked, shredded, and sauced",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pork_loin",
+        "name": "Pork Loin",
+        "category": "Raw Pork",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pig"
+        ],
+        "process": "Pork loin separated and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "pork_chop",
+        "name": "Pork Chop",
+        "category": "Portioned Pork",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "pork_loin"
+        ],
+        "process": "Pork loin cut into chops",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "pork_rib_rack",
+        "name": "Whole Pork Rib Rack",
+        "category": "Raw Pork",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "pig"
+        ],
+        "process": "Rib rack separated and trimmed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "full_slab_ribs",
+        "name": "Full Slab Ribs",
+        "category": "Portioned Pork",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "pork_rib_rack",
+          "rib_seasoning"
+        ],
+        "process": "Whole rack trimmed and seasoned",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "half_slab_ribs",
+        "name": "Half Slab Ribs",
+        "category": "Portioned Pork",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "full_slab_ribs"
+        ],
+        "process": "Full seasoned rack divided into two portions",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "four_bone_rib",
+        "name": "Four-Bone Rib Portion",
+        "category": "Portioned Pork",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "full_slab_ribs"
+        ],
+        "process": "Seasoned rack cut into a four-bone portion",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "cooked_ribs",
+        "name": "Cooked Ribs",
+        "category": "Prepared Pork",
+        "stage": "cooked_component",
+        "parent_ids": [
+          "full_slab_ribs",
+          "barbecue_sauce"
+        ],
+        "process": "Ribs slow-cooked and finished with barbecue sauce",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chicken",
+        "name": "Chicken",
+        "category": "Protein Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Primary source of chicken cuts",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chicken_breast",
+        "name": "Chicken Breast",
+        "category": "Raw Poultry",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "chicken"
+        ],
+        "process": "Breast meat separated, trimmed, and portioned",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "seasoned_chicken_breast",
+        "name": "Herb-Seasoned Chicken Breast",
+        "category": "Prepared Poultry",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "chicken_breast",
+          "herb_chicken_seasoning"
+        ],
+        "process": "Chicken breast coated with herb seasoning",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chicken_tenderloin",
+        "name": "Chicken Tenderloin",
+        "category": "Raw Poultry",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "chicken_breast"
+        ],
+        "process": "Tenderloin muscle separated from breast",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "chicken_tender",
+        "name": "Chicken Tenders",
+        "category": "Prepared Poultry",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "chicken_tenderloin",
+          "buttermilk_batter",
+          "bread_crumbs"
+        ],
+        "process": "Chicken tenderloins battered and breaded",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "boneless_wing_meat",
+        "name": "Boneless Wing Meat",
+        "category": "Raw Poultry",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "chicken_breast"
+        ],
+        "process": "Chicken breast cut into bite-sized pieces",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "boneless_wings",
+        "name": "Boneless Wings",
+        "category": "Prepared Poultry",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "boneless_wing_meat",
+          "buttermilk_batter",
+          "bread_crumbs"
+        ],
+        "process": "Chicken pieces battered and breaded",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "catfish_whole",
+        "name": "Whole Catfish",
+        "category": "Seafood Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole fish",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "catfish_fillet",
+        "name": "Catfish Fillet",
+        "category": "Raw Seafood",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "catfish_whole"
+        ],
+        "process": "Catfish cleaned, deboned, skinned, and filleted",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "breaded_catfish",
+        "name": "Breaded Catfish",
+        "category": "Prepared Seafood",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "catfish_fillet",
+          "buttermilk_batter",
+          "fish_seasoning"
+        ],
+        "process": "Catfish seasoned and battered or breaded",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "raw_shrimp",
+        "name": "Raw Shrimp",
+        "category": "Raw Seafood",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Raw shrimp, usually received peeled or shell-on",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "peeled_deveined_shrimp",
+        "name": "Peeled and Deveined Shrimp",
+        "category": "Raw Seafood",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "raw_shrimp"
+        ],
+        "process": "Shell and digestive tract removed",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "seasoned_shrimp",
+        "name": "Seasoned Shrimp",
+        "category": "Prepared Seafood",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "peeled_deveined_shrimp",
+          "fish_seasoning"
+        ],
+        "process": "Shrimp coated with seafood seasoning",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "salmon_whole",
+        "name": "Whole Salmon",
+        "category": "Seafood Source Materials",
+        "stage": "raw_material",
+        "parent_ids": [],
+        "process": "Whole fish",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "salmon_side",
+        "name": "Salmon Side or Fillet",
+        "category": "Raw Seafood",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "salmon_whole"
+        ],
+        "process": "Salmon cleaned and filleted",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "five_oz_salmon",
+        "name": "5 oz Salmon",
+        "category": "Portioned Seafood",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "salmon_side"
+        ],
+        "process": "Salmon fillet cut and weighed to 5 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "eight_oz_salmon",
+        "name": "8 oz Salmon",
+        "category": "Portioned Seafood",
+        "stage": "portioned_raw",
+        "parent_ids": [
+          "salmon_side"
+        ],
+        "process": "Salmon fillet cut and weighed to 8 ounces",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "generic_fish",
+        "name": "Generic Fish",
+        "category": "Raw Seafood",
+        "stage": "unresolved",
+        "parent_ids": [],
+        "process": "Unknown fish item requiring identification",
+        "added_to_complete_lineage": false,
+        "resolution_needed": "Determine whether this refers to catfish, salmon, another fish species, or a supplier category."
+      },
+      {
+        "id": "mozzarella_stick_core",
+        "name": "Mozzarella Stick Cheese Core",
+        "category": "Prepared Appetizer Components",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "mozzarella_cheese"
+        ],
+        "process": "Mozzarella formed or cut into sticks",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "mozzarella_sticks",
+        "name": "Mozzarella Sticks",
+        "category": "Prepared Appetizers",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "mozzarella_stick_core",
+          "flour",
+          "egg",
+          "bread_crumbs"
+        ],
+        "process": "Mozzarella sticks battered or breaded",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "rattlesnake_bite_filling",
+        "name": "Rattlesnake Bite Filling",
+        "category": "Prepared Appetizer Components",
+        "stage": "in_house_prepared",
+        "parent_ids": [
+          "jack_cheese",
+          "cheddar",
+          "red_pepper",
+          "green_pepper",
+          "ground_cayenne"
+        ],
+        "process": "Cheese, peppers, and seasoning blended and portioned",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "rattlesnake_bites",
+        "name": "Rattlesnake Bites",
+        "category": "Prepared Appetizers",
+        "stage": "ready_to_cook",
+        "parent_ids": [
+          "rattlesnake_bite_filling",
+          "flour",
+          "egg",
+          "bread_crumbs"
+        ],
+        "process": "Cheese filling formed, coated, and breaded",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "drink_concentrate",
+        "name": "Drink Concentrate",
+        "category": "Beverages",
+        "stage": "purchased_processed",
+        "parent_ids": [
+          "water",
+          "sugar"
+        ],
+        "process": "Commercial flavoring and sweetener concentrated for dilution",
+        "added_to_complete_lineage": false,
+        "resolution_needed": "Split into specific SKUs such as lemonade concentrate, tea concentrate, or fountain beverage syrup."
+      },
+      {
+        "id": "prepared_drink",
+        "name": "Prepared Nonalcoholic Drink",
+        "category": "Beverages",
+        "stage": "ready_to_serve",
+        "parent_ids": [
+          "drink_concentrate",
+          "water",
+          "ice"
+        ],
+        "process": "Concentrate diluted with water and served over ice",
+        "added_to_complete_lineage": true
+      },
+      {
+        "id": "black_straws",
+        "name": "Black Straws",
+        "category": "Disposables",
+        "stage": "non_food_supply",
+        "parent_ids": [],
+        "process": "Manufactured disposable beverage straw",
+        "added_to_complete_lineage": false
+      },
+      {
+        "id": "white_straws",
+        "name": "White Straws",
+        "category": "Disposables",
+        "stage": "non_food_supply",
+        "parent_ids": [],
+        "process": "Manufactured disposable beverage straw",
+        "added_to_complete_lineage": false,
+        "source_correction": "The separate original entries 'white' and 'straws' were consolidated as white straws."
+      },
+      {
+        "id": "eta_unresolved",
+        "name": "ETA",
+        "category": "Unresolved",
+        "stage": "unresolved",
+        "parent_ids": [],
+        "process": "Unknown",
+        "added_to_complete_lineage": false,
+        "resolution_needed": "Confirm whether 'ETA' is a product abbreviation, supplier name, sauce, concentrate, or accidental text."
+      },
+      {
+        "id": "generic_mix_unresolved",
+        "name": "Generic Mix",
+        "category": "Unresolved",
+        "stage": "unresolved",
+        "parent_ids": [],
+        "process": "Unknown blended product",
+        "added_to_complete_lineage": false,
+        "resolution_needed": "Identify whether this means bread mix, batter mix, drink mix, seasoning mix, or another product."
+      },
+      {
+        "id": "generic_ground_unresolved",
+        "name": "Generic Ground Item",
+        "category": "Unresolved",
+        "stage": "unresolved",
+        "parent_ids": [],
+        "process": "Unknown ground ingredient",
+        "added_to_complete_lineage": false,
+        "resolution_needed": "The original standalone word 'ground' needs the ingredient name attached."
+      }
+    ],
+    "important_parent_chains": [
+      {
+        "chain_name": "Prime Rib",
+        "path": [
+          "Beef Animal or Carcass",
+          "Beef Rib Subprimal",
+          "Prime Rib Log",
+          "Cooked Prime Rib Log",
+          "12 oz, 14 oz, or 16 oz Prime Rib",
+          "Prime Rib Drippings",
+          "Au Jus"
+        ]
+      },
+      {
+        "chain_name": "Sirloin Products",
+        "path": [
+          "Beef Animal or Carcass",
+          "Sirloin Subprimal",
+          "Portioned Sirloin Steaks, Beef Tips, Kebab Meat, or Cube Steak",
+          "Seasoned or Breaded Prepared Product",
+          "Cooked Entrée"
+        ]
+      },
+      {
+        "chain_name": "Ranch",
+        "path": [
+          "Milk",
+          "Buttermilk",
+          "Egg and Vegetable Oil",
+          "Mayonnaise",
+          "Ranch Seasoning Mix",
+          "Ranch Dressing"
+        ]
+      },
+      {
+        "chain_name": "Bread",
+        "path": [
+          "Wheat",
+          "Flour",
+          "Bread or Roll Mix",
+          "Bread or Roll Dough",
+          "Dinner Rolls or Bread"
+        ]
+      },
+      {
+        "chain_name": "Sweet Potato",
+        "path": [
+          "Sweet Potato",
+          "Baked Sweet Potato",
+          "Loaded Sweet Potato"
+        ]
+      },
+      {
+        "chain_name": "Apple Pie",
+        "path": [
+          "Whole Apples",
+          "Peeled and Sliced Apples",
+          "Apple Pie Filling",
+          "Apple Pie"
+        ]
+      },
+      {
+        "chain_name": "Pork Ribs",
+        "path": [
+          "Pork Animal or Carcass",
+          "Whole Pork Rib Rack",
+          "Full Slab Ribs",
+          "Half Slab Ribs or Four-Bone Rib Portion",
+          "Cooked Ribs"
+        ]
+      },
+      {
+        "chain_name": "Chicken Tenders",
+        "path": [
+          "Chicken",
+          "Chicken Breast",
+          "Chicken Tenderloin",
+          "Battered and Breaded Chicken Tenders",
+          "Cooked Chicken Tenders"
+        ]
+      },
+      {
+        "chain_name": "Salmon",
+        "path": [
+          "Whole Salmon",
+          "Salmon Side or Fillet",
+          "5 oz or 8 oz Salmon Portion",
+          "Seasoned and Cooked Salmon"
+        ]
+      }
+    ],
+    "items_requiring_store_confirmation": [
+      {
+        "original_entry": "ETA",
+        "problem": "Cannot be identified reliably."
+      },
+      {
+        "original_entry": "concentrate",
+        "problem": "The concentrate type is not specified."
+      },
+      {
+        "original_entry": "mix",
+        "problem": "The mix type is not specified."
+      },
+      {
+        "original_entry": "white",
+        "problem": "Assumed to belong with white straws."
+      },
+      {
+        "original_entry": "drink",
+        "problem": "Could refer to a finished beverage, drink mix, or drink concentrate."
+      },
+      {
+        "original_entry": "ground",
+        "problem": "The ingredient being ground is not named."
+      },
+      {
+        "original_entry": "fish",
+        "problem": "The fish species or product form is not specified."
+      },
+      {
+        "original_entry": "cream",
+        "problem": "Could mean dairy cream, cream sauce, ice cream, or another prepared product."
+      }
+    ]
+  }
+}

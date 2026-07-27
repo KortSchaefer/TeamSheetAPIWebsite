@@ -1,8 +1,11 @@
 import asyncio
 import pytest
+import pytest_asyncio
+import httpx
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import create_app
@@ -26,7 +29,12 @@ def app():
 
 @pytest.fixture(scope="session")
 def test_engine():
-    engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL, future=True)
+    engine = create_engine(
+        SQLALCHEMY_TEST_DATABASE_URL,
+        future=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -51,7 +59,8 @@ def override_get_db(app, TestingSessionLocal):
     app.dependency_overrides.pop(get_db, None)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(app):
-    async with AsyncClient(app=app, base_url="http://testserver") as ac:
+    transport = httpx.ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac

@@ -9,6 +9,20 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
     algorithm: str = "HS256"
+    openai_api_key: str | None = None
+    openai_transcription_model: str = "gpt-realtime-whisper"
+    openai_normalization_model: str = "gpt-5.6-luna"
+    openai_realtime_delay: str = "medium"
+    voice_inventory_enabled: bool = True
+    voice_prompt_version: str = "voice-inventory-v1"
+    voice_audio_retention_hours: int = 24
+    voice_storage_backend: str = "local"
+    voice_storage_local_path: str = "./voice_audio"
+    voice_storage_bucket: str | None = None
+    voice_storage_endpoint: str | None = None
+    voice_storage_region: str | None = None
+    voice_storage_access_key: str | None = None
+    voice_storage_secret_key: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

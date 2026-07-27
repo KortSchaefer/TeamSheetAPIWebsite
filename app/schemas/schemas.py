@@ -12,6 +12,8 @@ from app.models import (
     UserRole,
     PayoutType,
     POSOrderStatus,
+    PurchaseOrderStatus,
+    InventoryCountStatus,
     PyosShift,
     PyosStatus,
 )
@@ -529,6 +531,245 @@ class StockLevelRead(BaseModel):
     name: str
     unit: str
     quantity_on_hand: float
+
+
+class InventoryLocationBase(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    description: Optional[str] = None
+    active: bool = True
+
+
+class InventoryLocationCreate(InventoryLocationBase):
+    pass
+
+
+class InventoryLocationRead(InventoryLocationBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InventoryItemBase(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    category: Optional[str] = None
+    sku: Optional[str] = None
+    base_unit: str = "unit"
+    purchase_unit: Optional[str] = None
+    purchase_to_base: Decimal = Field(default=Decimal("1"), gt=0)
+    default_location_id: Optional[int] = None
+    cost_cents: int = Field(default=0, ge=0)
+    shelf_life_days: Optional[int] = Field(default=None, ge=0)
+    active: bool = True
+
+
+class InventoryItemCreate(InventoryItemBase):
+    pass
+
+
+class InventoryItemRead(InventoryItemBase, TimestampModel):
+    id: int
+    ingredient_id: Optional[int] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IngredientCatalogItemRead(BaseModel):
+    id: int
+    external_id: str
+    name: str
+    normalized_name: str
+    category: Optional[str] = None
+    stage: str
+    process: Optional[str] = None
+    added_to_complete_lineage: bool
+    source_correction: Optional[str] = None
+    resolution_needed: Optional[str] = None
+    catalog_schema_version: Optional[str] = None
+    parent_ids: List[str] = Field(default_factory=list)
+    child_ids: List[str] = Field(default_factory=list)
+    activated_inventory_item_id: Optional[int] = None
+
+
+class IngredientCatalogListRead(BaseModel):
+    items: List[IngredientCatalogItemRead]
+    total: int
+    limit: int
+    offset: int
+
+
+class IngredientCatalogImportRead(BaseModel):
+    import_id: Optional[int] = None
+    schema_version: str
+    source_name: str
+    source_sha256: str
+    item_count: int
+    relationship_count: int
+    created: int
+    updated: int
+    unchanged: int
+    dry_run: bool
+
+
+class InventoryCatalogActivationCreate(BaseModel):
+    catalog_id: str = Field(min_length=1, max_length=150)
+    base_unit: str = Field(default="unit", min_length=1, max_length=30)
+    sku: Optional[str] = None
+    purchase_unit: Optional[str] = None
+    purchase_to_base: Decimal = Field(default=Decimal("1"), gt=0)
+    default_location_id: Optional[int] = None
+    cost_cents: int = Field(default=0, ge=0)
+    shelf_life_days: Optional[int] = Field(default=None, ge=0)
+
+
+class InventoryBalanceRead(BaseModel):
+    id: int
+    inventory_item_id: int
+    location_id: int
+    quantity_on_hand: Decimal
+    minimum_quantity: Decimal
+    par_quantity: Decimal
+    maximum_quantity: Optional[Decimal] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InventoryBalanceUpsert(BaseModel):
+    location_id: int
+    minimum_quantity: Decimal = Field(default=Decimal("0"), ge=0)
+    par_quantity: Decimal = Field(default=Decimal("0"), ge=0)
+    maximum_quantity: Optional[Decimal] = Field(default=None, ge=0)
+
+
+class VendorBase(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    contact_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    lead_time_days: int = Field(default=1, ge=0)
+    active: bool = True
+
+
+class VendorCreate(VendorBase):
+    pass
+
+
+class VendorRead(VendorBase, TimestampModel):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VendorItemCreate(BaseModel):
+    vendor_id: int
+    inventory_item_id: int
+    vendor_sku: Optional[str] = None
+    unit_price_cents: int = Field(default=0, ge=0)
+    pack_quantity: Decimal = Field(default=Decimal("1"), gt=0)
+    preferred: bool = False
+
+
+class VendorItemRead(VendorItemCreate, TimestampModel):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InventoryMovementCreate(BaseModel):
+    inventory_item_id: int
+    location_id: int
+    quantity_change: Decimal
+    reason: str = Field(min_length=1, max_length=100)
+    notes: Optional[str] = None
+    source_event_key: Optional[str] = None
+    lot_number: Optional[str] = None
+    expiration_date: Optional[date] = None
+
+
+class InventoryMovementRead(InventoryMovementCreate, TimestampModel):
+    id: int
+    created_by_user_id: Optional[int] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InventoryTransferCreate(BaseModel):
+    inventory_item_id: int
+    from_location_id: int
+    to_location_id: int
+    quantity: Decimal = Field(gt=0)
+    notes: Optional[str] = None
+
+
+class InventoryStockRead(BaseModel):
+    inventory_item_id: int
+    item_name: str
+    category: Optional[str]
+    location_id: int
+    location_name: str
+    base_unit: str
+    quantity_on_hand: Decimal
+    minimum_quantity: Decimal
+    par_quantity: Decimal
+    status: str
+    earliest_expiration: Optional[date] = None
+
+
+class InventoryCountLineCreate(BaseModel):
+    inventory_item_id: int
+    counted_quantity: Decimal = Field(ge=0)
+    notes: Optional[str] = None
+
+
+class InventoryCountCreate(BaseModel):
+    location_id: int
+    notes: Optional[str] = None
+    lines: List[InventoryCountLineCreate] = Field(default_factory=list)
+
+
+class InventoryCountRead(BaseModel):
+    id: int
+    location_id: int
+    status: InventoryCountStatus
+    counted_by_user_id: int
+    reviewed_by_user_id: Optional[int] = None
+    notes: Optional[str] = None
+    lines: List[dict] = Field(default_factory=list)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PurchaseOrderLineCreate(BaseModel):
+    inventory_item_id: int
+    ordered_quantity: Decimal = Field(gt=0)
+    unit_price_cents: int = Field(default=0, ge=0)
+
+
+class PurchaseOrderCreate(BaseModel):
+    vendor_id: int
+    expected_date: Optional[date] = None
+    notes: Optional[str] = None
+    lines: List[PurchaseOrderLineCreate] = Field(default_factory=list)
+
+
+class PurchaseOrderRead(BaseModel):
+    id: int
+    vendor_id: int
+    status: PurchaseOrderStatus
+    expected_date: Optional[date] = None
+    notes: Optional[str] = None
+    created_by_user_id: int
+    lines: List[dict] = Field(default_factory=list)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReceivingLineCreate(BaseModel):
+    inventory_item_id: int
+    location_id: int
+    received_quantity: Decimal = Field(gt=0)
+    unit_price_cents: int = Field(default=0, ge=0)
+    lot_number: Optional[str] = None
+    expiration_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class ReceivingCreate(BaseModel):
+    purchase_order_id: int
+    invoice_number: Optional[str] = None
+    notes: Optional[str] = None
+    lines: List[ReceivingLineCreate] = Field(default_factory=list)
 
 
 class DailyRosterEntry(BaseModel):

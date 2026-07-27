@@ -5,6 +5,7 @@ from app import schemas
 from app.core.security import get_current_manager_or_admin, get_current_user
 from app.database import get_db
 from app.models import MenuCategory, MenuItem, POSOrder, POSOrderItem, POSOrderStatus, POSPayment, RecipeItem, StockMovement, User
+from app.services.inventory_events import record_recipe_sale
 
 router = APIRouter(prefix="/pos", tags=["pos"])
 
@@ -129,15 +130,7 @@ def close_order(
     db.add(payment)
 
     for item in order.items:
-        recipes = db.query(RecipeItem).filter(RecipeItem.menu_item_id == item.menu_item_id).all()
-        for recipe in recipes:
-            movement = StockMovement(
-                ingredient_id=recipe.ingredient_id,
-                quantity_change=-recipe.quantity * item.quantity,
-                reason="SALE",
-                order_item_id=item.id,
-            )
-            db.add(movement)
+        record_recipe_sale(db, item.id, item.menu_item_id, item.quantity)
 
     order.status = POSOrderStatus.CLOSED
     db.commit()
