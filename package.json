@@ -1,0 +1,23 @@
+{
+  "name": "teamsheet-cloudflare-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cf:dev": "cross-env CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev --local",
+    "cf:types": "cross-env CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types",
+    "cf:check": "npm run cf:types && tsc --noEmit",
+    "test": "npm run test:worker",
+    "test:worker": "npm run test:worker:unit && npm run test:worker:integration",
+    "test:worker:unit": "cross-env CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false vitest run --config vitest.worker.config.ts",
+    "test:worker:integration": "cross-env CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false vitest run --config vitest.integration.config.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.20.1",
+    "@types/node": "24.13.3",
+    "cross-env": "10.1.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wrangler": "4.118.0"
+  }
+}

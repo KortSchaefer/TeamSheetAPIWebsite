@@ -1,5 +1,32 @@
 # TeamSheetAPIWebsite
 
+## Cloudflare Worker foundation
+
+The migration branch includes a TypeScript Worker that serves the unchanged
+`public/` directory through Workers Static Assets. It currently implements only
+`/health`, `/api/version`, `/`, and the existing `/static/...` compatibility
+paths; FastAPI remains the reference backend for all business routes.
+
+Install the local Worker toolchain and run it without remote bindings:
+
+```powershell
+npm install
+npm run cf:dev
+```
+
+The local Worker is available at `http://127.0.0.1:8787`. Validate generated
+binding types and run both Worker runtime and full-config integration tests with:
+
+```powershell
+npm run cf:check
+npm run test:worker
+```
+
+These commands do not create Cloudflare resources. Deployment is intentionally
+not exposed as a package script and requires a separate authorized migration step.
+The scripts also prevent Wrangler from loading the existing FastAPI `.env` into
+the Worker process.
+
 ## Ingredient catalog
 
 The normalized process-lineage catalog is assembled from

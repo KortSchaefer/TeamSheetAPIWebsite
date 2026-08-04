@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "teamsheet-studio-local",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": ["/", "/health", "/api/*", "/static/*"]
+  },
+  "vars": {
+    "APP_NAME": "Team Sheet Studio API",
+    "APP_VERSION": "0.1.0",
+    "APP_ENVIRONMENT": "local"
+  },
+  "secrets": {
+    "required": []
+  },
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "staging": {
+      "name": "teamsheet-studio-staging",
+      "vars": {
+        "APP_NAME": "Team Sheet Studio API",
+        "APP_VERSION": "0.1.0",
+        "APP_ENVIRONMENT": "staging"
+      },
+      "secrets": {
+        "required": []
+      }
+    },
+    "production": {
+      "name": "teamsheet-studio-production",
+      "vars": {
+        "APP_NAME": "Team Sheet Studio API",
+        "APP_VERSION": "0.1.0",
+        "APP_ENVIRONMENT": "production"
+      },
+      "secrets": {
+        "required": []
+      }
+    }
+  }
+}
