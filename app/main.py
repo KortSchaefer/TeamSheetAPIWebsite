@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import Base, engine, ensure_sqlite_catalog_columns, ensure_sqlite_inventory_columns, ensure_sqlite_sections_columns, ensure_sqlite_user_columns
+from app.database import Base, engine, ensure_sqlite_catalog_columns, ensure_sqlite_count_sheet_columns, ensure_sqlite_inventory_columns, ensure_sqlite_pos_columns, ensure_sqlite_sections_columns, ensure_sqlite_store_preference_columns, ensure_sqlite_user_columns
 from app.routers import auth, employees, imports, sections, shifts, team_sheets, cobrands, gift_tracker, payouts, seasons, store_preferences, pos, inventory, ingredient_catalog, daily_rosters, teamsheet_presets, pyos, voice_inventory
 
 PUBLIC_DIR = Path(__file__).resolve().parent.parent / "public"
@@ -58,6 +58,9 @@ def create_app() -> FastAPI:
 Base.metadata.create_all(bind=engine)
 ensure_sqlite_sections_columns()
 ensure_sqlite_user_columns()
+ensure_sqlite_store_preference_columns()
 ensure_sqlite_inventory_columns()
 ensure_sqlite_catalog_columns()
+ensure_sqlite_count_sheet_columns()
+ensure_sqlite_pos_columns()
 app = create_app()

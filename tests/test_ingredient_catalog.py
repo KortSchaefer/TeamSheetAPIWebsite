@@ -7,6 +7,7 @@ from app.models import (
     IngredientLineage,
     InventoryBalance,
     InventoryItem,
+    InventoryItemAlias,
     InventoryLocation,
     MenuItem,
     RecipeItem,
@@ -40,13 +41,13 @@ def test_default_catalog_import_is_complete_and_idempotent(TestingSessionLocal):
         first = import_default_catalog(db)
         second = import_default_catalog(db)
 
-        assert first["item_count"] == 256
-        assert first["relationship_count"] == 437
+        assert first["item_count"] == 420
+        assert first["relationship_count"] == 529
         assert second["created"] == 0
         assert second["updated"] == 0
-        assert second["unchanged"] == 256
-        assert db.query(Ingredient).filter(Ingredient.external_id.is_not(None)).count() == 256
-        assert db.query(IngredientLineage).count() == 437
+        assert second["unchanged"] == 420
+        assert db.query(Ingredient).filter(Ingredient.external_id.is_not(None)).count() == 420
+        assert db.query(IngredientLineage).count() == 529
 
         mustard = db.query(Ingredient).filter(Ingredient.external_id == "yellow_mustard").one()
         parent_ids = [
@@ -54,6 +55,22 @@ def test_default_catalog_import_is_complete_and_idempotent(TestingSessionLocal):
             for link in sorted(mustard.parent_links, key=lambda link: link.order_index)
         ]
         assert parent_ids == ["mustard_powder", "vinegar", "water", "salt"]
+
+        razzlesnake = (
+            db.query(Ingredient)
+            .filter(Ingredient.external_id == "razzlesnake_margarita")
+            .one()
+        )
+        assert razzlesnake.name == "Razzlesnake Margarita"
+        assert "Razzle Snake" in razzlesnake.source_correction
+
+        grand_marnier = (
+            db.query(Ingredient)
+            .filter(Ingredient.external_id == "grand_marnier_liqueur")
+            .one()
+        )
+        assert grand_marnier.category == "Liqueurs"
+        assert grand_marnier.catalog_metadata["stockable"] is True
 
 
 @pytest.mark.asyncio
@@ -63,12 +80,12 @@ async def test_catalog_search_detail_and_inventory_activation(client):
 
     imported = await client.post("/ingredient-catalog/import-default", headers=headers)
     assert imported.status_code == 200, imported.text
-    assert imported.json()["item_count"] == 256
+    assert imported.json()["item_count"] == 420
 
     metadata = await client.get("/ingredient-catalog/metadata", headers=headers)
     assert metadata.status_code == 200, metadata.text
     assert len(metadata.json()["stage_definitions"]) == 9
-    assert len(metadata.json()["items_requiring_store_confirmation"]) == 8
+    assert len(metadata.json()["items_requiring_store_confirmation"]) == 15
     assert metadata.json()["relationship_rules"]["parent_ids"].startswith("Immediate")
 
     search = await client.get(
@@ -116,6 +133,58 @@ async def test_catalog_search_detail_and_inventory_activation(client):
         headers=headers,
     )
     assert linked_detail.json()["activated_inventory_item_id"] == activated.json()["id"]
+
+
+@pytest.mark.asyncio
+async def test_bar_inventory_activation_only_creates_countable_products(
+    client, TestingSessionLocal
+):
+    token = await login_manager(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    first = await client.post(
+        "/ingredient-catalog/import-bar-inventory",
+        headers=headers,
+    )
+    second = await client.post(
+        "/ingredient-catalog/import-bar-inventory",
+        headers=headers,
+    )
+    assert first.status_code == 200, first.text
+    assert second.status_code == 200, second.text
+    assert first.json()["stockable_item_count"] == 117
+    assert first.json()["created"] == 117
+    assert second.json()["created"] == 0
+    assert second.json()["updated"] == 0
+
+    items = await client.get("/inventory/items?active=true", headers=headers)
+    assert items.status_code == 200, items.text
+    names = {item["name"] for item in items.json()}
+    assert "Monin Mango Syrup" in names
+    assert "Bud Light Draft Keg" in names
+    assert "La Marca Prosecco 187 mL Bottle" in names
+    assert "House Margarita" not in names
+    assert "Barefoot Moscato Glass" not in names
+    budweiser_bottles = next(
+        item for item in items.json() if item["name"] == "Budweiser Beer Bottles"
+    )
+    assert budweiser_bottles["base_unit"] == "bottle"
+    assert budweiser_bottles["purchase_unit"] == "bottle"
+    assert budweiser_bottles["purchase_to_base"] == "1.0000"
+
+    with TestingSessionLocal() as db:
+        mello_yello = (
+            db.query(InventoryItem)
+            .filter(InventoryItem.name == "Mello Yello Fountain Syrup")
+            .one()
+        )
+        aliases = {
+            alias.normalized_alias
+            for alias in db.query(InventoryItemAlias)
+            .filter(InventoryItemAlias.inventory_item_id == mello_yello.id)
+            .all()
+        }
+        assert "mellow yellow" in aliases
 
 
 def test_recipe_sale_depletes_activated_inventory_exactly_once(TestingSessionLocal):

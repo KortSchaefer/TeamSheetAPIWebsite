@@ -465,9 +465,9 @@
         .wheel-sublabel { font-size: 10px; }
       }
     </style>
+    <link rel="stylesheet" href="/static/team-sheet-studio.css" />
   </head>
   <body>
-    <a class="back-btn" href="/static/index.html">← Back</a>
     <section id="login-view" class="workspace-hidden">
       <div class="brand">
         <p class="pill-nav" style="gap:.5rem;">
@@ -517,147 +517,166 @@
       </div>
     </section>
 
-    <section id="builder-view">
-      <div class="builder-header">
-        <div>
-          <h1>Team Sheet Studio</h1>
-          <p style="margin:.2rem 0 0;color:#8ea7ff;font-size:.9rem;">Optimize floor coverage with confidence</p>
+    <section id="builder-view" aria-label="TeamSheet Studio workspace">
+      <header class="studio-shell-header builder-header">
+        <div class="studio-brand-row">
+          <a class="studio-back-link" href="/static/index.html" aria-label="Back to Operations Hub">←</a>
+          <div class="studio-title-block">
+            <span class="studio-eyebrow">Operations</span>
+            <h1>TeamSheet Studio</h1>
+          </div>
         </div>
-        <div class="pill-nav">
-          <button id="servers-tab" class="active">Servers</button>
-          <button id="hosts-tab">Hosts & SAS</button>
-          <button id="auto-assign-btn">Auto-Assign</button>
-          <button id="remove-servers-btn">Remove All</button>
-          <button id="change-teamsheet-btn" class="ghost-btn">Change Teamsheet</button>
-          <button id="import-daily-roster-btn" class="ghost-btn">Daily Roster</button>
-          <button id="import-btn">Import Data</button>
-          <input type="file" id="csv-input" accept=".csv" style="display:none;" />
-          <input type="file" id="daily-roster-input" accept=".csv" style="display:none;" />
+        <div class="studio-header-actions">
+          <div class="manager-chip"><span class="manager-avatar" aria-hidden="true">M</span><span id="manager-name">Manager</span></div>
+          <span id="save-state" class="save-state" role="status">Loading sheet…</span>
+          <button id="save-sheet-btn" class="primary-action" type="button">Save sheet</button>
+          <details class="action-menu" id="export-menu">
+            <summary>Export</summary>
+            <div class="action-menu-popover">
+              <button id="print-sheet-btn" type="button">Print sheet</button>
+              <button id="export-csv-btn" type="button">Download CSV</button>
+              <button id="view-json-btn" type="button">View JSON</button>
+            </div>
+          </details>
         </div>
-      </div>
-      <div class="schedule-bar">
-        <div class="schedule-group">
-          <label for="store-number">Store</label>
-          <input id="store-number" class="compact-input" type="text" value="1" />
+      </header>
+
+      <section class="shift-context" aria-label="Shift context">
+        <div class="shift-context-fields">
+          <div class="schedule-group store-field"><label for="store-number">Store</label><input id="store-number" class="compact-input" type="text" value="1" inputmode="numeric" /></div>
+          <div class="schedule-group"><label for="shift-date">Date</label><input id="shift-date" class="compact-input" type="date" /></div>
+          <div class="schedule-group"><label for="shift-select">Shift</label><select id="shift-select" class="compact-input"></select></div>
+          <button id="load-shift-btn" class="secondary-action" type="button">Load shift</button>
         </div>
-        <div class="schedule-group">
-          <label for="shift-date">Date</label>
-          <input id="shift-date" class="compact-input" type="date" />
+        <div id="shift-summary" class="shift-summary">Choose a store, date, and shift</div>
+      </section>
+
+      <nav class="workspace-nav" aria-label="TeamSheet workspaces">
+        <div class="workspace-tabs" role="tablist">
+          <button id="servers-tab" class="active" role="tab" aria-selected="true">Servers</button>
+          <button id="hosts-tab" role="tab" aria-selected="false">Hosts &amp; SAs</button>
         </div>
-        <div class="schedule-group">
-          <label for="shift-select">Shift</label>
-          <select id="shift-select" class="compact-input"></select>
+        <div class="workspace-actions">
+          <button id="auto-assign-btn" class="secondary-action" type="button">Auto-assign</button>
+          <button id="remove-servers-btn" class="danger-action" type="button">Clear assignments</button>
+          <details class="action-menu" id="roster-menu">
+            <summary>Roster</summary>
+            <div class="action-menu-popover">
+              <button id="import-daily-roster-btn" type="button">Upload daily roster</button>
+              <button id="import-btn" type="button">Import employee CSV</button>
+            </div>
+          </details>
+          <button id="change-teamsheet-btn" class="secondary-action" type="button">Configure floor</button>
+          <input type="file" id="csv-input" accept=".csv" hidden />
+          <input type="file" id="daily-roster-input" accept=".csv" hidden />
         </div>
-        <div class="schedule-actions">
-          <button id="load-shift-btn" class="ghost-btn" type="button">Load Shift</button>
-          <button id="save-sheet-btn" type="button">Save Sheet</button>
-          <button id="view-json-btn" class="ghost-btn" type="button">View JSON</button>
-          <button id="print-sheet-btn" class="ghost-btn" type="button">Print</button>
+      </nav>
+
+      <div id="workspace-status" class="workspace-status hidden" role="status" aria-live="polite"></div>
+
+      <div id="json-output" class="json-output panel-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="json-dialog-title">
+        <div class="json-dialog panel-card">
+          <div class="panel-header">
+            <div><span class="studio-eyebrow">Advanced export</span><h2 id="json-dialog-title">Team sheet JSON</h2></div>
+            <button id="close-json-btn" class="icon-action" type="button" aria-label="Close JSON viewer">×</button>
+          </div>
+          <pre id="json-content"></pre>
+          <div class="panel-actions sticky-actions">
+            <button id="copy-json-btn" class="secondary-action" type="button">Copy JSON</button>
+            <button id="close-json-footer-btn" class="primary-action" type="button">Done</button>
+          </div>
         </div>
-      </div>
-      <div id="json-output" class="json-output hidden">
-        <pre id="json-content" style="margin:0;"></pre>
       </div>
       <div id="section-panel" class="panel-overlay hidden">
-        <div class="panel-card">
+        <div class="panel-card floor-drawer" role="dialog" aria-modal="true" aria-labelledby="section-panel-title">
           <div class="panel-header">
-            <h2 id="section-panel-title">Manage Sections</h2>
-            <button id="close-section-panel" class="ghost-btn" type="button">Close</button>
+            <div><span class="studio-eyebrow">Layout and defaults</span><h2 id="section-panel-title">Configure floor</h2></div>
+            <button id="close-section-panel" class="icon-action" type="button" aria-label="Close floor configuration">×</button>
           </div>
-          <div class="panel-header" style="margin-bottom:1.2rem;gap:1rem;">
-            <div style="flex:1;">
-              <label style="display:block;margin-bottom:.3rem;color:#8ea7ff;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">Preset</label>
-              <select id="preset-select" class="compact-input" style="width:100%;"></select>
+          <div class="preset-toolbar">
+            <div class="preset-field">
+              <label for="preset-select">Preset</label>
+              <select id="preset-select" class="compact-input"></select>
             </div>
-            <div style="flex:1;">
-              <label style="display:block;margin-bottom:.3rem;color:#8ea7ff;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">Preset Name</label>
+            <div class="preset-field">
+              <label for="preset-name">Preset name</label>
               <input id="preset-name" class="compact-input" placeholder="Weekday Floor" />
             </div>
-            <div style="display:flex;gap:.5rem;align-items:flex-end;">
-              <button id="load-preset" class="ghost-btn" type="button">Load</button>
-              <button id="save-preset" type="button">Save</button>
+            <div class="preset-actions">
+              <button id="load-preset" class="secondary-action" type="button">Load preset</button>
+              <button id="save-preset" class="secondary-action" type="button">Save preset</button>
             </div>
           </div>
-          <table class="panel-table">
-            <thead>
-              <tr>
-                <th>Section ID</th>
-                <th>Tables</th>
-                <th>Guest Count</th>
-                <th>Cut Order</th>
-                <th>Tags</th>
-                <th>Sidework</th>
-                <th>Outwork</th>
-              </tr>
-            </thead>
-            <tbody id="section-panel-rows"></tbody>
-          </table>
-          <div class="panel-actions">
-            <button id="add-section-row" class="ghost-btn" type="button">Add Row</button>
-            <button id="save-sections" type="button">Save Sections</button>
+          <div class="team-rules-bar">
+            <div>
+              <span class="studio-eyebrow">Server placement rule</span>
+              <strong>Minimum BLAST requirement</strong>
+              <p>Servers below the minimum are flagged for a two-table section.</p>
+            </div>
+            <label for="blast-threshold-input"><span>Minimum</span><input id="blast-threshold-input" class="compact-input" type="number" min="0" max="250" step="1" value="98" /><b>%</b></label>
+            <button id="save-blast-threshold-btn" class="secondary-action" type="button">Save requirement</button>
+          </div>
+          <div class="floor-table-wrap table-scroll">
+            <table class="panel-table">
+              <thead><tr><th>Section ID</th><th>Tables</th><th>Guest count</th><th>Cut order</th><th>Tags</th><th>Sidework</th><th>Outwork</th></tr></thead>
+              <tbody id="section-panel-rows"></tbody>
+            </table>
+          </div>
+          <div class="panel-actions sticky-actions">
+            <button id="add-section-row" class="secondary-action" type="button">Add section</button>
+            <button id="save-sections" class="primary-action" type="button">Save sections</button>
           </div>
         </div>
       </div>
       <div class="board" id="servers-board">
-        <aside class="panel">
-          <h3>Servers</h3>
+        <aside class="panel roster-panel">
+          <div class="roster-panel-header">
+            <div><span class="studio-eyebrow">Available team</span><h2>Servers</h2></div>
+            <div class="roster-summary-badges"><span id="blast-threshold-label" class="threshold-badge">Minimum 98%</span><span id="server-roster-count" class="count-badge">0</span></div>
+          </div>
+          <label class="search-field" for="server-search"><span>Search servers</span><input id="server-search" type="search" placeholder="Name or nickname" autocomplete="off" /></label>
+          <label class="sort-field" for="server-sort"><span>Sort</span><select id="server-sort" class="compact-input"><option value="score">Highest score</option><option value="name">Name</option><option value="in_time">In time</option></select></label>
+          <p class="assignment-hint">Drag a server to a section, or select a server and then select an open slot.</p>
           <div id="server-list"></div>
         </aside>
-        <div class="grid-panel panel">
-          <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Sections Grid</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Section</th>
-                <th>Server</th>
-                <th>Sidework</th>
-                <th>Outwork</th>
-              </tr>
-            </thead>
-            <tbody id="section-rows"></tbody>
-          </table>
+        <div class="grid-panel panel assignment-panel">
+          <div class="assignment-panel-header">
+            <div><span class="studio-eyebrow">Shift coverage</span><h2>Section assignments</h2></div>
+            <div class="assignment-progress-block"><span id="assignment-progress-label">0 of 0 assigned</span><div class="progress-track" aria-hidden="true"><span id="assignment-progress-bar"></span></div></div>
+          </div>
+          <div class="table-scroll assignment-table-wrap">
+            <table class="assignment-table">
+              <thead><tr><th>Section</th><th>Server</th><th>Sidework</th><th>Outwork</th></tr></thead>
+              <tbody id="section-rows"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="board" id="hosts-board" style="display:none;">
-        <aside class="panel" style="display:flex;flex-direction:column;gap:1rem;">
-          <div>
-            <h3>Hosts</h3>
+        <aside class="panel roster-panel support-roster-panel">
+          <label class="search-field" for="support-search"><span>Search support team</span><input id="support-search" type="search" placeholder="Name or qualification" autocomplete="off" /></label>
+          <div class="support-roster-group">
+            <div class="roster-panel-header compact"><h2>Hosts</h2><span id="host-roster-count" class="count-badge">0</span></div>
             <div id="host-list"></div>
           </div>
-          <div>
-            <h3>SAS</h3>
+          <div class="support-roster-group">
+            <div class="roster-panel-header compact"><h2>SAs</h2><span id="sas-roster-count" class="count-badge">0</span></div>
             <div id="sas-list"></div>
           </div>
         </aside>
-        <div class="panel" style="display:flex;flex-direction:column;gap:1.2rem;">
-          <div class="grid-panel panel" style="margin:0;">
-            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">Host Deck</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Slot</th>
-                  <th>Assigned Host</th>
-                  <th>Qualifications</th>
-                </tr>
-              </thead>
-              <tbody id="host-rows"></tbody>
-            </table>
+        <div class="support-assignment-stack">
+          <div class="grid-panel panel assignment-panel">
+            <div class="assignment-panel-header"><div><span class="studio-eyebrow">Front door</span><h2>Host deck</h2></div></div>
+            <div class="table-scroll"><table class="assignment-table"><thead><tr><th>Slot</th><th>Assigned host</th><th>Qualifications</th></tr></thead><tbody id="host-rows"></tbody></table></div>
           </div>
-          <div class="grid-panel panel" style="margin:0;">
-            <h3 style="margin-top:0;margin-bottom:1rem;color:#8ea7ff;text-transform:uppercase;font-size:.85rem;">SAS Deck</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Slot</th>
-                  <th>Assigned SA</th>
-                </tr>
-              </thead>
-              <tbody id="sas-rows"></tbody>
-            </table>
+          <div class="grid-panel panel assignment-panel">
+            <div class="assignment-panel-header"><div><span class="studio-eyebrow">Dining room support</span><h2>SA deck</h2></div></div>
+            <div class="table-scroll"><table class="assignment-table"><thead><tr><th>Slot</th><th>Assigned SA</th></tr></thead><tbody id="sas-rows"></tbody></table></div>
           </div>
         </div>
       </div>
+      <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
     </section>
 
     <script>
@@ -694,19 +713,38 @@
       const saveSheetBtn = document.getElementById('save-sheet-btn');
       const viewJsonBtn = document.getElementById('view-json-btn');
       const printSheetBtn = document.getElementById('print-sheet-btn');
+      const exportCsvBtn = document.getElementById('export-csv-btn');
       const jsonOutput = document.getElementById('json-output');
       const jsonContent = document.getElementById('json-content');
+      const closeJsonBtn = document.getElementById('close-json-btn');
+      const closeJsonFooterBtn = document.getElementById('close-json-footer-btn');
+      const copyJsonBtn = document.getElementById('copy-json-btn');
+      const saveStateEl = document.getElementById('save-state');
+      const workspaceStatusEl = document.getElementById('workspace-status');
+      const shiftSummaryEl = document.getElementById('shift-summary');
+      const serverSearchInput = document.getElementById('server-search');
+      const serverSortSelect = document.getElementById('server-sort');
+      const supportSearchInput = document.getElementById('support-search');
+      const serverRosterCount = document.getElementById('server-roster-count');
+      const hostRosterCount = document.getElementById('host-roster-count');
+      const sasRosterCount = document.getElementById('sas-roster-count');
+      const assignmentProgressLabel = document.getElementById('assignment-progress-label');
+      const assignmentProgressBar = document.getElementById('assignment-progress-bar');
+      const blastThresholdLabel = document.getElementById('blast-threshold-label');
+      const blastThresholdInput = document.getElementById('blast-threshold-input');
+      const saveBlastThresholdBtn = document.getElementById('save-blast-threshold-btn');
+      const toastRegion = document.getElementById('toast-region');
       const toggleModeBtn = document.getElementById('toggle-mode-btn');
       const registerFields = document.getElementById('register-fields');
       const fullNameInput = document.getElementById('full_name');
       const roleSelect = document.getElementById('role');
 
       const fallbackServers = [
-        { id: 1, name: 'Blake', upsellScore: 104, clockIn: '6:51 PM', hours: 33, length_of_employment: 820, pitty: 4, max_guests: 20 },
-        { id: 2, name: 'Kort', upsellScore: 60, clockIn: '8:57 AM', hours: 25, length_of_employment: 340, pitty: 2, max_guests: 16 },
-        { id: 3, name: 'Kort s', upsellScore: 4, clockIn: '8:59 AM', hours: 14, length_of_employment: 120, pitty: 1, max_guests: 12 },
-        { id: 4, name: 'Mia', upsellScore: 78, clockIn: '4:12 PM', hours: 22, length_of_employment: 610, pitty: 3, max_guests: 18 },
-        { id: 5, name: 'Janelle', upsellScore: 95, clockIn: '5:05 PM', hours: 30, length_of_employment: 450, pitty: 5, max_guests: 24 },
+        { id: 1, name: 'Blake', upsellScore: 132, clockIn: '6:51 PM', hours: 33, length_of_employment: 820, pitty: 4, max_guests: 20 },
+        { id: 2, name: 'Kort', upsellScore: 111, clockIn: '8:57 AM', hours: 25, length_of_employment: 340, pitty: 2, max_guests: 16 },
+        { id: 3, name: 'Kort s', upsellScore: 94, clockIn: '8:59 AM', hours: 14, length_of_employment: 120, pitty: 1, max_guests: 12 },
+        { id: 4, name: 'Mia', upsellScore: 124, clockIn: '4:12 PM', hours: 22, length_of_employment: 610, pitty: 3, max_guests: 18 },
+        { id: 5, name: 'Janelle', upsellScore: 148, clockIn: '5:05 PM', hours: 30, length_of_employment: 450, pitty: 5, max_guests: 24 },
       ];
       const fallbackHosts = [
         { id: 'h1', name: 'Alex H', qualifications: ['L.A.D', 'Seater', 'Board'] },
@@ -731,6 +769,7 @@
       let currentShiftId = null;
       let currentTeamSheetId = null;
       let dailyRoster = [];
+      let blastThreshold = 98;
 
       const sectionTemplates = [
         { id: 101, label: '15,22,23', sidework: 'Sweep section', outwork: 'Closing Sidework' },
@@ -750,6 +789,51 @@
         statusEl.className = 'status ' + (isError ? 'error' : 'success');
       };
 
+      const showToast = (message, tone = 'info') => {
+        if (!toastRegion) return;
+        const toast = document.createElement('div');
+        toast.className = `studio-toast ${tone}`;
+        toast.textContent = message;
+        toastRegion.appendChild(toast);
+        window.setTimeout(() => toast.remove(), 4200);
+      };
+
+      const setWorkspaceStatus = (message = '', isError = false) => {
+        if (!workspaceStatusEl) return;
+        workspaceStatusEl.textContent = message;
+        workspaceStatusEl.className = `workspace-status${isError ? ' error' : ''}${message ? '' : ' hidden'}`;
+      };
+
+      const setSaveState = (state, label) => {
+        if (!saveStateEl) return;
+        saveStateEl.dataset.state = state;
+        saveStateEl.textContent = label;
+      };
+
+      const markDirty = () => setSaveState('dirty', 'Unsaved changes');
+
+      const updateShiftSummary = (prefix = '') => {
+        if (!shiftSummaryEl) return;
+        const store = storeNumberInput?.value?.trim() || '—';
+        const dateValue = shiftDateInput?.value;
+        const dateLabel = dateValue
+          ? new Date(`${dateValue}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+          : 'Choose date';
+        const shiftLabel = shiftSelect?.options?.[shiftSelect.selectedIndex]?.textContent || 'Choose shift';
+        shiftSummaryEl.textContent = `${prefix ? `${prefix} · ` : ''}Store ${store} · ${dateLabel} · ${shiftLabel}`;
+      };
+
+      const updateAssignmentMetrics = () => {
+        const serverZones = Array.from(document.querySelectorAll('.dropzone[data-accept-type="server"]'));
+        const assigned = serverZones.filter((zone) => Boolean(zone.dataset.item)).length;
+        const total = serverZones.length;
+        if (serverRosterCount) serverRosterCount.textContent = activeServers.length;
+        if (hostRosterCount) hostRosterCount.textContent = activeHosts.length;
+        if (sasRosterCount) sasRosterCount.textContent = activeSas.length;
+        if (assignmentProgressLabel) assignmentProgressLabel.textContent = `${assigned} of ${total} assigned`;
+        if (assignmentProgressBar) assignmentProgressBar.style.width = total ? `${Math.round((assigned / total) * 100)}%` : '0%';
+      };
+
       const WEIGHTS = {
         employment: 1,
         blast: 1,
@@ -761,6 +845,7 @@
       let accessToken = null;
       let currentMode = 'servers';
       let authMode = 'login';
+      let selectedRosterItem = null;
 
       const loadInternalRoster = async () => {
         try {
@@ -847,6 +932,23 @@
         return Number.isFinite(parsed) ? parsed : null;
       };
 
+      const normalizeBlastThreshold = (value) => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return 98;
+        return Math.min(250, Math.max(0, parsed));
+      };
+
+      const updateBlastThresholdUi = () => {
+        const formatted = Number.isInteger(blastThreshold) ? String(blastThreshold) : blastThreshold.toFixed(1);
+        if (blastThresholdLabel) blastThresholdLabel.textContent = `Minimum ${formatted}%`;
+        if (blastThresholdInput) blastThresholdInput.value = formatted;
+        renderServers();
+        document.querySelectorAll('.dropzone[data-accept-type="server"][data-item]').forEach((zone) => {
+          const assigned = getZoneItem(zone);
+          if (assigned?.item) setZoneItem(zone, assigned.item, 'server', { html: buildAssignedServerHtml(assigned.item) });
+        });
+      };
+
       const loadStoreSchedule = async () => {
         const storeNumber = storeNumberInput?.value?.trim();
         if (!storeNumber) {
@@ -857,11 +959,40 @@
           const resp = await authFetch(`/store-preferences?store_number=${encodeURIComponent(storeNumber)}`);
           if (!resp.ok) throw new Error(`Store preferences failed (${resp.status})`);
           const data = await resp.json();
-          storeSchedule = data?.[0]?.daily_schedule || [];
+          const preference = data?.[0];
+          storeSchedule = preference?.daily_schedule || [];
+          blastThreshold = normalizeBlastThreshold(preference?.blast_minimum_percent ?? 98);
+          updateBlastThresholdUi();
         } catch (err) {
           console.warn('Store preferences unavailable.', err);
           storeSchedule = [];
+          blastThreshold = 98;
+          updateBlastThresholdUi();
         }
+      };
+
+      const saveBlastThreshold = async () => {
+        if (!['MANAGER', 'ADMIN'].includes(currentUser?.role)) {
+          throw new Error('Only managers and admins can change the BLAST requirement.');
+        }
+        const storeNumber = storeNumberInput?.value?.trim();
+        if (!storeNumber) throw new Error('Enter a store number before saving the BLAST requirement.');
+        const nextThreshold = normalizeBlastThreshold(blastThresholdInput?.value);
+        const resp = await authFetch('/store-preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store_number: storeNumber,
+            daily_schedule: storeSchedule,
+            blast_minimum_percent: nextThreshold,
+          }),
+        });
+        if (!resp.ok) {
+          const detail = await resp.json().catch(() => ({}));
+          throw new Error(detail.detail || `BLAST requirement save failed (${resp.status})`);
+        }
+        blastThreshold = normalizeBlastThreshold((await resp.json()).blast_minimum_percent);
+        updateBlastThresholdUi();
       };
 
       const buildShiftOptions = (entry) => {
@@ -887,6 +1018,7 @@
         const dayName = getDayName(shiftDateInput?.value);
         const entry = storeSchedule.find((item) => (item.day || '').toLowerCase() === (dayName || '').toLowerCase());
         buildShiftOptions(entry);
+        updateShiftSummary();
       };
 
       const loadDailyRoster = async () => {
@@ -1007,7 +1139,7 @@
           const server = serverById.get(`${assignment.employee_id}`);
           if (!server) return;
           setZoneItem(zone, server, 'server', {
-            html: `<strong>${server.name}</strong><span>Score: ${server.currentScore || calculateServerScore(server)}</span>`,
+            html: buildAssignedServerHtml(server),
           });
           activeServers = activeServers.filter((srv) => `${srv.id}` !== `${server.id}`);
         });
@@ -1096,9 +1228,13 @@
       };
 
       const loadShift = async () => {
+        setSaveState('saving', 'Loading sheet…');
         const shift = await ensureShift();
         const teamSheet = await ensureTeamSheet(shift);
         applyTeamSheetData(teamSheet);
+        updateShiftSummary(teamSheet.status || 'Draft');
+        updateAssignmentMetrics();
+        setSaveState('saved', 'Sheet loaded');
       };
 
       const buildTaskLabel = (sectionId, label) => `[Section:${sectionId}] ${label || ''}`.trim();
@@ -1178,15 +1314,28 @@
       };
 
       const showJsonOutput = async () => {
-        if (!currentTeamSheetId) {
-          const saved = await saveTeamSheet();
-          currentTeamSheetId = saved.id;
-        }
+        const saved = await saveTeamSheet();
+        currentTeamSheetId = saved.id;
+        setSaveState('saved', 'Saved for export');
         const resp = await authFetch(`/team-sheets/${currentTeamSheetId}/export/json`);
         if (!resp.ok) throw new Error(`JSON export failed (${resp.status})`);
         const data = await resp.json();
         jsonContent.textContent = JSON.stringify(data, null, 2);
         jsonOutput.classList.remove('hidden');
+      };
+
+      const closeJsonOutput = () => jsonOutput?.classList.add('hidden');
+
+      const exportTeamSheetCsv = async () => {
+        const saved = await saveTeamSheet();
+        currentTeamSheetId = saved.id;
+        setSaveState('saved', 'Saved for export');
+        const anchor = document.createElement('a');
+        anchor.href = `/team-sheets/${currentTeamSheetId}/export/csv`;
+        anchor.download = `team_sheet_${currentTeamSheetId}.csv`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
       };
 
       const sectionPanel = document.getElementById('section-panel');
@@ -1332,8 +1481,7 @@
         const rows = collectSectionRows();
         const filtered = rows.filter((row) => row.name);
         if (!filtered.length) {
-          alert('Add at least one section with a Section ID.');
-          return;
+          throw new Error('Add at least one section with a Section ID.');
         }
         for (const row of filtered) {
           const payload = {
@@ -1372,6 +1520,8 @@
         }
         await loadSections();
         renderSections();
+        enableDragDrop();
+        updateAssignmentMetrics();
       };
 
       const calculateServerScore = (server) => {
@@ -1387,12 +1537,59 @@
         return Number(total.toFixed(2));
       };
 
+      const getBlastMetrics = (server) => {
+        const rawValue = Number(server?.upsellScore ?? 0);
+        const value = Number.isFinite(rawValue) ? rawValue : 0;
+        return {
+          value,
+          formatted: Number.isInteger(value) ? String(value) : value.toFixed(1),
+          passing: value >= blastThreshold,
+        };
+      };
+
+      const buildAssignedServerHtml = (server, score = null) => {
+        const blast = getBlastMetrics(server);
+        const scoreValue = score ?? server.currentScore ?? calculateServerScore(server);
+        return `
+          <strong>${server.name}</strong>
+          <span class="assigned-server-meta">
+            <span class="blast-badge ${blast.passing ? 'passing' : 'failing'}">BLAST ${blast.formatted}%</span>
+            <span>Score ${scoreValue}</span>
+            ${blast.passing ? '' : '<b class="two-table-flag">2-table section</b>'}
+          </span>
+        `;
+      };
+
+      const clearRosterSelection = () => {
+        selectedRosterItem = null;
+        document.querySelectorAll('.server-card.selected').forEach((card) => card.classList.remove('selected'));
+        document.querySelectorAll('.dropzone.assignment-target').forEach((zone) => zone.classList.remove('assignment-target'));
+      };
+
+      const selectRosterItem = (pill, item, type) => {
+        const isAlreadySelected = selectedRosterItem
+          && selectedRosterItem.type === type
+          && `${selectedRosterItem.item.id}` === `${item.id}`;
+        clearRosterSelection();
+        if (isAlreadySelected) return;
+        selectedRosterItem = { item, type };
+        pill.classList.add('selected');
+        document.querySelectorAll(`.dropzone[data-accept-type="${type}"]`).forEach((zone) => zone.classList.add('assignment-target'));
+        setWorkspaceStatus(`${item.name || 'Team member'} selected. Choose a ${type === 'server' ? 'section' : 'slot'}.`);
+      };
+
       const createDragItem = (item, type, options = {}) => {
         const pill = document.createElement('div');
+        let dragImageEl = null;
         pill.className = options.className || 'drag-pill';
         pill.draggable = true;
         pill.dataset.dragType = type;
         pill.dataset.item = JSON.stringify(item);
+        pill.tabIndex = 0;
+        pill.setAttribute('role', 'button');
+        pill.setAttribute('aria-label', options.sourceKind === 'list'
+          ? `Select ${item.name || item.label || type}`
+          : `${item.name || item.label || type} assigned`);
         const payload = {
           type,
           item,
@@ -1400,12 +1597,50 @@
           sourceZoneId: options.sourceZoneId || null,
         };
         pill.innerHTML = options.html || `<strong>${item.name || item.label || 'Item'}</strong>`;
+        pill.addEventListener('pointerdown', () => pill.classList.add('drag-primed'));
+        pill.addEventListener('pointerup', () => pill.classList.remove('drag-primed'));
+        pill.addEventListener('pointercancel', () => pill.classList.remove('drag-primed'));
         pill.addEventListener('dragstart', (e) => {
           e.dataTransfer.setData('application/json', JSON.stringify(payload));
           e.dataTransfer.effectAllowed = 'move';
           pill.classList.add('dragging');
+          if (typeof e.dataTransfer.setDragImage === 'function') {
+            const rect = pill.getBoundingClientRect();
+            dragImageEl = pill.cloneNode(true);
+            dragImageEl.querySelector('.item-remove')?.remove();
+            dragImageEl.classList.remove('dragging', 'drag-primed');
+            dragImageEl.classList.add('studio-drag-image');
+            dragImageEl.style.width = `${rect.width}px`;
+            dragImageEl.style.minHeight = `${rect.height}px`;
+            document.body.appendChild(dragImageEl);
+            e.dataTransfer.setDragImage(dragImageEl, Math.min(28, rect.width / 2), Math.min(24, rect.height / 2));
+          }
         });
-        pill.addEventListener('dragend', () => pill.classList.remove('dragging'));
+        pill.addEventListener('dragend', () => {
+          pill.classList.remove('dragging', 'drag-primed');
+          dragImageEl?.remove();
+          dragImageEl = null;
+        });
+        if (options.sourceKind === 'list') {
+          pill.addEventListener('click', () => selectRosterItem(pill, item, type));
+          pill.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectRosterItem(pill, item, type);
+          });
+        }
+        if (options.sourceKind === 'zone' && ['server', 'host', 'sas'].includes(type)) {
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'item-remove';
+          removeBtn.textContent = '×';
+          removeBtn.setAttribute('aria-label', `Remove ${item.name || type} assignment`);
+          removeBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            returnAssignedItem(pill.parentElement, item, type);
+          });
+          pill.appendChild(removeBtn);
+        }
         return pill;
       };
 
@@ -1441,6 +1676,54 @@
         zone.innerHTML = '';
       };
 
+      const returnAssignedItem = (zone, item, type) => {
+        if (!zone || !item) return;
+        clearZone(zone);
+        if (type === 'server' && !activeServers.some((entry) => `${entry.id}` === `${item.id}`)) {
+          activeServers.push(item);
+          renderServers();
+        }
+        if (type === 'host' && !activeHosts.some((entry) => `${entry.id}` === `${item.id}`)) {
+          activeHosts.push(item);
+          updateHostQuals(zone, null);
+          renderHosts();
+        }
+        if (type === 'sas' && !activeSas.some((entry) => `${entry.id}` === `${item.id}`)) {
+          activeSas.push(item);
+          renderSas();
+        }
+        clearRosterSelection();
+        markDirty();
+        updateAssignmentMetrics();
+      };
+
+      const assignSelectedToZone = (zone) => {
+        if (!selectedRosterItem || !zone) return;
+        const { item, type } = selectedRosterItem;
+        if (zone.dataset.acceptType !== type) return;
+        const existing = getZoneItem(zone);
+        if (existing?.item) {
+          if (type === 'server') activeServers.push(existing.item);
+          else {
+            showToast('That slot is already filled. Remove or move the current assignment first.', 'error');
+            return;
+          }
+        }
+        if (type === 'server') activeServers = activeServers.filter((entry) => `${entry.id}` !== `${item.id}`);
+        if (type === 'host') activeHosts = activeHosts.filter((entry) => `${entry.id}` !== `${item.id}`);
+        if (type === 'sas') activeSas = activeSas.filter((entry) => `${entry.id}` !== `${item.id}`);
+        setZoneItem(zone, item, type, type === 'server'
+          ? { html: buildAssignedServerHtml(item) }
+          : {});
+        if (type === 'host') updateHostQuals(zone, item);
+        clearRosterSelection();
+        renderServers();
+        renderHosts();
+        renderSas();
+        markDirty();
+        updateAssignmentMetrics();
+      };
+
       const updateHostQuals = (zone, item) => {
         if (!zone) return;
         const qualsCell = zone.parentElement?.querySelector('.dropzone-qualifications');
@@ -1456,22 +1739,47 @@
         serverListEl.innerHTML = '';
         if (!activeServers.length) {
           serverListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Import a CSV roster to load today\'s team.</p>';
+          updateAssignmentMetrics();
           return;
         }
-        activeServers.forEach((srv) => {
-          const score = calculateServerScore(srv);
+        const query = serverSearchInput?.value?.trim().toLowerCase() || '';
+        const sortMode = serverSortSelect?.value || 'score';
+        const visibleServers = activeServers
+          .filter((srv) => !query || `${srv.name} ${srv.nickname || ''}`.toLowerCase().includes(query))
+          .map((srv) => {
+            srv.currentScore = srv.currentScore ?? calculateServerScore(srv);
+            return srv;
+          })
+          .sort((a, b) => {
+            if (sortMode === 'name') return a.name.localeCompare(b.name);
+            if (sortMode === 'in_time') return (a.in_time || '99:99').localeCompare(b.in_time || '99:99');
+            return (b.currentScore || 0) - (a.currentScore || 0) || a.name.localeCompare(b.name);
+          });
+        if (!visibleServers.length) {
+          serverListEl.innerHTML = '<p style="color:#8894bb;font-size:.82rem;">No servers match this search.</p>';
+          updateAssignmentMetrics();
+          return;
+        }
+        visibleServers.forEach((srv) => {
+          const score = srv.currentScore;
           srv.currentScore = score;
+          const blast = getBlastMetrics(srv);
           const inTimeLabel = srv.in_time ? `In: ${srv.in_time} | ` : 'In: -- | ';
           const html = `
             <strong>${srv.name}</strong>
-            <div class="server-meta">Upsell: <span style="color:#4df58c;">${srv.upsellScore}</span></div>
-            <div class="server-meta">${inTimeLabel}Hours: ${srv.hours}</div>
-            <div class="server-meta">Score: ${score}</div>
+            <div class="server-meta">${inTimeLabel}Score: ${score}</div>
+            <div class="server-card-metrics">
+              <span class="blast-badge ${blast.passing ? 'passing' : 'failing'}">BLAST ${blast.formatted}%</span>
+              <span class="server-capacity">Capacity ${srv.max_guests || '—'}</span>
+            </div>
+            ${blast.passing ? '' : '<div class="two-table-warning">Place in a two-table section</div>'}
           `;
           const tooltip = [
             `Server: ${srv.name}`,
             `In Time: ${srv.in_time || '-'}`,
-            `BLAST: ${srv.upsellScore ?? 0}`,
+            `BLAST: ${blast.formatted}% (${blast.passing ? 'Meets standard' : 'Below standard'})`,
+            `Minimum: ${blastThreshold}%`,
+            blast.passing ? 'Placement: Standard section' : 'Placement: Two-table section',
             `Employment: ${srv.length_of_employment ?? '-'}`,
             `Pity: ${srv.pitty ?? 0}`,
             `Max Guests: ${srv.max_guests ?? '-'}`,
@@ -1482,8 +1790,11 @@
             sourceKind: 'list',
           });
           card.dataset.tooltip = tooltip;
+          card.classList.toggle('blast-below-threshold', !blast.passing);
+          if (selectedRosterItem?.type === 'server' && `${selectedRosterItem.item.id}` === `${srv.id}`) card.classList.add('selected');
           serverListEl.appendChild(card);
         });
+        updateAssignmentMetrics();
       };
 
       const renderSections = () => {
@@ -1524,6 +1835,7 @@
           setZoneItem(sideworkZone, { label: sideworkLabel }, 'sidework');
           setZoneItem(outworkZone, { label: outworkLabel }, 'outwork');
         });
+        updateAssignmentMetrics();
       };
 
       const renderHosts = () => {
@@ -1532,7 +1844,10 @@
           hostListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load host roster to begin.</p>';
           return;
         }
-        activeHosts.forEach((host) => {
+        const query = supportSearchInput?.value?.trim().toLowerCase() || '';
+        activeHosts
+          .filter((host) => !query || `${host.name} ${(host.qualifications || []).join(' ')}`.toLowerCase().includes(query))
+          .forEach((host) => {
           const quals = (host.qualifications || []).join(', ');
           const html = `
             <strong>${host.name}</strong>
@@ -1543,8 +1858,10 @@
             html,
             sourceKind: 'list',
           });
+          if (selectedRosterItem?.type === 'host' && `${selectedRosterItem.item.id}` === `${host.id}`) card.classList.add('selected');
           hostListEl.appendChild(card);
         });
+        updateAssignmentMetrics();
       };
 
       const renderSas = () => {
@@ -1553,15 +1870,20 @@
           sasListEl.innerHTML = '<p style="color:#8894bb;font-size:.9rem;">Load SA roster to begin.</p>';
           return;
         }
-        activeSas.forEach((sa) => {
+        const query = supportSearchInput?.value?.trim().toLowerCase() || '';
+        activeSas
+          .filter((sa) => !query || sa.name.toLowerCase().includes(query))
+          .forEach((sa) => {
           const html = `<strong>${sa.name}</strong>`;
           const card = createDragItem(sa, 'sas', {
             className: 'server-card',
             html,
             sourceKind: 'list',
           });
+          if (selectedRosterItem?.type === 'sas' && `${selectedRosterItem.item.id}` === `${sa.id}`) card.classList.add('selected');
           sasListEl.appendChild(card);
         });
+        updateAssignmentMetrics();
       };
 
       const renderHostTables = () => {
@@ -1589,6 +1911,22 @@
       const enableDragDrop = () => {
         const dropzones = document.querySelectorAll('.dropzone');
         dropzones.forEach((zone) => {
+          if (zone.dataset.interactionsReady === 'true') return;
+          zone.dataset.interactionsReady = 'true';
+          if (['server', 'host', 'sas'].includes(zone.dataset.acceptType)) {
+            zone.tabIndex = 0;
+            zone.setAttribute('role', 'button');
+            zone.setAttribute('aria-label', `Assign ${zone.dataset.acceptType} to this slot`);
+            zone.addEventListener('click', (event) => {
+              if (event.target.closest('.item-remove')) return;
+              assignSelectedToZone(zone);
+            });
+            zone.addEventListener('keydown', (event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              assignSelectedToZone(zone);
+            });
+          }
           zone.addEventListener('dragover', (e) => {
             e.preventDefault();
             zone.classList.add('over');
@@ -1607,7 +1945,7 @@
             }
             const accept = zone.dataset.acceptType;
             if (accept && payload.type !== accept) {
-              alert('This slot is reserved for a different role.');
+              showToast('This slot is reserved for a different role.', 'error');
               return;
             }
 
@@ -1625,11 +1963,12 @@
                 if (!sourceExisting || sourceExisting.type !== payload.type) return;
                 setZoneItem(zone, sourceExisting.item, sourceExisting.type);
                 setZoneItem(sourceZone, existing.item, existing.type);
+                markDirty();
                 return;
               }
               if (payload.type === 'host' || payload.type === 'sas') {
                 if (payload.sourceKind === 'list') {
-                  alert('That slot is already filled. Move the assigned name first.');
+                  showToast('That slot is already filled. Move the assigned name first.', 'error');
                   return;
                 }
                 if (sourceZone) {
@@ -1643,6 +1982,8 @@
                     }
                   }
                 }
+                markDirty();
+                updateAssignmentMetrics();
                 return;
               }
               if (payload.type === 'server') {
@@ -1655,6 +1996,8 @@
                   if (sourceExisting) {
                     setZoneItem(zone, sourceExisting.item, sourceExisting.type);
                     setZoneItem(sourceZone, existing.item, existing.type);
+                    markDirty();
+                    updateAssignmentMetrics();
                     return;
                   }
                 }
@@ -1687,10 +2030,14 @@
             if (payload.type === 'host') {
               updateHostQuals(zone, payload.item);
             }
+            clearRosterSelection();
+            markDirty();
+            updateAssignmentMetrics();
           });
         });
 
-        if (serverListEl) {
+        if (serverListEl && serverListEl.dataset.interactionsReady !== 'true') {
+          serverListEl.dataset.interactionsReady = 'true';
           serverListEl.addEventListener('dragover', (e) => {
             e.preventDefault();
             serverListEl.classList.add('over');
@@ -1713,13 +2060,16 @@
             clearZone(sourceZone);
             activeServers.push(payload.item);
             renderServers();
+            clearRosterSelection();
+            markDirty();
+            updateAssignmentMetrics();
           });
         }
       };
 
       const autoAssign = () => {
         if (!activeServers.length) {
-          alert('Upload a roster CSV or add servers for this shift.');
+          showToast('Upload a roster CSV or add servers for this shift.', 'error');
           return;
         }
         const computed = activeServers.map((server) => ({
@@ -1735,11 +2085,15 @@
             const server = computed[index % computed.length];
             assignedIds.add(`${server.id}`);
             setZoneItem(zone, server, 'server', {
-              html: `<strong>${server.name}</strong><span>Score: ${server.autoScore}</span>`,
+              html: buildAssignedServerHtml(server, server.autoScore),
             });
           });
         activeServers = activeServers.filter((srv) => !assignedIds.has(`${srv.id}`));
         renderServers();
+        clearRosterSelection();
+        markDirty();
+        updateAssignmentMetrics();
+        showToast('Servers assigned by score and capacity.', 'success');
       };
 
       const removeAllServers = () => {
@@ -1747,18 +2101,24 @@
         serverZones.forEach((zone) => {
           const existing = getZoneItem(zone);
           if (existing?.item) {
-            activeServers.push(existing.item);
+            if (!activeServers.some((server) => `${server.id}` === `${existing.item.id}`)) activeServers.push(existing.item);
           }
           clearZone(zone);
         });
         renderServers();
+        clearRosterSelection();
+        markDirty();
+        updateAssignmentMetrics();
+        showToast('Server assignments cleared.');
       };
 
       const showBuilder = (user) => {
         loginView.classList.add('workspace-hidden');
         builderView.style.display = 'flex';
         const headerName = user?.full_name || currentUser?.full_name || 'Manager';
-        builderView.querySelector('.builder-header h1').textContent = `Team Sheet Studio - ${headerName}`;
+        const managerName = document.getElementById('manager-name');
+        if (managerName) managerName.textContent = headerName;
+        setSaveState('saving', 'Loading sheet…');
         renderServers();
         renderHosts();
         renderSas();
@@ -1771,7 +2131,11 @@
         refreshShiftOptions()
           .then(() => refreshDailyRoster())
           .then(() => loadShift())
-          .catch((err) => console.warn('Shift load skipped.', err));
+          .catch((err) => {
+            console.warn('Shift load skipped.', err);
+            setSaveState('error', 'Shift not loaded');
+            setWorkspaceStatus(err.message || 'The shift could not be loaded. Choose the shift and try again.', true);
+          });
       };
 
       const splitCsvLine = (line) => {
@@ -1897,7 +2261,7 @@
         });
         document.querySelectorAll('.dropzone-qualifications').forEach((cell) => (cell.textContent = ''));
         if (missed.length) {
-          alert(`No data found for: ${missed.join(', ')}. Add them to the internal roster to enable scoring.`);
+          setWorkspaceStatus(`No employee data was found for ${missed.join(', ')}. They can still be assigned, but scoring will use defaults.`, true);
         }
       };
 
@@ -1917,20 +2281,28 @@
 
       const switchMode = (mode) => {
         currentMode = mode;
+        clearRosterSelection();
         if (mode === 'servers') {
           serversBoard.style.display = 'grid';
           hostsBoard.style.display = 'none';
           autoAssignBtn.disabled = false;
+          autoAssignBtn.classList.remove('hidden');
+          removeServersBtn?.classList.remove('hidden');
           renderServers();
         } else {
           serversBoard.style.display = 'none';
           hostsBoard.style.display = 'grid';
           autoAssignBtn.disabled = true;
+          autoAssignBtn.classList.add('hidden');
+          removeServersBtn?.classList.add('hidden');
           renderHosts();
           renderSas();
         }
         serversTab.classList.toggle('active', mode === 'servers');
         hostsTab.classList.toggle('active', mode !== 'servers');
+        serversTab.setAttribute('aria-selected', String(mode === 'servers'));
+        hostsTab.setAttribute('aria-selected', String(mode !== 'servers'));
+        updateAssignmentMetrics();
       };
       const authenticate = async (email, password) => {
         const response = await authFetch('/auth/login', {
@@ -2031,46 +2403,84 @@
       if (removeServersBtn) {
         removeServersBtn.addEventListener('click', () => {
           if (currentMode !== 'servers') return;
+          const assignedCount = document.querySelectorAll('.dropzone[data-accept-type="server"][data-item]').length;
+          if (assignedCount && !window.confirm(`Clear all ${assignedCount} server assignments?`)) return;
           removeAllServers();
         });
       }
 
       serversTab.addEventListener('click', () => switchMode('servers'));
       hostsTab.addEventListener('click', () => switchMode('hosts'));
-      importBtn.addEventListener('click', () => csvInput.click());
+      serverSearchInput?.addEventListener('input', renderServers);
+      serverSortSelect?.addEventListener('change', renderServers);
+      supportSearchInput?.addEventListener('input', () => {
+        renderHosts();
+        renderSas();
+      });
+      importBtn.addEventListener('click', () => {
+        document.getElementById('roster-menu')?.removeAttribute('open');
+        csvInput.click();
+      });
       if (importDailyRosterBtn) {
-        importDailyRosterBtn.addEventListener('click', () => dailyRosterInput?.click());
+        importDailyRosterBtn.addEventListener('click', () => {
+          document.getElementById('roster-menu')?.removeAttribute('open');
+          dailyRosterInput?.click();
+        });
       }
+      const resetShiftContext = () => {
+        currentShiftId = null;
+        currentTeamSheetId = null;
+        setSaveState('dirty', 'Shift not loaded');
+        updateShiftSummary();
+      };
       if (storeNumberInput) {
         storeNumberInput.addEventListener('change', () => {
+          resetShiftContext();
           refreshShiftOptions();
           refreshDailyRoster();
         });
       }
       if (shiftDateInput) {
         shiftDateInput.addEventListener('change', () => {
+          resetShiftContext();
           refreshShiftOptions();
           refreshDailyRoster();
         });
       }
+      shiftSelect?.addEventListener('change', resetShiftContext);
       if (loadShiftBtn) {
         loadShiftBtn.addEventListener('click', async () => {
+          loadShiftBtn.disabled = true;
+          setWorkspaceStatus('Loading shift, roster, and saved assignments…');
           try {
             await loadShift();
+            setWorkspaceStatus('');
+            showToast('Shift loaded.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to load shift.');
+            setSaveState('error', 'Load failed');
+            setWorkspaceStatus(err.message || 'Unable to load shift.', true);
+          } finally {
+            loadShiftBtn.disabled = false;
           }
         });
       }
       if (saveSheetBtn) {
         saveSheetBtn.addEventListener('click', async () => {
+          saveSheetBtn.disabled = true;
+          setSaveState('saving', 'Saving…');
           try {
             await saveTeamSheet();
-            alert('Team sheet saved.');
+            const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            setSaveState('saved', `Saved ${time}`);
+            setWorkspaceStatus('');
+            showToast('Team sheet saved.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to save team sheet.');
+            setSaveState('error', 'Save failed');
+            setWorkspaceStatus(err.message || 'Unable to save team sheet.', true);
+          } finally {
+            saveSheetBtn.disabled = false;
           }
         });
       }
@@ -2083,15 +2493,29 @@
           }
           try {
             await showJsonOutput();
+            document.getElementById('export-menu')?.removeAttribute('open');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to load JSON.');
+            showToast(err.message || 'Unable to load JSON.', 'error');
           }
         });
       }
+      closeJsonBtn?.addEventListener('click', closeJsonOutput);
+      closeJsonFooterBtn?.addEventListener('click', closeJsonOutput);
+      jsonOutput?.addEventListener('click', (event) => {
+        if (event.target === jsonOutput) closeJsonOutput();
+      });
+      copyJsonBtn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(jsonContent?.textContent || '');
+          showToast('JSON copied to clipboard.', 'success');
+        } catch (err) {
+          showToast('Unable to copy JSON. Select the text and copy it manually.', 'error');
+        }
+      });
       if (changeTeamsheetBtn) {
         changeTeamsheetBtn.addEventListener('click', () => {
-          openSectionPanel('Change Teamsheet');
+          openSectionPanel('Configure floor');
         });
       }
       if (closeSectionPanelBtn) {
@@ -2112,9 +2536,10 @@
         loadPresetBtn.addEventListener('click', () => {
           try {
             loadPreset();
+            showToast('Preset loaded into the floor editor.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to load preset.');
+            showToast(err.message || 'Unable to load preset.', 'error');
           }
         });
       }
@@ -2122,22 +2547,40 @@
         savePresetBtn.addEventListener('click', async () => {
           try {
             await savePreset();
-            alert('Preset saved.');
+            showToast('Floor preset saved.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to save preset.');
+            showToast(err.message || 'Unable to save preset.', 'error');
           }
         });
       }
+      blastThresholdInput?.addEventListener('input', () => {
+        blastThreshold = normalizeBlastThreshold(blastThresholdInput.value);
+        if (blastThresholdLabel) blastThresholdLabel.textContent = `Minimum ${blastThreshold}%`;
+        renderServers();
+      });
+      saveBlastThresholdBtn?.addEventListener('click', async () => {
+        saveBlastThresholdBtn.disabled = true;
+        try {
+          await saveBlastThreshold();
+          showToast(`BLAST minimum saved at ${blastThreshold}%.`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || 'Unable to save the BLAST requirement.', 'error');
+        } finally {
+          saveBlastThresholdBtn.disabled = false;
+        }
+      });
 
       if (saveSectionsBtn) {
         saveSectionsBtn.addEventListener('click', async () => {
           try {
             await saveSections();
             closeSectionPanel();
+            showToast('Floor sections saved.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to save sections.');
+            showToast(err.message || 'Unable to save sections.', 'error');
           }
         });
       }
@@ -2145,25 +2588,43 @@
       if (printSheetBtn) {
         printSheetBtn.addEventListener('click', async () => {
           try {
-            if (!currentTeamSheetId) {
-              const saved = await saveTeamSheet();
-              currentTeamSheetId = saved.id;
-            }
+            const saved = await saveTeamSheet();
+            currentTeamSheetId = saved.id;
+            setSaveState('saved', 'Saved for print');
             const printWindow = window.open(`/team-sheets/${currentTeamSheetId}/print`, '_blank');
             if (!printWindow) {
-              alert('Pop-up blocked. Allow pop-ups to print.');
+              showToast('Pop-up blocked. Allow pop-ups to print.', 'error');
               return;
             }
+            document.getElementById('export-menu')?.removeAttribute('open');
             printWindow.focus();
             printWindow.addEventListener('load', () => {
               printWindow.print();
             });
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Unable to print team sheet.');
+            showToast(err.message || 'Unable to print team sheet.', 'error');
           }
         });
       }
+      exportCsvBtn?.addEventListener('click', async () => {
+        try {
+          await exportTeamSheetCsv();
+          document.getElementById('export-menu')?.removeAttribute('open');
+          showToast('CSV export started.', 'success');
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || 'Unable to export CSV.', 'error');
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        closeJsonOutput();
+        closeSectionPanel();
+        clearRosterSelection();
+        document.querySelectorAll('.action-menu[open]').forEach((menu) => menu.removeAttribute('open'));
+      });
 
       csvInput.addEventListener('change', (event) => {
         const file = event.target.files?.[0];
@@ -2172,23 +2633,27 @@
         reader.onload = async (e) => {
           const text = e.target?.result;
           if (typeof text !== 'string') {
-            alert('Unable to read CSV file.');
+            showToast('Unable to read CSV file.', 'error');
             return;
           }
           const roster = parseCsv(text);
           if (!roster.length) {
-            alert('CSV appeared empty. Expected headers like name,nickname,upsell_score,pitty,employment_days,max_guests.');
+            showToast('CSV appeared empty. Expected headers such as name, upsell_score, employment_days, and max_guests.', 'error');
             return;
           }
             try {
               const result = await uploadRosterCsv(file);
               setStatus(`Imported roster: ${result.created} new, ${result.updated} updated.`);
+              setWorkspaceStatus(`Employee import complete: ${result.created} created · ${result.updated} updated.`);
+              showToast('Employee roster imported.', 'success');
               await loadInternalRoster();
             } catch (err) {
               console.error(err);
-              alert(err.message || 'Import failed. Confirm you are logged in as a manager or admin.');
+              setWorkspaceStatus(err.message || 'Import failed. Confirm you are logged in as a manager or admin.', true);
             }
           hydrateServersForShift(roster);
+          markDirty();
+          updateAssignmentMetrics();
         };
         reader.readAsText(file);
         csvInput.value = '';
@@ -2200,10 +2665,11 @@
           try {
             await uploadDailyRosterCsv(file);
             await refreshDailyRoster();
-            alert('Daily roster uploaded.');
+            setWorkspaceStatus(`Daily roster loaded with ${dailyRoster.length} team member${dailyRoster.length === 1 ? '' : 's'}.`);
+            showToast('Daily roster uploaded.', 'success');
           } catch (err) {
             console.error(err);
-            alert(err.message || 'Daily roster upload failed.');
+            setWorkspaceStatus(err.message || 'Daily roster upload failed.', true);
           }
           dailyRosterInput.value = '';
         });

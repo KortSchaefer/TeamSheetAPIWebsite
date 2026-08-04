@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -11,7 +11,10 @@ from app.models import (
     TeamSheetStatus,
     UserRole,
     PayoutType,
+    POSAccessRole,
+    POSCheckProgress,
     POSOrderStatus,
+    POSTableStatus,
     PurchaseOrderStatus,
     InventoryCountStatus,
     PyosShift,
@@ -381,6 +384,7 @@ class DailyScheduleEntry(BaseModel):
 class StorePreferenceBase(BaseModel):
     store_number: str
     daily_schedule: List[DailyScheduleEntry] = Field(default_factory=list)
+    blast_minimum_percent: float = Field(default=98.0, ge=0, le=250)
 
 
 class StorePreferenceCreate(StorePreferenceBase):
@@ -397,6 +401,7 @@ class MenuCategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
     active: bool = True
+    display_order: int = Field(default=0, ge=0)
 
 
 class MenuCategoryCreate(MenuCategoryBase):
@@ -506,6 +511,97 @@ class POSPaymentRead(POSPaymentCreate, TimestampModel):
 
 class POSCloseRequest(BaseModel):
     payment: POSPaymentCreate
+
+
+class POSAccessUpsert(BaseModel):
+    employee_number: Optional[str] = Field(
+        default=None, pattern=r"^\d{4,6}$"
+    )
+    access_role: POSAccessRole = POSAccessRole.SERVER
+    active: bool = True
+
+
+class POSAccessRead(BaseModel):
+    employee_id: int
+    employee_name: str
+    employee_role: str
+    access_role: Optional[POSAccessRole] = None
+    pos_active: bool = False
+    has_employee_number: bool = False
+    last_used_at: Optional[datetime] = None
+    locked_until: Optional[datetime] = None
+
+
+class POSPinLogin(BaseModel):
+    employee_number: str = Field(pattern=r"^\d{4,6}$")
+
+
+class POSTerminalEmployeeRead(BaseModel):
+    employee_id: int
+    employee_name: str
+    access_role: POSAccessRole
+
+
+class POSCheckSummaryRead(BaseModel):
+    id: int
+    check_number: int
+    status: POSOrderStatus
+    progress: POSCheckProgress
+    subtotal_cents: int
+    tax_cents: int
+    tip_cents: int
+    total_cents: int
+    print_count: int
+    printed_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+    item_count: int = 0
+
+
+class POSTableRead(BaseModel):
+    id: int
+    table_number: int
+    owner_employee_id: int
+    owner_name: str
+    status: POSTableStatus
+    progress: POSCheckProgress
+    revision: int
+    opened_at: datetime
+    closed_at: Optional[datetime] = None
+    check: POSCheckSummaryRead
+
+
+class POSTableCreate(BaseModel):
+    table_number: int = Field(ge=1, le=9999)
+    client_request_id: str = Field(min_length=8, max_length=64)
+
+
+class POSTableTransfer(BaseModel):
+    owner_employee_id: int
+    revision: int = Field(ge=1)
+
+
+class POSCloseEmptyRequest(BaseModel):
+    revision: int = Field(ge=1)
+
+
+class POSTerminalSessionRead(BaseModel):
+    employee: POSTerminalEmployeeRead
+    idle_timeout_seconds: int
+    expires_at: datetime
+
+
+class POSTerminalBootstrapRead(POSTerminalSessionRead):
+    permissions: dict[str, bool]
+    features: dict[str, bool]
+    categories: list[MenuCategoryRead]
+    tables: list[POSTableRead]
+    transfer_candidates: list[POSTerminalEmployeeRead] = Field(default_factory=list)
+
+
+class POSPrintStartRead(BaseModel):
+    print_url: str
+    print_count: int
+    printed_at: datetime
 
 
 class StockMovementBase(BaseModel):
@@ -637,6 +733,24 @@ class InventoryBalanceUpsert(BaseModel):
     maximum_quantity: Optional[Decimal] = Field(default=None, ge=0)
 
 
+class InventoryPlanningSettingsRowUpdate(BaseModel):
+    inventory_item_id: int
+    planning_active: bool = True
+    weekday_targets: dict[int, Optional[Decimal]] = Field(default_factory=dict)
+    lower_tolerance_percent: Optional[Decimal] = Field(default=None, ge=0, le=100)
+    upper_tolerance_percent: Optional[Decimal] = Field(default=None, ge=0, le=100)
+    preferred_vendor_id: Optional[int] = None
+    vendor_sku: Optional[str] = Field(default=None, max_length=100)
+    purchase_unit: Optional[str] = Field(default=None, max_length=30)
+    pack_quantity: Decimal = Field(default=Decimal("1"), gt=0)
+    unit_price_cents: int = Field(default=0, ge=0)
+
+
+class InventoryPlanningSettingsBulkUpdate(BaseModel):
+    location_id: int
+    rows: List[InventoryPlanningSettingsRowUpdate] = Field(min_length=1)
+
+
 class VendorBase(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     contact_name: Optional[str] = None
@@ -731,10 +845,89 @@ class InventoryCountRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CountSheetCreate(BaseModel):
+    location_id: int
+    template_id: Optional[int] = None
+    notes: Optional[str] = None
+    resume_existing: bool = True
+
+
+class CountSheetLinePatch(BaseModel):
+    counted_quantity: Optional[Decimal] = Field(default=None, ge=0)
+    is_counted: Optional[bool] = None
+    notes: Optional[str] = None
+    source: Optional[Literal["MANUAL", "VOICE", "IMPORT"]] = None
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
+    review_status: Optional[
+        Literal["PENDING", "READY", "NEEDS_REVIEW", "APPROVED"]
+    ] = None
+    evidence: Optional[str] = Field(default=None, max_length=4000)
+    client_revision: Optional[int] = Field(default=None, ge=1)
+
+
+class CountSheetBatchLinePatch(CountSheetLinePatch):
+    line_id: int
+
+
+class CountSheetBatchPatch(BaseModel):
+    edits: List[CountSheetBatchLinePatch] = Field(min_length=1, max_length=250)
+
+
+class CountSheetReorder(BaseModel):
+    line_ids: List[int] = Field(min_length=1, max_length=2000)
+
+
+class CountSheetRead(BaseModel):
+    id: int
+    location_id: int
+    location_name: str
+    template_id: Optional[int] = None
+    template_name: Optional[str] = None
+    status: str
+    revision: int
+    counted_by_user_id: int
+    reviewed_by_user_id: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    line_count: int
+    counted_line_count: int
+    uncounted_line_count: int
+    exception_count: int
+    completion_percent: float
+    lines: List[dict[str, Any]] = Field(default_factory=list)
+
+
+class CountTemplateLineCreate(BaseModel):
+    inventory_item_id: int
+    location_id: int
+    display_order: int = Field(default=0, ge=0)
+    preferred_unit: Optional[str] = Field(default=None, max_length=30)
+
+
+class CountTemplateCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    description: Optional[str] = None
+    lines: List[CountTemplateLineCreate] = Field(min_length=1, max_length=2000)
+
+
+class CountTemplateRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    active: bool
+    created_by_user_id: int
+    lines: List[dict[str, Any]] = Field(default_factory=list)
+
+
 class PurchaseOrderLineCreate(BaseModel):
     inventory_item_id: int
+    location_id: Optional[int] = None
     ordered_quantity: Decimal = Field(gt=0)
     unit_price_cents: int = Field(default=0, ge=0)
+    purchase_unit: Optional[str] = None
+    quantity_per_purchase_unit: Decimal = Field(default=Decimal("1"), gt=0)
 
 
 class PurchaseOrderCreate(BaseModel):
@@ -750,14 +943,44 @@ class PurchaseOrderRead(BaseModel):
     status: PurchaseOrderStatus
     expected_date: Optional[date] = None
     notes: Optional[str] = None
+    external_reference: Optional[str] = None
+    imported_filename: Optional[str] = None
     created_by_user_id: int
     lines: List[dict] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 
-class ReceivingLineCreate(BaseModel):
+class PurchaseOrderCSVPreviewRequest(BaseModel):
+    vendor_id: int
+    csv_text: str = Field(min_length=1, max_length=2_000_000)
+    source_filename: Optional[str] = Field(default=None, max_length=255)
+    expected_date: Optional[date] = None
+    item_overrides: dict[int, int] = Field(default_factory=dict)
+    default_location_id: Optional[int] = None
+    location_overrides: dict[int, int] = Field(default_factory=dict)
+
+
+class PurchaseOrderCSVImportRequest(PurchaseOrderCSVPreviewRequest):
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    external_reference: Optional[str] = Field(default=None, max_length=100)
+
+
+class PurchaseOrderPlanLineCreate(BaseModel):
     inventory_item_id: int
     location_id: int
+    purchase_quantity: Decimal = Field(gt=0)
+
+
+class PurchaseOrderPlanCreate(BaseModel):
+    expected_date: date
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    lines: List[PurchaseOrderPlanLineCreate] = Field(min_length=1)
+
+
+class ReceivingLineCreate(BaseModel):
+    purchase_order_line_id: Optional[int] = None
+    inventory_item_id: int
+    location_id: Optional[int] = None
     received_quantity: Decimal = Field(gt=0)
     unit_price_cents: int = Field(default=0, ge=0)
     lot_number: Optional[str] = None
@@ -769,6 +992,7 @@ class ReceivingCreate(BaseModel):
     purchase_order_id: int
     invoice_number: Optional[str] = None
     notes: Optional[str] = None
+    allow_overage: bool = False
     lines: List[ReceivingLineCreate] = Field(default_factory=list)
 
 

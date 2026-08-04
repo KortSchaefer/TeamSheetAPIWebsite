@@ -14,24 +14,17 @@ from app.database import (
     ensure_sqlite_catalog_columns,
     ensure_sqlite_inventory_columns,
 )
-from app.services.ingredient_catalog import (
-    DEFAULT_CATALOG_PATH,
-    import_default_catalog,
-    import_catalog,
-    load_catalog_file,
-)
+from app.services.ingredient_catalog import activate_bar_inventory
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Validate and idempotently import an ingredient catalog."
+        description="Import the bundled catalog and activate countable bar inventory."
     )
     parser.add_argument(
-        "path",
-        nargs="?",
-        type=Path,
-        default=None,
-        help="Optional standalone catalog JSON path; by default imports the bundled core and bar catalogs",
+        "--location",
+        default="Bar",
+        help="Inventory location to create or reuse (default: Bar)",
     )
     parser.add_argument(
         "--dry-run",
@@ -44,15 +37,11 @@ def main():
     ensure_sqlite_inventory_columns()
     ensure_sqlite_catalog_columns()
     with SessionLocal() as db:
-        if args.path is None:
-            result = import_default_catalog(db, dry_run=args.dry_run)
-        else:
-            result = import_catalog(
-                db,
-                load_catalog_file(args.path),
-                source_name=args.path.name,
-                dry_run=args.dry_run,
-            )
+        result = activate_bar_inventory(
+            db,
+            location_name=args.location,
+            dry_run=args.dry_run,
+        )
     print(json.dumps(result, indent=2))
 
 

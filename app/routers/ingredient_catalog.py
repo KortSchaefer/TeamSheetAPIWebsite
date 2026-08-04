@@ -14,6 +14,7 @@ from app.models import (
 )
 from app.services.ingredient_catalog import (
     CatalogValidationError,
+    activate_bar_inventory,
     import_default_catalog,
     normalize_name,
 )
@@ -179,6 +180,23 @@ def import_bundled_catalog(
 ):
     try:
         return import_default_catalog(db, dry_run=dry_run)
+    except CatalogValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/import-bar-inventory")
+def import_bundled_bar_inventory(
+    location_name: str = Query(default="Bar", min_length=1, max_length=100),
+    dry_run: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_manager_or_admin),
+):
+    try:
+        return activate_bar_inventory(
+            db,
+            location_name=location_name.strip(),
+            dry_run=dry_run,
+        )
     except CatalogValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

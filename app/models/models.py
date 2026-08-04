@@ -401,12 +401,147 @@ class StorePreference(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     store_number: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     daily_schedule: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
+    blast_minimum_percent: Mapped[float] = mapped_column(Float, nullable=False, default=98.0)
 
 
 class POSOrderStatus(str, enum.Enum):
     OPEN = "OPEN"
     CLOSED = "CLOSED"
     VOIDED = "VOIDED"
+
+
+class POSAccessRole(str, enum.Enum):
+    SERVER = "SERVER"
+    MANAGER = "MANAGER"
+
+
+class POSTableStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+
+
+class POSCheckProgress(str, enum.Enum):
+    FOOD_UNORDERED = "FOOD_UNORDERED"
+    FOOD_ORDERED = "FOOD_ORDERED"
+    CHECK_PAID = "CHECK_PAID"
+
+
+class POSCredential(Base, TimestampMixin):
+    __tablename__ = "pos_credentials"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id"), unique=True, nullable=False, index=True
+    )
+    pin_lookup_digest: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, index=True
+    )
+    pin_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    access_role: Mapped[POSAccessRole] = mapped_column(
+        Enum(POSAccessRole), default=POSAccessRole.SERVER, nullable=False
+    )
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    locked_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    employee = relationship("Employee")
+    sessions = relationship(
+        "POSTerminalSession", back_populates="credential", cascade="all, delete-orphan"
+    )
+
+
+class POSTerminalSession(Base):
+    __tablename__ = "pos_terminal_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("pos_credentials.id"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, index=True
+    )
+    issued_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    credential = relationship("POSCredential", back_populates="sessions")
+
+
+class POSTable(Base, TimestampMixin):
+    __tablename__ = "pos_tables"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    table_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    client_request_id: Mapped[str | None] = mapped_column(
+        String(64), unique=True, nullable=True, index=True
+    )
+    active_number_key: Mapped[str | None] = mapped_column(
+        String(20), unique=True, nullable=True, index=True
+    )
+    owner_employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id"), nullable=False, index=True
+    )
+    status: Mapped[POSTableStatus] = mapped_column(
+        Enum(POSTableStatus), default=POSTableStatus.OPEN, nullable=False, index=True
+    )
+    progress: Mapped[POSCheckProgress] = mapped_column(
+        Enum(POSCheckProgress),
+        default=POSCheckProgress.FOOD_UNORDERED,
+        nullable=False,
+    )
+    revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    opened_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    owner = relationship("Employee")
+    checks = relationship(
+        "POSOrder", back_populates="table", cascade="all, delete-orphan"
+    )
+    events = relationship(
+        "POSTableEvent", back_populates="table", cascade="all, delete-orphan"
+    )
+
+
+class POSTableEvent(Base):
+    __tablename__ = "pos_table_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    table_id: Mapped[int] = mapped_column(
+        ForeignKey("pos_tables.id"), nullable=False, index=True
+    )
+    order_id: Mapped[int | None] = mapped_column(
+        ForeignKey("pos_orders.id"), nullable=True, index=True
+    )
+    employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id"), nullable=False, index=True
+    )
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+
+    table = relationship("POSTable", back_populates="events")
+    order = relationship("POSOrder")
+    employee = relationship("Employee")
 
 
 class MenuCategory(Base):
@@ -416,6 +551,7 @@ class MenuCategory(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     items = relationship("MenuItem", back_populates="category")
 
@@ -517,9 +653,30 @@ class POSOrder(Base, TimestampMixin):
     status: Mapped[POSOrderStatus] = mapped_column(Enum(POSOrderStatus), default=POSOrderStatus.OPEN)
     shift_id: Mapped[int | None] = mapped_column(ForeignKey("shifts.id"))
     server_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"))
+    table_id: Mapped[int | None] = mapped_column(
+        ForeignKey("pos_tables.id"), nullable=True, index=True
+    )
+    check_number: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    progress: Mapped[POSCheckProgress] = mapped_column(
+        Enum(POSCheckProgress),
+        default=POSCheckProgress.FOOD_UNORDERED,
+        nullable=False,
+    )
+    subtotal_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tax_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tip_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    print_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    printed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     table_label: Mapped[str | None] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(Text)
 
+    table = relationship("POSTable", back_populates="checks")
     items = relationship("POSOrderItem", back_populates="order", cascade="all, delete-orphan")
     payments = relationship("POSPayment", back_populates="order", cascade="all, delete-orphan")
 
@@ -610,10 +767,38 @@ class InventoryBalance(Base, TimestampMixin):
     minimum_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
     par_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
     maximum_quantity: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+    planning_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    lower_tolerance_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
+    upper_tolerance_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
 
     item = relationship("InventoryItem", back_populates="balances")
     location = relationship("InventoryLocation")
     __table_args__ = (UniqueConstraint("inventory_item_id", "location_id", name="uq_inventory_balance_item_location"),)
+
+
+class InventoryWeekdayTarget(Base, TimestampMixin):
+    __tablename__ = "inventory_weekday_targets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    inventory_item_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_items.id"), nullable=False, index=True
+    )
+    location_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=False, index=True
+    )
+    weekday: Mapped[int] = mapped_column(Integer, nullable=False)
+    target_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False)
+
+    item = relationship("InventoryItem")
+    location = relationship("InventoryLocation")
+    __table_args__ = (
+        UniqueConstraint(
+            "inventory_item_id",
+            "location_id",
+            "weekday",
+            name="uq_inventory_weekday_target",
+        ),
+    )
 
 
 class Vendor(Base, TimestampMixin):
@@ -662,10 +847,16 @@ class PurchaseOrder(Base, TimestampMixin):
     status: Mapped[PurchaseOrderStatus] = mapped_column(Enum(PurchaseOrderStatus), default=PurchaseOrderStatus.DRAFT)
     expected_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    import_source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    imported_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     vendor = relationship("Vendor")
     lines = relationship("PurchaseOrderLine", back_populates="purchase_order", cascade="all, delete-orphan")
+    __table_args__ = (
+        UniqueConstraint("vendor_id", "external_reference", name="uq_purchase_order_vendor_reference"),
+    )
 
 
 class PurchaseOrderLine(Base):
@@ -674,12 +865,18 @@ class PurchaseOrderLine(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     purchase_order_id: Mapped[int] = mapped_column(ForeignKey("inventory_purchase_orders.id"), nullable=False)
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
+    location_id: Mapped[int | None] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=True, index=True
+    )
     ordered_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
     unit_price_cents: Mapped[int] = mapped_column(Integer, default=0)
     received_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
+    purchase_unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    quantity_per_purchase_unit: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=1)
 
     purchase_order = relationship("PurchaseOrder", back_populates="lines")
     item = relationship("InventoryItem")
+    location = relationship("InventoryLocation")
 
 
 class InventoryCountStatus(str, enum.Enum):
@@ -695,12 +892,20 @@ class InventoryCount(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     location_id: Mapped[int] = mapped_column(ForeignKey("inventory_locations.id"), nullable=False)
+    template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("inventory_count_templates.id"), nullable=True, index=True
+    )
     status: Mapped[InventoryCountStatus] = mapped_column(Enum(InventoryCountStatus), default=InventoryCountStatus.DRAFT)
     counted_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     reviewed_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     location = relationship("InventoryLocation")
+    template = relationship("InventoryCountTemplate")
     lines = relationship("InventoryCountLine", back_populates="count", cascade="all, delete-orphan")
 
 
@@ -713,10 +918,70 @@ class InventoryCountLine(Base):
     counted_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
     expected_quantity: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_counted: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    review_status: Mapped[str] = mapped_column(
+        String(30), default="READY", nullable=False, index=True
+    )
+    evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    updated_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
 
     count = relationship("InventoryCount", back_populates="lines")
     item = relationship("InventoryItem")
     __table_args__ = (UniqueConstraint("count_id", "inventory_item_id", name="uq_inventory_count_line"),)
+
+
+class InventoryCountTemplate(Base, TimestampMixin):
+    __tablename__ = "inventory_count_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_by_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"), nullable=False
+    )
+
+    lines = relationship(
+        "InventoryCountTemplateLine",
+        back_populates="template",
+        cascade="all, delete-orphan",
+        order_by="InventoryCountTemplateLine.display_order",
+    )
+
+
+class InventoryCountTemplateLine(Base):
+    __tablename__ = "inventory_count_template_lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    template_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_count_templates.id"), nullable=False, index=True
+    )
+    inventory_item_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_items.id"), nullable=False
+    )
+    location_id: Mapped[int] = mapped_column(
+        ForeignKey("inventory_locations.id"), nullable=False
+    )
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    preferred_unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
+
+    template = relationship("InventoryCountTemplate", back_populates="lines")
+    item = relationship("InventoryItem")
+    location = relationship("InventoryLocation")
+    __table_args__ = (
+        UniqueConstraint(
+            "template_id",
+            "inventory_item_id",
+            "location_id",
+            name="uq_count_template_item_location",
+        ),
+    )
 
 
 class InventoryVoiceSessionStatus(str, enum.Enum):
@@ -970,6 +1235,9 @@ class InventoryReceivingLine(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     receiving_id: Mapped[int] = mapped_column(ForeignKey("inventory_receiving.id"), nullable=False)
+    purchase_order_line_id: Mapped[int | None] = mapped_column(
+        ForeignKey("inventory_purchase_order_lines.id"), nullable=True, index=True
+    )
     inventory_item_id: Mapped[int] = mapped_column(ForeignKey("inventory_items.id"), nullable=False)
     location_id: Mapped[int] = mapped_column(ForeignKey("inventory_locations.id"), nullable=False)
     received_quantity: Mapped[Decimal] = mapped_column(Numeric(12, 4), default=0)
@@ -979,6 +1247,7 @@ class InventoryReceivingLine(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     receiving = relationship("InventoryReceiving", back_populates="lines")
+    purchase_order_line = relationship("PurchaseOrderLine")
     item = relationship("InventoryItem")
     location = relationship("InventoryLocation")
 

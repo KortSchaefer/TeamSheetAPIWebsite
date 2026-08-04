@@ -4,7 +4,7 @@ import pytest
 from openpyxl import load_workbook
 
 from app.models import UserRole
-from app.services.voice_inventory import split_inventory_phrases
+from app.services.voice_inventory import canonical_unit, split_inventory_phrases
 
 
 async def login_manager(client, email: str):
@@ -36,6 +36,17 @@ def test_voice_transition_words_split_entries_without_splitting_item_commas():
     assert split_inventory_phrases("Next Level Sauce two bottles") == [
         "Next Level Sauce two bottles"
     ]
+    assert split_inventory_phrases(
+        "Bud Light draft one keg. Next Budweiser draft half a keg."
+    ) == [
+        "Bud Light draft one keg",
+        "Budweiser draft half a keg",
+    ]
+    assert canonical_unit("kegs") == "keg"
+    assert canonical_unit("cans") == "can"
+    assert canonical_unit("containers") == "container"
+    assert canonical_unit("packs") == "package"
+    assert canonical_unit("bag in box") == "bag_in_box"
 
 
 @pytest.mark.asyncio
@@ -93,6 +104,65 @@ async def test_voice_transition_words_create_multiple_inventory_entries(client):
         "Transition Onions": "3.0000",
         "Transition Carrots": "4.0000",
     }
+
+
+@pytest.mark.asyncio
+async def test_voice_writes_into_requested_live_count_sheet(client):
+    headers = await login_manager(client, "voice-live-sheet@example.com")
+    location = await client.post(
+        "/inventory/locations",
+        json={"name": "Voice Live Sheet Walk In"},
+        headers=headers,
+    )
+    item = await client.post(
+        "/inventory/items",
+        json={
+            "name": "Voice Live Sheet Tomatoes",
+            "base_unit": "lb",
+            "default_location_id": location.json()["id"],
+        },
+        headers=headers,
+    )
+    sheet = await client.post(
+        "/inventory/count-sheets",
+        json={"location_id": location.json()["id"]},
+        headers=headers,
+    )
+    session = await client.post(
+        "/inventory/voice/sessions",
+        json={
+            "client_session_id": "93111111-1111-4111-8111-111111111111",
+            "initial_location_id": location.json()["id"],
+            "device_metadata": {"target_count_id": sheet.json()["id"]},
+        },
+        headers=headers,
+    )
+    result = await client.post(
+        f"/inventory/voice/sessions/{session.json()['id']}/utterances",
+        json={
+            "client_event_id": "94111111-1111-4111-8111-111111111111",
+            "sequence": 1,
+            "transcript": "Voice Live Sheet Tomatoes 7 pounds",
+        },
+        headers=headers,
+    )
+    assert result.status_code == 201, result.text
+    current = await client.get(
+        f"/inventory/voice/sessions/{session.json()['id']}",
+        headers=headers,
+    )
+    assert current.json()["draft_counts"][0]["inventory_count_id"] == sheet.json()["id"]
+    refreshed = await client.get(
+        f"/inventory/count-sheets/{sheet.json()['id']}",
+        headers=headers,
+    )
+    counted_line = next(
+        row
+        for row in refreshed.json()["lines"]
+        if row["inventory_item_id"] == item.json()["id"]
+    )
+    assert counted_line["counted_quantity"] == "7.0000"
+    assert counted_line["source"] == "VOICE"
 
 
 @pytest.mark.asyncio
@@ -181,7 +251,8 @@ async def test_voice_inventory_multilocation_review_drafts_and_exports(client):
     before_finish = await client.get(
         f"/inventory/voice/sessions/{session_id}", headers=headers
     )
-    assert before_finish.json()["draft_counts"] == []
+    assert len(before_finish.json()["draft_counts"]) == 1
+    assert before_finish.json()["draft_counts"][0]["status"] == "DRAFT"
 
     switched = await client.post(
         f"/inventory/voice/sessions/{session_id}/utterances",
@@ -247,7 +318,8 @@ async def test_voice_inventory_multilocation_review_drafts_and_exports(client):
         f"/inventory/counts/{body['draft_counts'][0]['inventory_count_id']}/submit",
         headers=headers,
     )
-    assert submitted.status_code == 200, submitted.text
+    assert submitted.status_code == 409
+    assert "uncounted row" in submitted.text
 
 
 @pytest.mark.asyncio
@@ -258,7 +330,11 @@ async def test_unresolved_voice_entry_blocks_linked_count_submission(client):
     )
     item = await client.post(
         "/inventory/items",
-        json={"name": "Voice Blocking Item", "base_unit": "each"},
+        json={
+            "name": "Voice Blocking Item",
+            "base_unit": "each",
+            "default_location_id": location.json()["id"],
+        },
         headers=headers,
     )
     session = await client.post(

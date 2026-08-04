@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
+    pos_idle_timeout_seconds: int = 45
+    pos_session_expire_hours: int = 12
+    pos_login_max_attempts: int = 5
+    pos_login_lock_minutes: int = 5
     algorithm: str = "HS256"
     openai_api_key: str | None = None
     openai_transcription_model: str = "gpt-realtime-whisper"

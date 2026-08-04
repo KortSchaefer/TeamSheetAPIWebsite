@@ -72,3 +72,40 @@ async def test_team_sheet_create_and_export(client):
     export_resp = await client.get(f"/team-sheets/{team_sheet_id}/export/csv", headers=headers)
     assert export_resp.status_code == 200
     assert "text/csv" in export_resp.headers["content-type"]
+
+
+@pytest.mark.asyncio
+async def test_store_blast_minimum_is_configurable(client):
+    token = await register_and_login(client, "blast-manager@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    save_resp = await client.post(
+        "/store-preferences",
+        json={
+            "store_number": "777",
+            "daily_schedule": [],
+            "blast_minimum_percent": 98,
+        },
+        headers=headers,
+    )
+    assert save_resp.status_code == 200, save_resp.text
+    assert save_resp.json()["blast_minimum_percent"] == 98
+
+    update_resp = await client.post(
+        "/store-preferences",
+        json={
+            "store_number": "777",
+            "daily_schedule": [],
+            "blast_minimum_percent": 105.5,
+        },
+        headers=headers,
+    )
+    assert update_resp.status_code == 200, update_resp.text
+    assert update_resp.json()["blast_minimum_percent"] == 105.5
+
+    read_resp = await client.get(
+        "/store-preferences?store_number=777",
+        headers=headers,
+    )
+    assert read_resp.status_code == 200
+    assert read_resp.json()[0]["blast_minimum_percent"] == 105.5

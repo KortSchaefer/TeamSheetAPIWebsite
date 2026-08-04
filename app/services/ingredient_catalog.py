@@ -1,16 +1,27 @@
 import hashlib
 import json
 import unicodedata
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.models import Ingredient, IngredientCatalogImport, IngredientLineage
+from app.models import (
+    Ingredient,
+    IngredientCatalogImport,
+    IngredientLineage,
+    InventoryAliasSource,
+    InventoryBalance,
+    InventoryItem,
+    InventoryItemAlias,
+    InventoryLocation,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CATALOG_PATH = PROJECT_ROOT / "data" / "ingredient_catalog.json"
+BAR_CATALOG_PATH = PROJECT_ROOT / "data" / "bar_inventory_catalog.json"
 ITEM_FIELDS = {
     "id",
     "name",
@@ -40,6 +51,22 @@ def load_catalog_file(path: Path = DEFAULT_CATALOG_PATH) -> dict[str, Any]:
         raise CatalogValidationError(f"Catalog file not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise CatalogValidationError(f"Catalog JSON is invalid: {exc}") from exc
+
+
+def load_default_catalog() -> dict[str, Any]:
+    """Load the core catalog plus bundled domain extensions as one validated graph."""
+    payload = deepcopy(load_catalog_file(DEFAULT_CATALOG_PATH))
+    model = payload["inventory_process_model"]
+    extension = load_catalog_file(BAR_CATALOG_PATH)["inventory_process_model"]
+
+    model["schema_version"] = extension.get(
+        "schema_version", model["schema_version"]
+    )
+    model["items"].extend(extension.get("items", []))
+    for field in ("important_parent_chains", "items_requiring_store_confirmation"):
+        model.setdefault(field, [])
+        model[field].extend(extension.get(field, []))
+    return payload
 
 
 def validate_catalog(payload: dict[str, Any]) -> dict[str, Any]:
@@ -287,7 +314,150 @@ def import_catalog(
 def import_default_catalog(db: Session, *, dry_run: bool = False) -> dict[str, Any]:
     return import_catalog(
         db,
-        load_catalog_file(DEFAULT_CATALOG_PATH),
-        source_name=DEFAULT_CATALOG_PATH.name,
+        load_default_catalog(),
+        source_name=f"{DEFAULT_CATALOG_PATH.name}+{BAR_CATALOG_PATH.name}",
         dry_run=dry_run,
     )
+
+
+def activate_bar_inventory(
+    db: Session,
+    *,
+    location_name: str = "Bar",
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Import the catalog and activate only physical bar products that are counted."""
+    catalog_result = import_default_catalog(db, dry_run=dry_run)
+    payload = load_default_catalog()
+    bar_items = [
+        item
+        for item in payload["inventory_process_model"]["items"]
+        if item.get("inventory_department") == "bar" and item.get("stockable") is True
+    ]
+    if dry_run:
+        return {
+            "location": location_name,
+            "catalog": catalog_result,
+            "stockable_item_count": len(bar_items),
+            "created": 0,
+            "updated": 0,
+            "dry_run": True,
+        }
+
+    location = (
+        db.query(InventoryLocation)
+        .filter(InventoryLocation.name == location_name)
+        .first()
+    )
+    if location is None:
+        location = InventoryLocation(
+            name=location_name,
+            description="Bar bottles, kegs, mixers, and beverage supplies",
+        )
+        db.add(location)
+        db.flush()
+    else:
+        location.active = True
+
+    external_ids = [item["id"] for item in bar_items]
+    ingredients = {
+        ingredient.external_id: ingredient
+        for ingredient in db.query(Ingredient)
+        .filter(Ingredient.external_id.in_(external_ids))
+        .all()
+    }
+    existing = {
+        item.ingredient_id: item
+        for item in db.query(InventoryItem)
+        .filter(
+            InventoryItem.ingredient_id.in_(
+                [ingredient.id for ingredient in ingredients.values()]
+            )
+        )
+        .all()
+    }
+
+    created = 0
+    updated = 0
+    for definition in bar_items:
+        ingredient = ingredients[definition["id"]]
+        inventory_item = existing.get(ingredient.id)
+        base_unit = definition.get("inventory_base_unit", "unit")
+        purchase_unit = definition.get("inventory_purchase_unit")
+        purchase_to_base = definition.get("purchase_to_base")
+        if purchase_to_base is None:
+            # Never imply that one case equals one bottle when the pack size is unknown.
+            if purchase_unit != base_unit:
+                purchase_unit = base_unit
+            purchase_to_base = 1
+        values = {
+            "name": ingredient.name,
+            "category": ingredient.category,
+            "base_unit": base_unit,
+            "purchase_unit": purchase_unit,
+            "purchase_to_base": purchase_to_base,
+            "default_location_id": location.id,
+            "active": True,
+        }
+        if inventory_item is None:
+            inventory_item = InventoryItem(ingredient_id=ingredient.id, **values)
+            db.add(inventory_item)
+            db.flush()
+            existing[ingredient.id] = inventory_item
+            created += 1
+        else:
+            changed = False
+            for key, value in values.items():
+                if getattr(inventory_item, key) != value:
+                    setattr(inventory_item, key, value)
+                    changed = True
+            updated += int(changed)
+
+        for spoken_alias in definition.get("spoken_aliases", []):
+            normalized_alias = normalize_name(spoken_alias)
+            alias = (
+                db.query(InventoryItemAlias)
+                .filter(
+                    InventoryItemAlias.inventory_item_id == inventory_item.id,
+                    InventoryItemAlias.normalized_alias == normalized_alias,
+                )
+                .first()
+            )
+            if alias is None:
+                db.add(
+                    InventoryItemAlias(
+                        inventory_item_id=inventory_item.id,
+                        normalized_alias=normalized_alias,
+                        source=InventoryAliasSource.CATALOG,
+                    )
+                )
+            else:
+                alias.active = True
+                alias.source = InventoryAliasSource.CATALOG
+
+        balance = (
+            db.query(InventoryBalance)
+            .filter(
+                InventoryBalance.inventory_item_id == inventory_item.id,
+                InventoryBalance.location_id == location.id,
+            )
+            .first()
+        )
+        if balance is None:
+            db.add(
+                InventoryBalance(
+                    inventory_item_id=inventory_item.id,
+                    location_id=location.id,
+                )
+            )
+
+    db.commit()
+    return {
+        "location": location.name,
+        "location_id": location.id,
+        "catalog": catalog_result,
+        "stockable_item_count": len(bar_items),
+        "created": created,
+        "updated": updated,
+        "dry_run": False,
+    }

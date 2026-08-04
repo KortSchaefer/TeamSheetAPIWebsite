@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07131f">
+  <title>Inventory Count Sheet</title>
+  <style>
+    :root {
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      color-scheme: dark;
+      --bg: #07131f;
+      --panel: #0d1d2b;
+      --panel-2: #12283a;
+      --line: #294258;
+      --line-strong: #426780;
+      --ink: #f4f8fb;
+      --muted: #96aabd;
+      --blue: #5da9ff;
+      --cyan: #69e2df;
+      --green: #74e2a9;
+      --yellow: #ffd166;
+      --red: #ff808d;
+      --cell: #081824;
+      --shadow: 0 18px 60px #0007;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body { background: radial-gradient(circle at 45% -30%, #205d78 0, var(--bg) 48%); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100dvh; display: grid; grid-template-rows: auto auto 1fr; }
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; gap: 12px;
+      padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+      background: #07131feb; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+    .back, .btn {
+      border: 1px solid var(--line); border-radius: 10px;
+      background: #102538; color: var(--ink); text-decoration: none;
+      padding: 9px 12px; font-weight: 800; white-space: nowrap;
+    }
+    .btn:hover, .back:hover { border-color: var(--line-strong); background: #173148; }
+    .btn.primary { border-color: #4e9eee; background: linear-gradient(135deg, #2675cf, #5cabff); }
+    .btn.success { border: 0; background: linear-gradient(135deg, #18885d, #69dca2); color: #042719; }
+    .btn.warn { border-color: #6c581b; color: var(--yellow); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .title { min-width: 0; flex: 1; }
+    .title h1 { font-size: clamp(1rem, 3vw, 1.35rem); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .title p { color: var(--muted); margin: 2px 0 0; font-size: .76rem; }
+    .save-state { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: .8rem; font-weight: 800; }
+    .save-dot { width: 9px; height: 9px; border-radius: 50%; background: #6c8293; }
+    .save-state.saving .save-dot { background: var(--yellow); animation: pulse 1s infinite; }
+    .save-state.saved .save-dot { background: var(--green); }
+    .save-state.offline .save-dot { background: var(--red); }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .setup {
+      display: flex; align-items: end; gap: 10px; flex-wrap: wrap;
+      padding: 12px 16px; background: #0a1926; border-bottom: 1px solid var(--line);
+    }
+    label.control { display: grid; gap: 4px; color: var(--muted); font-size: .68rem; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+    select, .search {
+      border: 1px solid var(--line); border-radius: 9px; min-height: 40px;
+      padding: 8px 10px; color: var(--ink); background: #071621;
+    }
+    .sheet-shell { min-width: 0; display: grid; grid-template-rows: auto 1fr; }
+    .sheet-tools {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 11px 16px; border-bottom: 1px solid var(--line); background: #0d1d2be8;
+    }
+    .search { min-width: 230px; flex: 1; }
+    .filters { display: flex; gap: 5px; overflow-x: auto; }
+    .filter {
+      border: 1px solid var(--line); border-radius: 999px; color: var(--muted);
+      background: #0a1926; padding: 7px 10px; font-size: .76rem; font-weight: 850; white-space: nowrap;
+    }
+    .filter.active { color: var(--ink); border-color: #4078a5; background: #173853; }
+    a.filter { text-decoration: none; }
+    .hidden { display: none !important; }
+    .progress { margin-left: auto; display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .8rem; font-weight: 800; }
+    .progress-track { width: 105px; height: 7px; border-radius: 999px; background: #05101a; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .2s; }
+    .grid-wrap { overflow: auto; overscroll-behavior: contain; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; }
+    thead { position: sticky; top: 0; z-index: 8; }
+    th {
+      padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line-strong);
+      background: #13293b; color: var(--muted); font-size: .69rem; text-transform: uppercase;
+      letter-spacing: .06em; white-space: nowrap;
+    }
+    td { height: 49px; padding: 0 10px; border-bottom: 1px solid #1c3447; background: #0a1926; font-size: .86rem; white-space: nowrap; }
+    tbody tr:hover td { background: #102538; }
+    tbody tr.needs td { background: #29230f; border-bottom-color: #5d4d18; }
+    tbody tr.just-saved td { animation: savedFlash .85s ease-out; }
+    tbody tr[draggable="true"] td { cursor: grab; }
+    tbody tr.dragging td { opacity: .45; }
+    @keyframes savedFlash { from { background: #124d3b; } }
+    th.index, td.index { width: 48px; text-align: center; color: #6f879b; }
+    .order-buttons { display: inline-flex; gap: 2px; }
+    .order-buttons button { border: 0; border-radius: 5px; background: #173148; color: var(--ink); padding: 3px 6px; }
+    th.item, td.item { position: sticky; left: 0; z-index: 4; min-width: 235px; }
+    th.item { z-index: 10; }
+    td.item { background: #0d1f2e; border-right: 1px solid var(--line); }
+    tbody tr:hover td.item { background: #142d40; }
+    tbody tr.needs td.item { background: #312a10; }
+    .item-name { display: block; font-weight: 850; overflow: hidden; text-overflow: ellipsis; max-width: 270px; }
+    .category { color: var(--muted); font-size: .72rem; }
+    .number { font-variant-numeric: tabular-nums; text-align: right; }
+    .count-cell { padding: 0; min-width: 130px; background: #071620; }
+    .count-input {
+      width: 100%; height: 48px; border: 0; border-radius: 0; padding: 0 12px;
+      background: transparent; color: var(--cyan); font-size: 1rem; font-weight: 900;
+      text-align: right; font-variant-numeric: tabular-nums; outline: none;
+    }
+    .count-input:focus { box-shadow: inset 0 0 0 2px var(--blue); background: #0c2740; }
+    .delta.negative { color: var(--red); }
+    .delta.positive { color: var(--green); }
+    .row-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px;
+      background: #0a1926; color: var(--muted); font-size: .69rem; font-weight: 900;
+    }
+    .row-status.ready, .row-status.approved { color: var(--green); border-color: #276147; }
+    .row-status.needs_review { color: var(--yellow); border-color: #705b18; cursor: pointer; }
+    .row-status.pending { color: #8396a6; }
+    .source { color: var(--muted); font-size: .76rem; }
+    .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+    .empty strong { display: block; color: var(--ink); margin-bottom: 7px; font-size: 1.05rem; }
+    .toast {
+      position: fixed; z-index: 40; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 130px); max-width: calc(100vw - 24px);
+      padding: 11px 15px; border-radius: 11px; border: 1px solid var(--line);
+      background: #081722; box-shadow: var(--shadow); font-weight: 800; transition: .2s;
+    }
+    .toast.show { transform: translate(-50%, 0); }
+    .toast.error { border-color: #793543; color: #ffb0b7; }
+    .sheet-actions { display: flex; gap: 8px; }
+    .guided {
+      position: fixed; z-index: 30; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-50%); width: min(680px, calc(100vw - 20px));
+      display: flex; align-items: center; gap: 14px; padding: 13px 14px;
+      border: 1px solid #4a7ca0; border-radius: 16px; background: #0b2131f2;
+      box-shadow: var(--shadow); backdrop-filter: blur(16px);
+    }
+    .guided-copy { min-width: 0; flex: 1; }
+    .guided-copy small { display: block; color: var(--cyan); font-weight: 900; text-transform: uppercase; letter-spacing: .07em; }
+    .guided-copy strong { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .guided-copy span { display: block; color: var(--muted); font-size: .75rem; margin-top: 2px; }
+    .guided-actions { display: flex; gap: 6px; }
+    .guided-actions .btn { padding: 8px 10px; }
+    .desktop-only { display: inline-flex; }
+    @media (max-width: 760px) {
+      .topbar { padding-inline: 10px; }
+      .title p, .save-state span, .desktop-only { display: none; }
+      .setup { padding: 9px 10px; display: grid; grid-template-columns: 1fr 1fr; }
+      .setup label.control:first-child { grid-column: 1 / -1; }
+      .setup .btn { width: 100%; }
+      .sheet-tools { padding: 8px 10px; position: sticky; top: 58px; z-index: 12; }
+      .search { min-width: 100%; }
+      .progress { margin-left: 0; width: 100%; }
+      .progress-track { flex: 1; }
+      table { min-width: 735px; }
+      th.item, td.item { min-width: 190px; max-width: 190px; }
+      .item-name { max-width: 170px; }
+      th.category-col, td.category-col, th.par-col, td.par-col, th.source-col, td.source-col { display: none; }
+      .grid-wrap { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="back" href="/static/inventory.html" aria-label="Back to inventory">←</a>
+      <div class="title">
+        <h1 id="sheetTitle">Inventory count sheet</h1>
+        <p id="sheetSubtitle">Choose a location to begin.</p>
+      </div>
+      <div class="save-state saved" id="saveState"><i class="save-dot"></i><span>Ready</span></div>
+      <div class="sheet-actions">
+        <button class="btn desktop-only" id="undoButton" type="button" disabled>Undo</button>
+        <a class="btn" id="voiceButton" href="/static/inventory-voice.html">Voice</a>
+        <button class="btn" id="guidedButton" type="button" disabled>Guided</button>
+        <button class="btn success" id="approveButton" type="button" disabled>Approve</button>
+        <button class="btn primary" id="postButton" type="button" disabled>Post</button>
+      </div>
+    </header>
+
+    <section class="setup" aria-label="Count setup">
+      <label class="control">Location<select id="locationSelect"><option value="">Choose a location…</option></select></label>
+      <label class="control">Template<select id="templateSelect"><option value="">Standard location sheet</option></select></label>
+      <button class="btn primary" id="openSheetButton" type="button">Open sheet</button>
+      <button class="btn" id="newSheetButton" type="button">New sheet</button>
+      <button class="btn" id="reorderButton" type="button" disabled>Reorder</button>
+      <button class="btn" id="saveTemplateButton" type="button" disabled>Save template</button>
+    </section>
+
+    <main class="sheet-shell">
+      <div class="sheet-tools">
+        <input class="search" id="searchInput" type="search" placeholder="Search this sheet…" autocomplete="off">
+        <div class="filters" role="group" aria-label="Row filters">
+          <button class="filter active" data-filter="all" type="button">All</button>
+          <button class="filter" data-filter="uncounted" type="button">Uncounted</button>
+          <button class="filter" data-filter="exceptions" type="button">Exceptions</button>
+          <button class="filter" data-filter="counted" type="button">Counted</button>
+        </div>
+        <div class="filters" aria-label="Sheet exports">
+          <a class="filter hidden" id="xlsxExport" href="#">XLSX</a>
+          <a class="filter hidden" id="csvExport" href="#">CSV</a>
+          <a class="filter hidden" id="printExport" href="#" target="_blank">Print</a>
+        </div>
+        <div class="progress">
+          <span id="progressText">0 / 0</span>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-wrap" id="gridWrap">
+        <table aria-label="Inventory count spreadsheet">
+          <thead>
+            <tr>
+              <th class="index">#</th>
+              <th class="item">Item</th>
+              <th class="category-col">Category</th>
+              <th>Unit</th>
+              <th class="number">On hand</th>
+              <th class="number par-col">Par</th>
+              <th class="number">Count</th>
+              <th class="number">Delta</th>
+              <th class="source-col">Source</th>
+              <th>Approval</th>
+            </tr>
+          </thead>
+          <tbody id="sheetBody">
+            <tr><td colspan="10"><div class="empty"><strong>Ready to count</strong>Choose a location and open its sheet.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <section class="guided hidden" id="guidedBar" aria-live="polite">
+    <div class="guided-copy">
+      <small>Guided counting</small>
+      <strong id="guidedItem">Choose a sheet first</strong>
+      <span id="guidedStatus">Say a quantity, “skip,” “back,” or “stop.”</span>
+    </div>
+    <div class="guided-actions">
+      <button class="btn" id="guidedBack" type="button" aria-label="Previous item">←</button>
+      <button class="btn primary" id="guidedListen" type="button">Listen</button>
+      <button class="btn" id="guidedSkip" type="button">Skip</button>
+      <button class="btn" id="guidedClose" type="button" aria-label="Close guided mode">×</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const state = {
+      locations: [],
+      templates: [],
+      sheet: null,
+      filter: "all",
+      search: "",
+      pending: new Map(),
+      flushing: false,
+      flushTimer: null,
+      undo: [],
+      locallyRestored: false,
+      reorder: false,
+      draggedLineId: null,
+      guided: {active: false, index: 0, recognition: null, listening: false},
+    };
+
+    const authFetch = (url, options = {}) => fetch(url, {
+      credentials: "include",
+      ...options,
+      headers: {"Content-Type": "application/json", ...(options.headers || {})},
+    });
+
+    async function read(response) {
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = body.detail?.message || body.detail || body.message || `Request failed (${response.status})`;
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return body;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      })[char]);
+    }
+
+    function toast(message, error = false) {
+      const element = $("toast");
+      element.textContent = message;
+      element.className = `toast show${error ? " error" : ""}`;
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => element.className = "toast", 3200);
+    }
+
+    function setSaveState(mode, label) {
+      const element = $("saveState");
+      element.className = `save-state ${mode}`;
+      element.querySelector("span").textContent = label;
+    }
+
+    function localQueueKey() {
+      return state.sheet ? `inventory-count-sheet-queue:${state.sheet.id}` : null;
+    }
+
+    function persistPending() {
+      const key = localQueueKey();
+      if (!key) return;
+      localStorage.setItem(key, JSON.stringify([...state.pending.values()]));
+    }
+
+    function restorePending() {
+      const key = localQueueKey();
+      if (!key) return;
+      try {
+        const rows = JSON.parse(localStorage.getItem(key) || "[]");
+        rows.forEach(edit => {
+          const line = state.sheet.lines.find(row => row.id === edit.line_id);
+          if (!line) return;
+          edit.client_revision = line.revision;
+          state.pending.set(edit.line_id, edit);
+          line.counted_quantity = edit.counted_quantity;
+          line.is_counted = edit.counted_quantity !== null;
+          line.source = edit.source || "MANUAL";
+          if (edit.review_status) line.review_status = edit.review_status;
+        });
+        if (rows.length) {
+          state.locallyRestored = true;
+          toast(`${rows.length} unsynced edit${rows.length === 1 ? "" : "s"} restored.`);
+        }
+      } catch (_) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    function lineDelta(line) {
+      if (!line.is_counted || line.counted_quantity === null) return null;
+      return Number(line.counted_quantity) - Number(line.expected_quantity || 0);
+    }
+
+    function visibleLines() {
+      const search = state.search.trim().toLowerCase();
+      return (state.sheet?.lines || []).filter(line => {
+        if (search && !`${line.item_name} ${line.category || ""}`.toLowerCase().includes(search)) return false;
+        if (state.filter === "uncounted") return !line.is_counted;
+        if (state.filter === "exceptions") return line.review_status === "NEEDS_REVIEW";
+        if (state.filter === "counted") return line.is_counted;
+        return true;
+      });
+    }
+
+    function statusMarkup(line) {
+      const status = String(line.review_status || "PENDING").toLowerCase();
+      const labels = {
+        pending: "Not counted",
+        ready: "✓ Ready",
+        needs_review: "Review",
+        approved: "✓ Approved",
+      };
+      const title = line.review_status === "NEEDS_REVIEW"
+        ? "Click to accept this exception"
+        : "";
+      return `<button class="row-status ${status}" type="button" data-accept="${line.id}" title="${title}" ${line.review_status === "NEEDS_REVIEW" ? "" : "disabled"}>${labels[status] || escapeHtml(line.review_status)}</button>`;
+    }
+
+    function render() {
+      const sheet = state.sheet;
+      if (!sheet) return;
+      $("sheetTitle").textContent = `${sheet.location_name} count`;
+      $("sheetSubtitle").textContent = `Sheet #${sheet.id} · ${sheet.status} · revision ${sheet.revision}`;
+      $("progressText").textContent = `${sheet.counted_line_count} / ${sheet.line_count}`;
+      $("progressFill").style.width = `${sheet.completion_percent}%`;
+      $("approveButton").disabled = sheet.status !== "DRAFT";
+      $("postButton").disabled = sheet.status !== "APPROVED";
+      $("guidedButton").disabled = sheet.status !== "DRAFT" || !sheet.lines.length;
+      $("reorderButton").disabled = sheet.status !== "DRAFT" || !sheet.lines.length;
+      $("saveTemplateButton").disabled = !sheet.lines.length;
+      $("undoButton").disabled = !state.undo.length || sheet.status !== "DRAFT";
+      $("voiceButton").href = `/static/inventory-voice.html?location=${sheet.location_id}&sheet=${sheet.id}`;
+      $("xlsxExport").href = `/inventory/count-sheets/${sheet.id}/export.xlsx`;
+      $("csvExport").href = `/inventory/count-sheets/${sheet.id}/export.csv`;
+      $("printExport").href = `/inventory/count-sheets/${sheet.id}/print`;
+      ["xlsxExport", "csvExport", "printExport"].forEach(id => $(id).classList.remove("hidden"));
+
+      const rows = visibleLines();
+      $("sheetBody").innerHTML = rows.length ? rows.map((line, index) => {
+        const delta = lineDelta(line);
+        const deltaClass = delta > 0 ? "positive" : delta < 0 ? "negative" : "";
+        const countValue = line.is_counted && line.counted_quantity !== null ? line.counted_quantity : "";
+        return `<tr data-line="${line.id}" draggable="${state.reorder ? "true" : "false"}" class="${line.review_status === "NEEDS_REVIEW" ? "needs" : ""}">
+          <td class="index">${state.reorder ? `<span class="order-buttons"><button type="button" data-move="-1" aria-label="Move ${escapeHtml(line.item_name)} up">↑</button><button type="button" data-move="1" aria-label="Move ${escapeHtml(line.item_name)} down">↓</button></span>` : index + 1}</td>
+          <td class="item"><span class="item-name">${escapeHtml(line.item_name)}</span><span class="category">${escapeHtml(line.category || "Uncategorized")}</span></td>
+          <td class="category-col">${escapeHtml(line.category || "—")}</td>
+          <td>${escapeHtml(line.base_unit)}</td>
+          <td class="number">${Number(line.expected_quantity || 0).toLocaleString()}</td>
+          <td class="number par-col">${Number(line.par_quantity || 0).toLocaleString()}</td>
+          <td class="count-cell"><input class="count-input" data-line-input="${line.id}" inputmode="decimal" type="number" min="0" step="any" value="${escapeHtml(countValue)}" aria-label="Count for ${escapeHtml(line.item_name)}" ${state.reorder ? "disabled" : ""}></td>
+          <td class="number delta ${deltaClass}">${delta === null ? "—" : (delta > 0 ? "+" : "") + Number(delta.toFixed(4)).toLocaleString()}</td>
+          <td class="source source-col">${escapeHtml(line.source || "—")}</td>
+          <td>${statusMarkup(line)}</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="10"><div class="empty"><strong>No matching rows</strong>Change the search or row filter.</div></td></tr>`;
+    }
+
+    function recalculateSummary() {
+      if (!state.sheet) return;
+      state.sheet.counted_line_count = state.sheet.lines.filter(line => line.is_counted).length;
+      state.sheet.uncounted_line_count = state.sheet.line_count - state.sheet.counted_line_count;
+      state.sheet.exception_count = state.sheet.lines.filter(line => line.review_status === "NEEDS_REVIEW").length;
+      state.sheet.completion_percent = state.sheet.line_count
+        ? Math.round(state.sheet.counted_line_count / state.sheet.line_count * 1000) / 10
+        : 100;
+    }
+
+    function queueEdit(line, values, {recordUndo = true} = {}) {
+      if (!state.sheet || state.sheet.status !== "DRAFT") return;
+      if (recordUndo) {
+        state.undo.push({
+          line_id: line.id,
+          counted_quantity: line.is_counted ? line.counted_quantity : null,
+          source: line.source,
+          review_status: line.review_status,
+        });
+        if (state.undo.length > 100) state.undo.shift();
+      }
+      const quantity = values.counted_quantity === "" || values.counted_quantity === null
+        ? null
+        : Number(values.counted_quantity);
+      line.counted_quantity = quantity;
+      line.is_counted = quantity !== null && Number.isFinite(quantity) && quantity >= 0;
+      line.source = line.is_counted ? (values.source || "MANUAL") : null;
+      line.review_status = values.review_status || (line.is_counted ? "READY" : "PENDING");
+      state.pending.set(line.id, {
+        line_id: line.id,
+        counted_quantity: line.is_counted ? quantity : null,
+        is_counted: line.is_counted,
+        source: line.source,
+        review_status: values.review_status,
+        client_revision: line.revision,
+      });
+      recalculateSummary();
+      persistPending();
+      setSaveState(navigator.onLine ? "saving" : "offline", navigator.onLine ? "Saving…" : "Saved on device");
+      render();
+      clearTimeout(state.flushTimer);
+      state.flushTimer = setTimeout(flushEdits, 260);
+    }
+
+    async function flushEdits() {
+      if (state.flushing || !state.sheet || !state.pending.size || !navigator.onLine) return;
+      state.flushing = true;
+      const edits = [...state.pending.values()];
+      edits.forEach(edit => state.pending.delete(edit.line_id));
+      try {
+        const updated = await read(await authFetch(`/inventory/count-sheets/${state.sheet.id}/lines/batch`, {
+          method: "POST",
+          body: JSON.stringify({edits}),
+        }));
+        const newerEdits = [...state.pending.values()];
+        state.sheet = updated;
+        newerEdits.forEach(edit => {
+          const line = state.sheet.lines.find(row => row.id === edit.line_id);
+          if (!line) return;
+          line.counted_quantity = edit.counted_quantity;
+          line.is_counted = edit.is_counted;
+          line.source = edit.source;
+          if (edit.review_status) line.review_status = edit.review_status;
+          edit.client_revision = line.revision;
+        });
+        localStorage.removeItem(localQueueKey());
+        persistPending();
+        recalculateSummary();
+        render();
+        setSaveState("saved", "Saved");
+        edits.forEach(edit => {
+          const row = document.querySelector(`[data-line="${edit.line_id}"]`);
+          if (row) {
+            row.classList.add("just-saved");
+            setTimeout(() => row.classList.remove("just-saved"), 900);
+          }
+        });
+      } catch (error) {
+        edits.forEach(edit => state.pending.set(edit.line_id, edit));
+        if (error.message.includes("changed on another device")) {
+          try {
+            const current = await read(await authFetch(`/inventory/count-sheets/${state.sheet.id}`));
+            state.sheet = current;
+            state.pending.forEach(edit => {
+              const line = current.lines.find(row => row.id === edit.line_id);
+              if (line) edit.client_revision = line.revision;
+            });
+            recalculateSummary();
+            render();
+          } catch (_) {}
+        }
+        persistPending();
+        setSaveState(navigator.onLine ? "offline" : "offline", "Saved on device");
+        toast(error.message, true);
+      } finally {
+        state.flushing = false;
+        if (state.pending.size && navigator.onLine) {
+          clearTimeout(state.flushTimer);
+          state.flushTimer = setTimeout(flushEdits, 300);
+        }
+      }
+    }
+
+    async function flushAllEdits() {
+      while (state.flushing) {
+        await new Promise(resolve => setTimeout(resolve, 40));
+      }
+      if (navigator.onLine && state.pending.size) {
+        const before = state.pending.size;
+        await flushEdits();
+        while (state.flushing) {
+          await new Promise(resolve => setTimeout(resolve, 40));
+        }
+        if (state.pending.size >= before) return false;
+      }
+      return state.pending.size === 0;
+    }
+
+    async function loadSetup() {
+      const [locations, templates] = await Promise.all([
+        read(await authFetch("/inventory/locations")),
+        read(await authFetch("/inventory/count-templates")),
+      ]);
+      state.locations = locations;
+      state.templates = templates;
+      $("locationSelect").innerHTML = `<option value="">Choose a location…</option>${locations.map(row => `<option value="${row.id}">${escapeHtml(row.name)}</option>`).join("")}`;
+      renderTemplateOptions();
+      const params = new URLSearchParams(location.search);
+      if (params.get("location")) $("locationSelect").value = params.get("location");
+      if (params.get("sheet")) {
+        await openExistingSheet(Number(params.get("sheet")));
+      } else if ($("locationSelect").value) {
+        await openSheet(true);
+      }
+    }
+
+    function renderTemplateOptions(selected = $("templateSelect").value) {
+      $("templateSelect").innerHTML = `<option value="">Standard location sheet</option>${state.templates.map(row => `<option value="${row.id}">${escapeHtml(row.name)}</option>`).join("")}`;
+      $("templateSelect").value = selected;
+    }
+
+    async function openExistingSheet(sheetId) {
+      stopGuided();
+      setSaveState("saving", "Opening…");
+      state.reorder = false;
+      $("reorderButton").textContent = "Reorder";
+      state.sheet = await read(await authFetch(`/inventory/count-sheets/${sheetId}`));
+      $("locationSelect").value = String(state.sheet.location_id);
+      $("templateSelect").value = state.sheet.template_id ? String(state.sheet.template_id) : "";
+      state.pending.clear();
+      state.undo.length = 0;
+      restorePending();
+      recalculateSummary();
+      render();
+      setSaveState(state.pending.size ? "offline" : "saved", state.pending.size ? "Unsynced edits" : "Saved");
+      if (state.pending.size && navigator.onLine) flushEdits();
+      history.replaceState(null, "", `?sheet=${state.sheet.id}&location=${state.sheet.location_id}`);
+    }
+
+    async function openSheet(resumeExisting = true) {
+      const locationId = Number($("locationSelect").value);
+      if (!locationId) return toast("Choose a storage location.", true);
+      setSaveState("saving", "Opening…");
+      try {
+        const sheet = await read(await authFetch("/inventory/count-sheets", {
+          method: "POST",
+          body: JSON.stringify({
+            location_id: locationId,
+            template_id: $("templateSelect").value ? Number($("templateSelect").value) : null,
+            resume_existing: resumeExisting,
+          }),
+        }));
+        await openExistingSheet(sheet.id);
+        if (!sheet.line_count) toast("This location has no active inventory items yet.", true);
+      } catch (error) {
+        setSaveState("offline", "Could not open");
+        toast(error.message, true);
+      }
+    }
+
+    async function approveSheet() {
+      if (!state.sheet) return;
+      if (!await flushAllEdits()) return toast("Wait for unsynced edits before approving.", true);
+      try {
+        state.sheet = await read(await authFetch(`/inventory/count-sheets/${state.sheet.id}/approve`, {method: "POST"}));
+        render();
+        toast("Location approved. It is ready to post.");
+      } catch (error) {
+        state.filter = "exceptions";
+        document.querySelectorAll(".filter").forEach(button => button.classList.toggle("active", button.dataset.filter === state.filter));
+        render();
+        toast(error.message, true);
+      }
+    }
+
+    async function postSheet() {
+      if (!state.sheet || state.sheet.status !== "APPROVED") return;
+      if (!confirm("Post this approved count to inventory balances? This creates stock movements.")) return;
+      try {
+        await read(await authFetch(`/inventory/counts/${state.sheet.id}/post`, {method: "POST"}));
+        await openExistingSheet(state.sheet.id);
+        toast("Inventory count posted.");
+      } catch (error) {
+        toast(error.message, true);
+      }
+    }
+
+    function undoLast() {
+      const previous = state.undo.pop();
+      if (!previous || !state.sheet) return;
+      const line = state.sheet.lines.find(row => row.id === previous.line_id);
+      if (!line) return;
+      queueEdit(line, previous, {recordUndo: false});
+    }
+
+    async function persistOrder(lineIds) {
+      if (!state.sheet) return;
+      setSaveState("saving", "Saving order…");
+      try {
+        state.sheet = await read(await authFetch(`/inventory/count-sheets/${state.sheet.id}/reorder`, {
+          method: "POST",
+          body: JSON.stringify({line_ids: lineIds}),
+        }));
+        render();
+        setSaveState("saved", "Order saved");
+      } catch (error) {
+        toast(error.message, true);
+        await openExistingSheet(state.sheet.id);
+      }
+    }
+
+    function moveLine(lineId, direction) {
+      if (!state.reorder || !state.sheet) return;
+      const index = state.sheet.lines.findIndex(line => line.id === lineId);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= state.sheet.lines.length) return;
+      const [line] = state.sheet.lines.splice(index, 1);
+      state.sheet.lines.splice(nextIndex, 0, line);
+      state.sheet.lines.forEach((row, order) => row.display_order = order);
+      render();
+      persistOrder(state.sheet.lines.map(row => row.id));
+    }
+
+    function toggleReorder() {
+      if (!state.sheet) return;
+      state.reorder = !state.reorder;
+      if (state.reorder) {
+        state.filter = "all";
+        state.search = "";
+        $("searchInput").value = "";
+        document.querySelectorAll(".filter[data-filter]").forEach(button => button.classList.toggle("active", button.dataset.filter === "all"));
+        stopGuided();
+      }
+      $("reorderButton").textContent = state.reorder ? "Done ordering" : "Reorder";
+      render();
+    }
+
+    async function saveAsTemplate() {
+      if (!state.sheet?.lines.length) return;
+      const name = prompt("Template name", `${state.sheet.location_name} count order`);
+      if (!name?.trim()) return;
+      try {
+        const template = await read(await authFetch("/inventory/count-templates", {
+          method: "POST",
+          body: JSON.stringify({
+            name: name.trim(),
+            description: `Saved from count sheet #${state.sheet.id}`,
+            lines: state.sheet.lines.map((line, display_order) => ({
+              inventory_item_id: line.inventory_item_id,
+              location_id: state.sheet.location_id,
+              display_order,
+              preferred_unit: line.base_unit,
+            })),
+          }),
+        }));
+        state.templates.push(template);
+        state.templates.sort((a, b) => a.name.localeCompare(b.name));
+        renderTemplateOptions(String(template.id));
+        toast("Count template saved.");
+      } catch (error) {
+        toast(error.message, true);
+      }
+    }
+
+    function parseSpokenNumber(text) {
+      const clean = text.toLowerCase().replace(/-/g, " ");
+      const numeric = clean.match(/\d+(?:\.\d+)?/);
+      if (numeric) return Number(numeric[0]);
+      if (/\b(zero|none|nothing)\b/.test(clean)) return 0;
+      const small = {
+        one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+        eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+        fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+        nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50,
+        sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+      };
+      let total = 0;
+      let current = 0;
+      let found = false;
+      clean.split(/\s+/).forEach(word => {
+        if (small[word] !== undefined) {
+          current += small[word];
+          found = true;
+        } else if (word === "hundred" && current) {
+          current *= 100;
+        } else if (word === "thousand" && current) {
+          total += current * 1000;
+          current = 0;
+        }
+      });
+      let value = total + current;
+      if (/\bhalf\b/.test(clean)) value += .5;
+      else if (/\bquarter\b/.test(clean)) value += .25;
+      return found || value ? value : null;
+    }
+
+    function guidedLine() {
+      return state.sheet?.lines[state.guided.index] || null;
+    }
+
+    function focusGuidedRow() {
+      const line = guidedLine();
+      if (!line) return stopGuided("All rows complete.");
+      $("guidedItem").textContent = `${line.item_name} · ${line.base_unit}`;
+      $("guidedStatus").textContent = line.is_counted
+        ? `Currently ${line.counted_quantity}. Say a replacement quantity.`
+        : "Say a quantity, “skip,” “back,” or “stop.”";
+      const input = document.querySelector(`[data-line-input="${line.id}"]`);
+      input?.scrollIntoView({block: "center", behavior: "smooth"});
+      input?.focus({preventScroll: true});
+    }
+
+    function speakGuided(message, listenAfter = true) {
+      if (!state.guided.active || !("speechSynthesis" in window)) {
+        if (listenAfter) listenGuided();
+        return;
+      }
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.rate = 1.05;
+      utterance.onend = () => {
+        if (listenAfter && state.guided.active) setTimeout(listenGuided, 180);
+      };
+      speechSynthesis.speak(utterance);
+    }
+
+    function guidedAdvance(step = 1, announce = true) {
+      if (!state.sheet) return;
+      if (step > 0 && state.guided.index + step >= state.sheet.lines.length) {
+        stopGuided("All rows complete.");
+        return false;
+      }
+      state.guided.index = Math.max(0, Math.min(state.sheet.lines.length - 1, state.guided.index + step));
+      focusGuidedRow();
+      const line = guidedLine();
+      if (announce && line) speakGuided(`${line.item_name}.`);
+      return true;
+    }
+
+    function handleGuidedTranscript(transcript) {
+      const clean = transcript.toLowerCase().trim();
+      $("guidedStatus").textContent = `Heard: “${transcript}”`;
+      if (/\b(stop|close|finish)\b/.test(clean)) return stopGuided("Guided counting stopped.");
+      if (/\b(back|previous)\b/.test(clean)) return guidedAdvance(-1);
+      if (/\b(skip|next|bump)\b/.test(clean)) return guidedAdvance(1);
+      if (/\b(repeat|again)\b/.test(clean)) {
+        const line = guidedLine();
+        if (line) speakGuided(`${line.item_name}.`);
+        return;
+      }
+      const quantity = parseSpokenNumber(clean);
+      const line = guidedLine();
+      if (quantity === null || !line) {
+        $("guidedStatus").textContent = "I did not hear a quantity. Try again.";
+        return speakGuided("Please repeat the quantity.");
+      }
+      queueEdit(line, {counted_quantity: quantity, source: "VOICE"});
+      if (!guidedAdvance(1, false)) return;
+      const next = guidedLine();
+      if (next) speakGuided(`Saved. ${next.item_name}.`);
+    }
+
+    function listenGuided() {
+      if (!state.guided.active || state.guided.listening) return;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        $("guidedStatus").textContent = "Speech recognition is unavailable. Type the highlighted count and use Skip.";
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      state.guided.recognition = recognition;
+      state.guided.listening = true;
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      $("guidedListen").textContent = "Listening…";
+      let finalTranscript = null;
+      recognition.onresult = event => {
+        finalTranscript = event.results[0][0].transcript;
+      };
+      recognition.onerror = event => {
+        if (event.error !== "aborted" && event.error !== "no-speech") {
+          $("guidedStatus").textContent = `Microphone: ${event.error}`;
+        }
+      };
+      recognition.onend = () => {
+        state.guided.listening = false;
+        state.guided.recognition = null;
+        $("guidedListen").textContent = "Listen";
+        if (finalTranscript && state.guided.active) {
+          handleGuidedTranscript(finalTranscript);
+        }
+      };
+      try {
+        recognition.start();
+      } catch (error) {
+        state.guided.listening = false;
+        $("guidedListen").textContent = "Listen";
+        toast(error.message, true);
+      }
+    }
+
+    function startGuided() {
+      if (!state.sheet?.lines.length) return;
+      state.guided.active = true;
+      const firstUncounted = state.sheet.lines.findIndex(line => !line.is_counted);
+      state.guided.index = firstUncounted >= 0 ? firstUncounted : 0;
+      $("guidedBar").classList.remove("hidden");
+      focusGuidedRow();
+      speakGuided(`${guidedLine().item_name}.`);
+    }
+
+    function stopGuided(message = "") {
+      if (state.guided.recognition) {
+        try { state.guided.recognition.abort(); } catch (_) {}
+      }
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+      state.guided.active = false;
+      state.guided.listening = false;
+      state.guided.recognition = null;
+      $("guidedBar").classList.add("hidden");
+      $("guidedListen").textContent = "Listen";
+      if (message) toast(message);
+    }
+
+    $("sheetBody").addEventListener("change", event => {
+      const input = event.target.closest("[data-line-input]");
+      if (!input || !state.sheet) return;
+      const line = state.sheet.lines.find(row => row.id === Number(input.dataset.lineInput));
+      if (!line) return;
+      if (input.value !== "" && (!Number.isFinite(Number(input.value)) || Number(input.value) < 0)) {
+        input.value = line.is_counted ? line.counted_quantity : "";
+        return toast("Enter zero or a positive quantity.", true);
+      }
+      queueEdit(line, {counted_quantity: input.value, source: "MANUAL"});
+    });
+
+    $("sheetBody").addEventListener("keydown", event => {
+      const input = event.target.closest("[data-line-input]");
+      if (!input) return;
+      const inputs = [...document.querySelectorAll("[data-line-input]")];
+      const index = inputs.indexOf(input);
+      if (event.key === "Enter" || event.key === "ArrowDown") {
+        event.preventDefault();
+        const nextLineId = inputs[index + 1]?.dataset.lineInput;
+        input.dispatchEvent(new Event("change", {bubbles: true}));
+        requestAnimationFrame(() => {
+          const next = nextLineId ? document.querySelector(`[data-line-input="${nextLineId}"]`) : null;
+          next?.focus();
+          next?.select();
+        });
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        const previousLineId = inputs[index - 1]?.dataset.lineInput;
+        input.dispatchEvent(new Event("change", {bubbles: true}));
+        requestAnimationFrame(() => {
+          const previous = previousLineId ? document.querySelector(`[data-line-input="${previousLineId}"]`) : null;
+          previous?.focus();
+          previous?.select();
+        });
+      }
+    });
+
+    $("sheetBody").addEventListener("click", event => {
+      const move = event.target.closest("[data-move]");
+      if (move) {
+        const row = move.closest("[data-line]");
+        return moveLine(Number(row.dataset.line), Number(move.dataset.move));
+      }
+      const button = event.target.closest("[data-accept]");
+      if (!button || button.disabled || !state.sheet) return;
+      const line = state.sheet.lines.find(row => row.id === Number(button.dataset.accept));
+      if (line) queueEdit(line, {
+        counted_quantity: line.counted_quantity,
+        source: line.source || "MANUAL",
+        review_status: "READY",
+      });
+    });
+
+    $("searchInput").addEventListener("input", event => {
+      state.search = event.target.value;
+      render();
+    });
+    document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => {
+      state.filter = button.dataset.filter;
+      document.querySelectorAll(".filter").forEach(row => row.classList.toggle("active", row === button));
+      render();
+    }));
+    $("openSheetButton").addEventListener("click", () => openSheet(true));
+    $("newSheetButton").addEventListener("click", () => openSheet(false));
+    $("undoButton").addEventListener("click", undoLast);
+    $("approveButton").addEventListener("click", approveSheet);
+    $("postButton").addEventListener("click", postSheet);
+    $("reorderButton").addEventListener("click", toggleReorder);
+    $("saveTemplateButton").addEventListener("click", saveAsTemplate);
+    $("guidedButton").addEventListener("click", startGuided);
+    $("guidedBack").addEventListener("click", () => guidedAdvance(-1));
+    $("guidedSkip").addEventListener("click", () => guidedAdvance(1));
+    $("guidedListen").addEventListener("click", listenGuided);
+    $("guidedClose").addEventListener("click", () => stopGuided());
+    $("sheetBody").addEventListener("dragstart", event => {
+      const row = event.target.closest("[data-line]");
+      if (!state.reorder || !row) return event.preventDefault();
+      state.draggedLineId = Number(row.dataset.line);
+      row.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+    });
+    $("sheetBody").addEventListener("dragover", event => {
+      if (!state.reorder || !state.draggedLineId) return;
+      event.preventDefault();
+      const target = event.target.closest("[data-line]");
+      const dragged = document.querySelector(`[data-line="${state.draggedLineId}"]`);
+      if (!target || !dragged || target === dragged) return;
+      const box = target.getBoundingClientRect();
+      target.parentNode.insertBefore(dragged, event.clientY < box.top + box.height / 2 ? target : target.nextSibling);
+    });
+    $("sheetBody").addEventListener("dragend", event => {
+      event.target.closest("[data-line]")?.classList.remove("dragging");
+      if (!state.reorder || !state.draggedLineId) return;
+      const ids = [...document.querySelectorAll("#sheetBody [data-line]")].map(row => Number(row.dataset.line));
+      state.draggedLineId = null;
+      persistOrder(ids);
+    });
+    window.addEventListener("online", () => {
+      setSaveState("saving", "Syncing…");
+      flushEdits();
+    });
+    window.addEventListener("offline", () => setSaveState("offline", "Saved on device"));
+    window.addEventListener("keydown", event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undoLast();
+      }
+    });
+    window.addEventListener("beforeunload", persistPending);
+
+    loadSetup().catch(error => {
+      setSaveState("offline", "Could not load");
+      toast(error.message, true);
+    });
+  </script>
+</body>
+</html>

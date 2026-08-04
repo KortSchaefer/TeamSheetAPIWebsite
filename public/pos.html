@@ -1,312 +1,926 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Team Sheet Studio - POS</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Roadhouse POS Terminal</title>
     <style>
-      :root { color-scheme: dark; font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+      :root {
+        color-scheme: dark;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        --bg: #242424;
+        --chrome: #3b3b3b;
+        --panel: #303030;
+        --paper: #e8e8e8;
+        --ink: #101010;
+        --white: #fff;
+        --muted: #b8b8b8;
+        --line: #161616;
+        --red: #fa4247;
+        --red-dark: #c72e34;
+        --green: #66ce72;
+        --yellow: #ffd347;
+        --orange: #ff8a45;
+        --blue: #79b9ff;
+        --shadow: 0 10px 20px #0007;
+      }
       * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, #112850, #070c1a 55%);
-        color: #f5f7ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-      }
-      .shell {
+      html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--white); }
+      body { min-height: 100dvh; overflow-x: hidden; }
+      button, input, select { font: inherit; }
+      button { touch-action: manipulation; }
+      .hidden { display: none !important; }
+      .terminal {
         width: min(1200px, 100%);
-        background: rgba(10, 18, 35, 0.9);
-        border-radius: 32px;
-        padding: 2.5rem;
-        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
-      }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      }
-      .header h1 {
-        margin: 0;
-        font-size: 2rem;
-      }
-      .back-btn {
-        border: 1px solid #243258;
-        background: rgba(10, 18, 35, 0.85);
-        color: #9bb0ff;
-        padding: .45rem .75rem;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-      }
-      .layout {
-        display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: 1.5rem;
-      }
-      .panel {
-        background: #050919;
-        border-radius: 20px;
-        padding: 1.2rem;
-        border: 1px solid #1f2a46;
-      }
-      .panel h2 {
-        margin-top: 0;
-        font-size: 1.05rem;
-        letter-spacing: .05em;
-        color: #7b8bb3;
-        text-transform: uppercase;
-      }
-      .menu-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: .9rem;
-      }
-      .menu-card {
-        background: #0f1a33;
-        border: 1px solid #1f2d51;
-        border-radius: 16px;
-        padding: .9rem;
+        min-height: 100dvh;
+        margin: auto;
+        background: radial-gradient(circle at 50% 55%, #303030, #202020 75%);
         display: flex;
         flex-direction: column;
-        gap: .6rem;
+        box-shadow: 0 0 70px #0009;
       }
-      .menu-card button {
-        border: none;
-        border-radius: 12px;
-        padding: .5rem;
-        font-weight: 600;
-        cursor: pointer;
-        background: linear-gradient(120deg, #4b63f7, #47a0ff);
-        color: #fff;
-      }
-      .order-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: .6rem;
-      }
-      .order-item {
-        background: #0f1a33;
-        border: 1px solid #1f2d51;
-        border-radius: 12px;
-        padding: .7rem .8rem;
-        display: flex;
-        justify-content: space-between;
+      .topbar, .bottombar {
+        background: var(--chrome);
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
+        gap: 18px;
+        padding: 22px 30px;
+        min-height: 132px;
       }
-      .muted { color: #8ea7ff; font-size: .85rem; }
-      .row {
-        display: flex;
-        gap: .6rem;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      input, select {
-        padding: .5rem .7rem;
-        border-radius: 10px;
-        border: 1px solid #202a48;
-        background: #050919;
-        color: #f5f7ff;
-        font-size: .9rem;
-      }
+      .topbar .left { justify-self: start; }
+      .topbar .right { justify-self: end; }
+      .top-actions { display: flex; gap: 12px; align-items: center; }
       .btn {
-        border: none;
-        border-radius: 12px;
-        padding: .6rem .9rem;
-        font-size: .9rem;
-        font-weight: 600;
+        min-height: 66px;
+        min-width: 145px;
+        border: 1px solid #b8b8b8;
+        border-radius: 16px;
+        background: #e1e1e1;
+        color: #0c0c0c;
+        padding: 10px 18px;
+        font-weight: 900;
+        font-size: clamp(1rem, 2.1vw, 1.45rem);
         cursor: pointer;
-        background: linear-gradient(120deg, #4b63f7, #47a0ff);
+        box-shadow: 0 5px 0 #1116;
+      }
+      .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #1116; }
+      .btn.exit {
+        background: var(--red);
+        border-color: #ff666a;
         color: #fff;
+        min-width: 220px;
+        font-size: clamp(1.7rem, 3.4vw, 2.7rem);
       }
-      .btn.secondary {
-        background: #0f1831;
-        border: 1px solid #243258;
+      .btn.small { min-width: 92px; min-height: 54px; font-size: 1rem; border-radius: 13px; }
+      .btn.green { background: var(--green); border-color: #a5e8ae; }
+      .btn:disabled { opacity: .46; cursor: not-allowed; box-shadow: none; }
+      .view { display: flex; flex-direction: column; min-height: 100dvh; }
+      .workspace { flex: 1; padding: 28px 22px; min-height: 0; }
+      .bottombar {
+        min-height: 142px;
+        grid-template-columns: 1fr;
+        padding: 18px 30px;
       }
-      .status {
-        min-height: 1.2rem;
-        margin-top: .6rem;
-        font-size: .9rem;
-        color: #9fb1e1;
+      .bottom-actions { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+      .employee-pill {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 8px;
+        background: #262626;
+        color: #ccc;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: .78rem;
       }
-      .status.error { color: #ff8b8b; }
-      .status.success { color: #65f5b6; }
+      .screen-footer { position: relative; }
+
+      /* PIN screen */
+      .pin-content {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 28px 18px;
+      }
+      .pin-wrap { text-align: center; }
+      .pin-wrap h1 { margin: 0 0 18px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+      .pin-display {
+        min-height: 44px;
+        color: #d6d6d6;
+        font-size: 2rem;
+        letter-spacing: .28em;
+        margin-bottom: 12px;
+      }
+      .keypad {
+        background: #383838;
+        border: 1px solid #0c0c0c;
+        border-radius: 34px;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: repeat(3, 122px);
+        gap: 18px;
+        box-shadow: var(--shadow);
+      }
+      .key {
+        width: 122px;
+        height: 118px;
+        border: 1px solid #050505;
+        border-radius: 38px;
+        background: #f7f7f7;
+        color: #000;
+        font-size: 3.6rem;
+        font-weight: 950;
+        cursor: pointer;
+        box-shadow: 0 7px 0 #16161666;
+      }
+      .key.word { font-size: 1.35rem; letter-spacing: -.04em; }
+      .key.ok { color: #58b97c; }
+      .login-status { min-height: 28px; margin-top: 16px; color: #ff9ba0; font-weight: 800; }
+      .login-footer {
+        min-height: 138px;
+        background: var(--chrome);
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        padding: 20px 44px;
+      }
+      .clock { text-align: center; color: #202020; }
+      .clock span { display: block; background: #efefef; padding: 3px 20px; border-radius: 999px; margin: 4px; }
+
+      /* table menu */
+      .table-list { display: grid; gap: 20px; }
+      .table-card {
+        background: #383838;
+        border: 1px solid #1a1a1a;
+        border-radius: 26px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: 145px minmax(0, 1fr) auto;
+        gap: 22px;
+        align-items: center;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+      }
+      .table-number {
+        height: 126px;
+        border-radius: 25px;
+        background: linear-gradient(155deg, #f7faff, #dce4ee);
+        color: #080808;
+        display: grid;
+        place-items: center;
+        font-size: 2.8rem;
+        font-weight: 950;
+        position: relative;
+      }
+      .table-number small {
+        position: absolute;
+        bottom: 8px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        font-size: .67rem;
+      }
+      .table-summary {
+        background: #e0e0e0;
+        color: #111;
+        min-height: 86px;
+        border: 1px solid #090909;
+        border-radius: 15px;
+        padding: 12px 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+      }
+      .summary-copy strong { display: block; font-size: 1.15rem; }
+      .summary-copy span { color: #555; }
+      .owner { margin-top: 8px; font-size: .82rem; font-weight: 800; }
+      .milestones { display: flex; gap: 6px; justify-content: end; }
+      .dot { width: 25px; height: 25px; border: 1px solid #222; border-radius: 50%; background: #ddd; }
+      .dot.unordered.active { background: var(--orange); }
+      .dot.ordered.active { background: var(--yellow); }
+      .dot.paid.active { background: var(--green); }
+      .elapsed { display: block; text-align: right; font-size: .72rem; margin-top: 10px; }
+      .card-actions { display: flex; gap: 8px; align-items: stretch; }
+      .empty-state {
+        border: 2px dashed #585858;
+        border-radius: 24px;
+        min-height: 280px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: #c9c9c9;
+        padding: 30px;
+      }
+      .empty-state h2 { margin: 0 0 6px; color: #fff; }
+
+      /* order and close */
+      .dense-top { grid-template-columns: 1fr auto 1fr; padding: 18px 10px; min-height: 144px; }
+      .dense-top .left, .dense-top .right { display: flex; gap: 9px; align-items: center; }
+      .dense-top .right { justify-self: end; }
+      .dense-top .btn { min-width: 88px; padding: 8px 12px; font-size: 1rem; }
+      .dense-top .exit { min-width: 220px; font-size: 2.4rem; }
+      .order-workspace {
+        display: grid;
+        grid-template-columns: 300px 145px minmax(0, 1fr);
+        gap: 16px;
+        padding: 16px 22px;
+      }
+      .check-paper, .item-panel {
+        background: #dedede;
+        color: #111;
+        border: 1px solid #111;
+        border-radius: 20px;
+      }
+      .check-paper {
+        min-height: 650px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+      }
+      .check-head {
+        background: #3d3d3d;
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 10px;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 850;
+      }
+      .check-body { flex: 1; padding: 14px 8px; }
+      .check-body h3 { margin: 0; border-bottom: 1px solid #222; }
+      .check-empty { color: #666; margin-top: 16px; text-align: center; }
+      .check-total { border-top: 2px solid #111; padding: 12px 8px; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 900; }
+      .category-rail { display: grid; align-content: start; gap: 7px; }
+      .category {
+        min-height: 58px;
+        border-radius: 14px;
+        border: 1px solid #111;
+        background: #ddd;
+        color: #111;
+        font-size: 1.05rem;
+        font-weight: 900;
+      }
+      .item-panel { min-height: 650px; display: grid; place-items: center; text-align: center; padding: 28px; color: #5b5b5b; }
+      .item-panel strong { display: block; color: #333; font-size: 1.4rem; margin-bottom: 5px; }
+      .order-bottom {
+        background: var(--chrome);
+        min-height: 142px;
+        padding: 18px 10px 34px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 20px;
+      }
+      .order-bottom .right-actions { display: flex; justify-content: end; gap: 8px; }
+      .order-bottom .btn { min-width: 122px; }
+      .close-layout { grid-template-columns: 320px minmax(0, 1fr); }
+      .payment-panel {
+        background: #dedede;
+        color: #111;
+        border-radius: 20px;
+        min-height: 650px;
+        padding: 28px;
+      }
+      .payment-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 18px; }
+      .payment-option {
+        min-height: 92px;
+        border-radius: 18px;
+        border: 2px solid #777;
+        background: #f5f5f5;
+        color: #111;
+        font-size: 1.1rem;
+        font-weight: 900;
+      }
+      .empty-close {
+        margin-top: 40px;
+        padding: 22px;
+        border-radius: 18px;
+        background: #fff;
+        border: 2px solid #aaa;
+        text-align: center;
+      }
+      .empty-close p { color: #555; }
+
+      /* functions */
+      .functions-panel {
+        border: 1px solid #111;
+        border-radius: 28px;
+        min-height: 300px;
+        padding: 12px 24px 30px;
+        background: #383838;
+      }
+      .functions-panel h1 { text-align: center; font-weight: 450; }
+      .stats { display: grid; grid-template-columns: repeat(2, minmax(250px, 1fr)); gap: 24px; width: min(650px, 100%); margin: auto; }
+      .stat-card { background: #303030; padding: 18px; border-radius: 18px; }
+      .stat-card h2 { text-align: center; font-weight: 500; margin: 0 0 12px; }
+      .stat-row { display: flex; justify-content: space-between; padding: 4px 0; color: #eee; }
+
+      /* dialogs and feedback */
+      dialog {
+        border: 1px solid #777;
+        border-radius: 24px;
+        background: #303030;
+        color: #fff;
+        box-shadow: 0 25px 90px #000c;
+        padding: 22px;
+        width: min(480px, calc(100vw - 28px));
+      }
+      dialog::backdrop { background: #000b; backdrop-filter: blur(4px); }
+      dialog h2 { margin: 0 0 12px; }
+      .dialog-actions { display: flex; justify-content: end; gap: 10px; margin-top: 18px; }
+      .number-input, .transfer-select {
+        width: 100%;
+        border: 2px solid #aaa;
+        border-radius: 15px;
+        background: #f5f5f5;
+        color: #111;
+        padding: 14px;
+        font-size: 2rem;
+        text-align: center;
+        font-weight: 900;
+      }
+      .transfer-select { font-size: 1.1rem; text-align: left; }
+      .mini-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+      .mini-keypad button { min-height: 62px; min-width: 0; }
+      .warning-count { font-size: 3rem; font-weight: 950; text-align: center; color: var(--yellow); }
+      .toast {
+        position: fixed;
+        z-index: 40;
+        left: 50%;
+        bottom: 24px;
+        transform: translate(-50%, 120px);
+        background: #111;
+        border: 1px solid #777;
+        color: #fff;
+        border-radius: 14px;
+        padding: 12px 18px;
+        font-weight: 800;
+        transition: .22s;
+        max-width: calc(100vw - 28px);
+      }
+      .toast.show { transform: translate(-50%, 0); }
+      .toast.error { border-color: var(--red); color: #ffb7bb; }
+      .role-badge { font-size: .72rem; border: 1px solid #aaa; border-radius: 999px; padding: 3px 8px; margin-left: 6px; }
+
       @media (max-width: 900px) {
-        .layout { grid-template-columns: 1fr; }
+        .topbar { padding: 14px; min-height: 108px; }
+        .btn { min-width: 112px; min-height: 58px; }
+        .keypad { grid-template-columns: repeat(3, minmax(86px, 110px)); padding: 20px; }
+        .key { width: 100%; height: 98px; }
+        .table-card { grid-template-columns: 116px minmax(0,1fr); }
+        .table-number { height: 106px; }
+        .card-actions { grid-column: 1/-1; justify-content: end; }
+        .order-workspace, .close-layout { grid-template-columns: 270px minmax(0,1fr); }
+        .category-rail { grid-column: 1/-1; grid-row: 2; grid-template-columns: repeat(4, 1fr); }
+        .item-panel, .check-paper, .payment-panel { min-height: 520px; }
+        .dense-top .right .btn:nth-child(n+3) { display: none; }
+      }
+      @media (max-width: 700px) {
+        .topbar { grid-template-columns: 1fr auto; }
+        .topbar .exit { grid-column: 2; grid-row: 1; min-width: 120px; }
+        .topbar .right { display: none; }
+        .table-card { grid-template-columns: 92px 1fr; gap: 10px; }
+        .table-number { height: 92px; font-size: 2rem; }
+        .table-summary { display: block; }
+        .milestones { margin-top: 8px; justify-content: start; }
+        .order-workspace, .close-layout { grid-template-columns: 1fr; }
+        .check-paper { min-height: 360px; }
+        .category-rail { grid-row: auto; grid-template-columns: repeat(3, 1fr); }
+        .item-panel, .payment-panel { min-height: 360px; }
+        .order-bottom { grid-template-columns: 1fr; }
+        .order-bottom .right-actions { justify-content: start; overflow-x: auto; }
+        .stats { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
-    <div class="shell">
-      <div class="header">
-        <a class="back-btn" href="/static/index.html">Back</a>
-        <h1>POS Workspace</h1>
-        <a class="back-btn" href="/static/inventory.html">Inventory Hub</a>
-      </div>
-
-      <div class="layout">
-        <div class="panel">
-          <h2>Menu</h2>
-          <div class="menu-grid" id="menu-grid"></div>
-        </div>
-
-        <div class="panel">
-          <h2>Current Ticket</h2>
-          <div class="row" style="margin-bottom:.8rem;">
-            <input id="table-label" placeholder="Table (optional)" />
-            <button class="btn secondary" id="new-order-btn">New Ticket</button>
+    <div class="terminal" id="app">
+      <section class="view" id="loginView">
+        <header class="topbar">
+          <div></div>
+          <button class="btn exit" id="leavePOS" type="button">Exit</button>
+          <div></div>
+        </header>
+        <main class="pin-content">
+          <div class="pin-wrap">
+            <h1>Enter Employee Number</h1>
+            <div class="pin-display" id="pinDisplay" aria-live="polite">• • • •</div>
+            <div class="keypad" id="loginKeypad">
+              <button class="key" data-digit="1">1</button><button class="key" data-digit="2">2</button><button class="key" data-digit="3">3</button>
+              <button class="key" data-digit="4">4</button><button class="key" data-digit="5">5</button><button class="key" data-digit="6">6</button>
+              <button class="key" data-digit="7">7</button><button class="key" data-digit="8">8</button><button class="key" data-digit="9">9</button>
+              <button class="key word" data-action="clear">Clear</button><button class="key" data-digit="0">0</button><button class="key word ok" data-action="submit">OK</button>
+            </div>
+            <div class="login-status" id="loginStatus" role="status"></div>
           </div>
-          <ul class="order-list" id="order-items"></ul>
-          <div class="row">
-            <select id="payment-method">
-              <option value="CARD">Card</option>
-              <option value="CASH">Cash</option>
-            </select>
-            <input id="payment-amount" type="number" min="0" placeholder="Amount (cents)" />
-            <button class="btn" id="close-order-btn">Close Ticket</button>
+        </main>
+        <footer class="login-footer">
+          <button class="btn" type="button" disabled>Clear Table</button>
+          <div class="clock"><span id="loginTime"></span><span id="loginDate"></span><span>POS V1</span></div>
+          <button class="btn" type="button" disabled>Bus Request</button>
+        </footer>
+      </section>
+
+      <section class="view hidden" id="tableView">
+        <header class="topbar">
+          <button class="btn left" id="newTableButton" type="button">New Table</button>
+          <button class="btn exit" data-exit type="button">Exit</button>
+          <button class="btn right" data-app-home type="button">Back to Menu</button>
+        </header>
+        <main class="workspace">
+          <div class="table-list" id="tableList"></div>
+        </main>
+        <footer class="bottombar screen-footer">
+          <div class="bottom-actions">
+            <button class="btn" data-placeholder="Tips" type="button">Tips</button>
+            <button class="btn" data-view="functions" type="button">Functions</button>
+            <button class="btn" data-placeholder="Checkout" type="button">Check Out</button>
+            <button class="btn" data-placeholder="Settings" type="button">Settings</button>
           </div>
-          <div class="status" id="status"></div>
-        </div>
-      </div>
+          <div class="employee-pill" data-employee-name></div>
+        </footer>
+      </section>
+
+      <section class="view hidden" id="orderView">
+        <header class="topbar dense-top">
+          <div class="left">
+            <button class="btn" data-view="table" type="button">Table<br />Menu</button>
+            <button class="btn" type="button" disabled>Clear</button>
+            <button class="btn" type="button" disabled>Split<br />Check</button>
+            <button class="btn" type="button" disabled>Split<br />Seat</button>
+          </div>
+          <button class="btn exit" data-exit type="button">Exit</button>
+          <div class="right">
+            <button class="btn" type="button" disabled>Order</button>
+            <button class="btn" type="button" disabled>To Go</button>
+            <button class="btn" type="button" disabled>Large<br />Party</button>
+            <button class="btn" type="button" disabled>1 Time<br />Guest</button>
+          </div>
+        </header>
+        <main class="workspace order-workspace">
+          <section class="check-paper" data-check-paper></section>
+          <nav class="category-rail" id="categoryRail" aria-label="Menu categories"></nav>
+          <section class="item-panel"><div><strong>Menu items are coming next</strong>Categories are ready, but ordering is intentionally disabled in POS V1.</div></section>
+        </main>
+        <footer class="order-bottom screen-footer">
+          <button class="btn" data-view="close" type="button">Close</button>
+          <div class="right-actions">
+            <button class="btn" type="button" disabled>Recipe</button>
+            <button class="btn" type="button" disabled>Quantity</button>
+            <button class="btn" type="button" disabled>Repeat</button>
+            <button class="btn" type="button" disabled>Modify</button>
+            <button class="btn" type="button" disabled>Delete</button>
+          </div>
+          <div class="employee-pill" data-employee-name></div>
+        </footer>
+      </section>
+
+      <section class="view hidden" id="closeView">
+        <header class="topbar dense-top">
+          <div class="left">
+            <button class="btn" data-view="table" type="button">Table<br />Menu</button>
+            <button class="btn" data-print-current type="button">Print</button>
+            <button class="btn" type="button" disabled>Print<br />All</button>
+          </div>
+          <button class="btn exit" data-exit type="button">Exit</button>
+          <div class="right">
+            <button class="btn" type="button" disabled>Payment</button>
+            <button class="btn" type="button" disabled>Promo</button>
+            <button class="btn" type="button" disabled>Comp</button>
+          </div>
+        </header>
+        <main class="workspace order-workspace close-layout">
+          <section class="check-paper" data-check-paper></section>
+          <section class="payment-panel">
+            <div class="payment-grid">
+              <button class="payment-option" disabled>Cash</button>
+              <button class="payment-option" disabled>Credit Card</button>
+              <button class="payment-option" disabled>Gift Card</button>
+              <button class="payment-option" disabled>Other</button>
+              <button class="payment-option" disabled>Promo</button>
+              <button class="payment-option" disabled>Comp</button>
+            </div>
+            <div class="empty-close">
+              <h2>Empty training check</h2>
+              <p>There are no menu items or balance to pay. Closing this check will automatically close the table while preserving its history.</p>
+              <button class="btn green" id="closeEmptyButton" type="button">Close Empty Check</button>
+            </div>
+          </section>
+        </main>
+        <footer class="order-bottom screen-footer">
+          <span></span>
+          <div class="right-actions">
+            <button class="btn" type="button" disabled>Delete</button>
+            <button class="btn" type="button" disabled>Adjust</button>
+            <button class="btn" type="button" disabled>Reprint</button>
+            <button class="btn" type="button" disabled>Promo #</button>
+            <button class="btn" type="button" disabled>Tax Exempt</button>
+          </div>
+          <div class="employee-pill" data-employee-name></div>
+        </footer>
+      </section>
+
+      <section class="view hidden" id="functionsView">
+        <header class="topbar">
+          <button class="btn left" data-view="table" type="button">Table Menu</button>
+          <button class="btn exit" data-exit type="button">Exit</button>
+          <button class="btn right" data-app-home type="button">Back to Menu</button>
+        </header>
+        <main class="workspace">
+          <section class="functions-panel">
+            <h1>Employee Statistics</h1>
+            <div class="stats">
+              <div class="stat-card">
+                <h2>Sales</h2>
+                <div class="stat-row"><span>Total</span><strong>$0.00</strong></div>
+                <div class="stat-row"><span>Open Tables</span><strong id="openTableCount">0</strong></div>
+                <div class="stat-row"><span>Entrée</span><span>—</span></div>
+                <div class="stat-row"><span>Beverage</span><span>—</span></div>
+                <div class="stat-row"><span>Tax</span><span>—</span></div>
+                <div class="stat-row"><span>Upsells</span><span>—</span></div>
+              </div>
+              <div class="stat-card">
+                <h2>BLAST</h2>
+                <div class="stat-row"><span>Beverage %</span><span>—</span></div>
+                <div class="stat-row"><span>Loads %</span><span>—</span></div>
+                <div class="stat-row"><span>App %</span><span>—</span></div>
+                <div class="stat-row"><span>Smother %</span><span>—</span></div>
+                <div class="stat-row"><span>Kick %</span><span>—</span></div>
+              </div>
+            </div>
+          </section>
+        </main>
+        <footer class="bottombar screen-footer">
+          <div class="bottom-actions">
+            <button class="btn" data-placeholder="Tips" type="button">Tips</button>
+            <button class="btn green" type="button">Functions</button>
+            <button class="btn" data-placeholder="Checkout" type="button">Check Out</button>
+            <button class="btn" data-placeholder="Settings" type="button">Settings</button>
+          </div>
+          <div class="employee-pill" data-employee-name></div>
+        </footer>
+      </section>
     </div>
 
+    <dialog id="newTableDialog">
+      <h2>Create New Table</h2>
+      <p>Enter a table number from 1 to 9999.</p>
+      <input class="number-input" id="tableNumberInput" inputmode="numeric" maxlength="4" aria-label="Table number" />
+      <div class="mini-keypad" id="tableKeypad">
+        <button class="btn" data-digit="1">1</button><button class="btn" data-digit="2">2</button><button class="btn" data-digit="3">3</button>
+        <button class="btn" data-digit="4">4</button><button class="btn" data-digit="5">5</button><button class="btn" data-digit="6">6</button>
+        <button class="btn" data-digit="7">7</button><button class="btn" data-digit="8">8</button><button class="btn" data-digit="9">9</button>
+        <button class="btn" data-action="clear">Clear</button><button class="btn" data-digit="0">0</button><button class="btn green" data-action="create">Create</button>
+      </div>
+      <div class="dialog-actions"><button class="btn small" data-close-dialog="newTableDialog">Cancel</button></div>
+    </dialog>
+
+    <dialog id="transferDialog">
+      <h2>Transfer Table <span id="transferTableNumber"></span></h2>
+      <p>Select the server who should own this table.</p>
+      <select class="transfer-select" id="transferEmployee"></select>
+      <div class="dialog-actions">
+        <button class="btn small" data-close-dialog="transferDialog">Cancel</button>
+        <button class="btn small green" id="confirmTransfer" type="button">Transfer</button>
+      </div>
+    </dialog>
+
+    <dialog id="idleDialog">
+      <h2>Terminal locking soon</h2>
+      <p>This shared terminal will return to the employee-number screen.</p>
+      <div class="warning-count" id="idleCountdown">10</div>
+      <div class="dialog-actions"><button class="btn green" id="staySignedIn" type="button">Stay Signed In</button></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+
     <script>
-      const menuGrid = document.getElementById('menu-grid');
-      const orderItemsEl = document.getElementById('order-items');
-      const newOrderBtn = document.getElementById('new-order-btn');
-      const closeOrderBtn = document.getElementById('close-order-btn');
-      const tableInput = document.getElementById('table-label');
-      const paymentMethod = document.getElementById('payment-method');
-      const paymentAmount = document.getElementById('payment-amount');
-      const statusEl = document.getElementById('status');
-
-      let currentOrderId = null;
-      let menuItems = [];
-      let ticketItems = [];
-
-      const authFetch = (url, options = {}) => fetch(url, { ...options, credentials: 'include' });
-
-      const setStatus = (message, isError = false) => {
-        statusEl.textContent = message;
-        statusEl.className = 'status ' + (isError ? 'error' : 'success');
+      const $ = id => document.getElementById(id);
+      const state = {
+        session: null,
+        tables: [],
+        categories: [],
+        transferCandidates: [],
+        permissions: {},
+        currentTable: null,
+        pin: "",
+        transferTable: null,
+        lastActivity: Date.now(),
+        idleTimer: null,
+        heartbeat: null,
       };
+      const views = ["login", "table", "order", "close", "functions"];
+      const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+      const authFetch = (url, options = {}) => fetch(url, {...options, credentials: "include", headers: {...(options.headers || {})}});
+      const json = async response => {
+        if (response.ok) return response.status === 204 ? null : response.json();
+        const body = await response.json().catch(() => ({}));
+        if (response.status === 401 && state.session) await lockTerminal(false);
+        throw new Error(typeof body.detail === "string" ? body.detail : `Request failed (${response.status})`);
+      };
+      function toast(message, error = false) {
+        const el = $("toast");
+        el.textContent = message;
+        el.className = `toast show ${error ? "error" : ""}`;
+        clearTimeout(el.timer);
+        el.timer = setTimeout(() => el.className = "toast", 3200);
+      }
+      function showView(name) {
+        views.forEach(view => $(`${view}View`).classList.toggle("hidden", view !== name));
+        if (name === "functions") $("openTableCount").textContent = state.tables.length;
+      }
+      function employeeName() {
+        return state.session?.employee?.employee_name || "";
+      }
+      function updateEmployeeLabels() {
+        document.querySelectorAll("[data-employee-name]").forEach(el => {
+          el.innerHTML = `${escapeHtml(employeeName())}<span class="role-badge">${escapeHtml(state.session?.employee?.access_role || "")}</span>`;
+        });
+      }
+      function formatMoney(cents) { return `$${(Number(cents || 0) / 100).toFixed(2)}`; }
+      function elapsed(iso) {
+        const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+        return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+      }
+      function statusDots(progress) {
+        return `<div class="milestones" aria-label="Check status ${escapeHtml(progress)}">
+          <span class="dot unordered ${progress === "FOOD_UNORDERED" ? "active" : ""}" title="Food unordered"></span>
+          <span class="dot ordered ${progress === "FOOD_ORDERED" ? "active" : ""}" title="Food ordered"></span>
+          <span class="dot paid ${progress === "CHECK_PAID" ? "active" : ""}" title="Check paid"></span>
+        </div>`;
+      }
+      function renderTables() {
+        $("tableList").innerHTML = state.tables.length ? state.tables.map(table => `
+          <article class="table-card" data-table-id="${table.id}" tabindex="0" role="button" aria-label="Open table ${table.table_number}">
+            <div class="table-number">${table.table_number}<small><span>${formatMoney(table.check.total_cents)}</span><span>Chk ${table.check.check_number}</span></small></div>
+            <div class="table-summary">
+              <div class="summary-copy">
+                <strong>Check ${table.check.check_number} · No items yet</strong>
+                <span>Food unordered · Empty POS V1 check</span>
+                <div class="owner">${escapeHtml(table.owner_name)}</div>
+              </div>
+              <div>${statusDots(table.progress)}<span class="elapsed" data-opened="${table.opened_at}">${elapsed(table.opened_at)}</span></div>
+            </div>
+            <div class="card-actions">
+              ${state.permissions.transfer_tables ? `<button class="btn small transfer" type="button">Transfer</button>` : ""}
+              <button class="btn print" type="button">Print</button>
+            </div>
+          </article>
+        `).join("") : `
+          <div class="empty-state"><div><h2>No active tables</h2><p>Select New Table to open your first empty check.</p></div></div>`;
+        $("openTableCount").textContent = state.tables.length;
+      }
+      function renderCheck() {
+        const table = state.currentTable;
+        if (!table) return;
+        document.querySelectorAll("[data-check-paper]").forEach(el => {
+          el.innerHTML = `
+            <div class="check-head"><span>Table ${table.table_number}</span><span>Check ${table.check.check_number}</span></div>
+            <div class="check-body"><h3>Check details</h3><div class="check-empty">No menu items have been added.</div></div>
+            <div class="check-total"><span>Total</span><span>${formatMoney(table.check.total_cents)}</span></div>`;
+        });
+      }
+      function renderCategories() {
+        $("categoryRail").innerHTML = state.categories.map(category =>
+          `<button class="category" type="button" disabled title="Menu ordering is coming in a later release">${escapeHtml(category.name)}</button>`
+        ).join("");
+      }
+      function setCurrentTable(tableId) {
+        state.currentTable = state.tables.find(table => table.id === Number(tableId)) || null;
+        renderCheck();
+      }
+      function renderPin() {
+        $("pinDisplay").textContent = state.pin ? "• ".repeat(state.pin.length).trim() : "• • • •";
+      }
+      function uuid() {
+        return crypto.randomUUID ? crypto.randomUUID() : `pos-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
 
-      const renderMenu = () => {
-        menuGrid.innerHTML = '';
-        if (!menuItems.length) {
-          menuGrid.innerHTML = '<p class="muted">No menu items yet.</p>';
+      async function bootstrap() {
+        const payload = await json(await authFetch("/pos/terminal/bootstrap"));
+        state.session = {employee: payload.employee, idle_timeout_seconds: payload.idle_timeout_seconds, expires_at: payload.expires_at};
+        state.tables = payload.tables;
+        state.categories = payload.categories;
+        state.transferCandidates = payload.transfer_candidates;
+        state.permissions = payload.permissions;
+        state.lastActivity = Date.now();
+        renderTables();
+        renderCategories();
+        updateEmployeeLabels();
+        showView("table");
+        startIdleMonitoring();
+      }
+      async function login() {
+        if (!/^\d{4,6}$/.test(state.pin)) {
+          $("loginStatus").textContent = "Enter a 4–6 digit employee number.";
           return;
         }
-        menuItems.forEach((item) => {
-          const card = document.createElement('div');
-          card.className = 'menu-card';
-          card.innerHTML = `
-            <strong>${item.name}</strong>
-            <div class="muted">$${(item.price_cents / 100).toFixed(2)}</div>
-            <button type="button">Add</button>
-          `;
-          card.querySelector('button').addEventListener('click', () => addToOrder(item));
-          menuGrid.appendChild(card);
-        });
-      };
-
-      const renderTicket = () => {
-        orderItemsEl.innerHTML = '';
-        if (!ticketItems.length) {
-          orderItemsEl.innerHTML = '<li class="muted">No items yet.</li>';
-          return;
-        }
-        ticketItems.forEach((item) => {
-          const li = document.createElement('li');
-          li.className = 'order-item';
-          li.innerHTML = `<span>${item.name} x${item.quantity}</span><span>$${(item.price_cents / 100).toFixed(2)}</span>`;
-          orderItemsEl.appendChild(li);
-        });
-      };
-
-      const loadMenu = async () => {
+        $("loginStatus").textContent = "Signing in…";
         try {
-          const resp = await authFetch('/pos/menu-items?active=true');
-          if (!resp.ok) throw new Error(`Menu load failed (${resp.status})`);
-          menuItems = await resp.json();
-          renderMenu();
-        } catch (err) {
-          console.error(err);
-          setStatus(err.message || 'Unable to load menu.', true);
+          state.session = await json(await authFetch("/pos/pin/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({employee_number: state.pin}),
+          }));
+          state.pin = "";
+          renderPin();
+          $("loginStatus").textContent = "";
+          await bootstrap();
+        } catch (error) {
+          state.pin = "";
+          renderPin();
+          $("loginStatus").textContent = error.message;
         }
-      };
+      }
+      async function lockTerminal(callServer = true) {
+        if (callServer) await authFetch("/pos/pin/logout", {method: "POST"}).catch(() => {});
+        state.session = null;
+        state.tables = [];
+        state.currentTable = null;
+        clearInterval(state.idleTimer);
+        clearInterval(state.heartbeat);
+        if ($("idleDialog").open) $("idleDialog").close();
+        showView("login");
+      }
+      function markActivity() {
+        if (!state.session) return;
+        state.lastActivity = Date.now();
+        if ($("idleDialog").open) $("idleDialog").close();
+      }
+      function startIdleMonitoring() {
+        clearInterval(state.idleTimer);
+        clearInterval(state.heartbeat);
+        state.idleTimer = setInterval(() => {
+          if (!state.session) return;
+          const elapsedSeconds = Math.floor((Date.now() - state.lastActivity) / 1000);
+          const remaining = state.session.idle_timeout_seconds - elapsedSeconds;
+          if (remaining <= 0) return void lockTerminal();
+          if (remaining <= 10) {
+            $("idleCountdown").textContent = remaining;
+            if (!$("idleDialog").open) $("idleDialog").showModal();
+          }
+        }, 250);
+        state.heartbeat = setInterval(async () => {
+          if (!state.session || Date.now() - state.lastActivity >= 40000) return;
+          try { state.session = await json(await authFetch("/pos/pin/session")); } catch {}
+        }, 20000);
+      }
+      async function refreshTables() {
+        state.tables = await json(await authFetch("/pos/terminal/tables"));
+        if (state.currentTable) setCurrentTable(state.currentTable.id);
+        renderTables();
+      }
+      async function createTable() {
+        const tableNumber = Number($("tableNumberInput").value);
+        if (!Number.isInteger(tableNumber) || tableNumber < 1 || tableNumber > 9999) return toast("Enter a table number from 1 to 9999.", true);
+        try {
+          const created = await json(await authFetch("/pos/terminal/tables", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({table_number: tableNumber, client_request_id: uuid()}),
+          }));
+          $("newTableDialog").close();
+          $("tableNumberInput").value = "";
+          state.tables.push(created);
+          state.tables.sort((a, b) => a.table_number - b.table_number);
+          renderTables();
+          setCurrentTable(created.id);
+          showView("order");
+          toast(`Table ${tableNumber} opened.`);
+        } catch (error) { toast(error.message, true); }
+      }
+      async function printCheck(table) {
+        const popup = window.open("", "_blank", "width=460,height=760");
+        if (popup) popup.document.write("<p style='font-family:sans-serif'>Preparing check…</p>");
+        try {
+          const result = await json(await authFetch(`/pos/terminal/checks/${table.check.id}/print`, {method: "POST"}));
+          if (popup) popup.location.href = result.print_url;
+          else window.location.href = result.print_url;
+          table.check.print_count = result.print_count;
+          table.check.printed_at = result.printed_at;
+          renderTables();
+        } catch (error) {
+          if (popup) popup.close();
+          toast(error.message, true);
+        }
+      }
+      async function closeEmpty() {
+        const table = state.currentTable;
+        if (!table || !confirm(`Close the empty check and Table ${table.table_number}?`)) return;
+        $("closeEmptyButton").disabled = true;
+        try {
+          await json(await authFetch(`/pos/terminal/checks/${table.check.id}/close-empty`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({revision: table.revision}),
+          }));
+          state.tables = state.tables.filter(row => row.id !== table.id);
+          state.currentTable = null;
+          renderTables();
+          showView("table");
+          toast(`Table ${table.table_number} closed.`);
+        } catch (error) { toast(error.message, true); }
+        finally { $("closeEmptyButton").disabled = false; }
+      }
+      function openTransfer(table) {
+        state.transferTable = table;
+        $("transferTableNumber").textContent = table.table_number;
+        $("transferEmployee").innerHTML = state.transferCandidates
+          .filter(row => row.employee_id !== table.owner_employee_id)
+          .map(row => `<option value="${row.employee_id}">${escapeHtml(row.employee_name)}</option>`)
+          .join("");
+        if (!$("transferEmployee").options.length) return toast("No other active POS servers are available.", true);
+        $("transferDialog").showModal();
+      }
+      async function transferTable() {
+        const table = state.transferTable;
+        try {
+          const updated = await json(await authFetch(`/pos/terminal/tables/${table.id}/transfer`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({owner_employee_id: Number($("transferEmployee").value), revision: table.revision}),
+          }));
+          const index = state.tables.findIndex(row => row.id === updated.id);
+          state.tables[index] = updated;
+          $("transferDialog").close();
+          renderTables();
+          toast(`Table ${updated.table_number} transferred to ${updated.owner_name}.`);
+        } catch (error) { toast(error.message, true); }
+      }
 
-      const createOrder = async () => {
-        const payload = { table_label: tableInput.value.trim() || null };
-        const resp = await authFetch('/pos/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!resp.ok) {
-          const detail = await resp.json().catch(() => ({}));
-          throw new Error(detail.detail || `Order create failed (${resp.status})`);
-        }
-        const order = await resp.json();
-        currentOrderId = order.id;
-        ticketItems = [];
-        renderTicket();
-      };
-
-      const addToOrder = async (menuItem) => {
-        if (!currentOrderId) {
-          await createOrder();
-        }
-        const resp = await authFetch(`/pos/orders/${currentOrderId}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ menu_item_id: menuItem.id, quantity: 1, price_cents: menuItem.price_cents }),
-        });
-        if (!resp.ok) {
-          const detail = await resp.json().catch(() => ({}));
-          throw new Error(detail.detail || `Add item failed (${resp.status})`);
-        }
-        ticketItems.push({ name: menuItem.name, quantity: 1, price_cents: menuItem.price_cents });
-        renderTicket();
-      };
-
-      const closeOrder = async () => {
-        if (!currentOrderId) {
-          setStatus('Create a ticket first.', true);
-          return;
-        }
-        const amount = Number(paymentAmount.value || 0);
-        const resp = await authFetch(`/pos/orders/${currentOrderId}/close`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment: { amount_cents: amount, method: paymentMethod.value } }),
-        });
-        if (!resp.ok) {
-          const detail = await resp.json().catch(() => ({}));
-          throw new Error(detail.detail || `Close failed (${resp.status})`);
-        }
-        await resp.json();
-        setStatus('Ticket closed.');
-        currentOrderId = null;
-        ticketItems = [];
-        renderTicket();
-      };
-
-      newOrderBtn.addEventListener('click', () => {
-        createOrder().catch((err) => setStatus(err.message || 'Unable to create ticket.', true));
+      $("loginKeypad").addEventListener("click", event => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        if (button.dataset.digit && state.pin.length < 6) state.pin += button.dataset.digit;
+        if (button.dataset.action === "clear") state.pin = "";
+        if (button.dataset.action === "submit") return void login();
+        renderPin();
       });
-      closeOrderBtn.addEventListener('click', () => {
-        closeOrder().catch((err) => setStatus(err.message || 'Unable to close ticket.', true));
+      $("tableKeypad").addEventListener("click", event => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        if (button.dataset.digit && $("tableNumberInput").value.length < 4) $("tableNumberInput").value += button.dataset.digit;
+        if (button.dataset.action === "clear") $("tableNumberInput").value = "";
+        if (button.dataset.action === "create") createTable();
       });
-
-      loadMenu();
+      $("tableList").addEventListener("click", event => {
+        const card = event.target.closest("[data-table-id]");
+        if (!card) return;
+        const table = state.tables.find(row => row.id === Number(card.dataset.tableId));
+        if (event.target.closest(".print")) return void printCheck(table);
+        if (event.target.closest(".transfer")) return openTransfer(table);
+        setCurrentTable(table.id);
+        showView("order");
+      });
+      $("tableList").addEventListener("keydown", event => {
+        if (["Enter", " "].includes(event.key) && event.target.matches("[data-table-id]")) {
+          event.preventDefault();
+          setCurrentTable(event.target.dataset.tableId);
+          showView("order");
+        }
+      });
+      document.addEventListener("click", event => {
+        const viewButton = event.target.closest("[data-view]");
+        if (viewButton) {
+          const name = viewButton.dataset.view;
+          if (name === "close" && !state.currentTable) return toast("Open a table first.", true);
+          showView(name);
+          if (name === "close") renderCheck();
+          if (name === "table" && state.session) {
+            refreshTables().catch(error => toast(error.message, true));
+          }
+        }
+        if (event.target.closest("[data-exit]")) lockTerminal();
+        if (event.target.closest("[data-app-home]")) location.href = "/static/index.html";
+        const placeholder = event.target.closest("[data-placeholder]");
+        if (placeholder) toast(`${placeholder.dataset.placeholder} is planned for the next POS release.`);
+        const closeDialog = event.target.closest("[data-close-dialog]");
+        if (closeDialog) $(closeDialog.dataset.closeDialog).close();
+        if (event.target.closest("[data-print-current]") && state.currentTable) printCheck(state.currentTable);
+      });
+      ["pointerdown", "keydown", "touchstart"].forEach(type => document.addEventListener(type, markActivity, {passive: true}));
+      $("newTableButton").addEventListener("click", () => {
+        $("tableNumberInput").value = "";
+        $("newTableDialog").showModal();
+        $("tableNumberInput").focus();
+      });
+      $("confirmTransfer").addEventListener("click", transferTable);
+      $("closeEmptyButton").addEventListener("click", closeEmpty);
+      $("staySignedIn").addEventListener("click", async () => {
+        markActivity();
+        try { state.session = await json(await authFetch("/pos/pin/session")); } catch {}
+      });
+      $("leavePOS").addEventListener("click", () => location.href = "/static/index.html");
+      setInterval(() => {
+        const now = new Date();
+        $("loginTime").textContent = now.toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
+        $("loginDate").textContent = now.toLocaleDateString();
+        document.querySelectorAll("[data-opened]").forEach(el => el.textContent = elapsed(el.dataset.opened));
+      }, 1000);
+      authFetch("/pos/pin/session").then(response => response.ok ? bootstrap() : showView("login")).catch(() => showView("login"));
+      renderPin();
     </script>
   </body>
 </html>

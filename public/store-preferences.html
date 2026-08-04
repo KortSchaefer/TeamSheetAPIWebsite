@@ -124,6 +124,7 @@
       }
       .status.error { color: #ff8b8b; }
       .status.success { color: #65f5b6; }
+      .preference-note { margin: .4rem 0 0; max-width: 640px; color: #7f90b6; font-size: .82rem; line-height: 1.5; }
     </style>
   </head>
   <body>
@@ -142,7 +143,7 @@
             <input id="store-number" type="text" value="1" />
           </div>
           <button class="btn secondary" id="load-btn" type="button">Load</button>
-          <button class="btn" id="save-btn" type="button">Save Schedule</button>
+          <button class="btn" id="save-btn" type="button">Save Preferences</button>
         </div>
         <table>
           <thead>
@@ -159,6 +160,19 @@
         </table>
         <div class="status" id="status"></div>
       </div>
+      <div class="panel" style="margin-top:1rem;">
+        <h2>TeamSheet Standards</h2>
+        <div class="form-row" style="margin-bottom:0;align-items:flex-end;">
+          <div>
+            <label for="blast-minimum-percent">Minimum BLAST Percentage</label>
+            <div style="display:flex;align-items:center;gap:.45rem;margin-top:.35rem;">
+              <input id="blast-minimum-percent" type="number" min="0" max="250" step="1" value="98" style="width:110px;" />
+              <strong>%</strong>
+            </div>
+          </div>
+          <p class="preference-note">Servers below this percentage are highlighted in TeamSheet Studio and should be placed in a two-table section. The current standard is 98%.</p>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -168,6 +182,7 @@
       const loadBtn = document.getElementById('load-btn');
       const saveBtn = document.getElementById('save-btn');
       const statusEl = document.getElementById('status');
+      const blastMinimumEl = document.getElementById('blast-minimum-percent');
 
       const authFetch = (url, options = {}) => {
         return fetch(url, { ...options, credentials: 'include' });
@@ -250,6 +265,7 @@
           const pref = data[0];
           buildTable();
           applySchedule(pref?.daily_schedule || []);
+          blastMinimumEl.value = String(pref?.blast_minimum_percent ?? 98);
           setStatus(pref ? 'Schedule loaded.' : 'No schedule saved yet. Fill in and save.');
         } catch (err) {
           console.error(err);
@@ -266,6 +282,7 @@
         const payload = {
           store_number: storeNumber,
           daily_schedule: collectSchedule(),
+          blast_minimum_percent: Number(blastMinimumEl.value || 98),
         };
         setStatus('Saving schedule...');
         try {
@@ -279,7 +296,7 @@
             throw new Error(detail.detail || `Save failed (${resp.status})`);
           }
           await resp.json();
-          setStatus('Schedule saved.');
+          setStatus('Store preferences saved.');
         } catch (err) {
           console.error(err);
           setStatus(err.message || 'Unable to save schedule.', true);

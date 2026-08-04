@@ -1,70 +1,252 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Team Sheet Studio - Accounts</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Accounts and POS Access</title>
     <style>
-      :root { color-scheme: dark; font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+      :root {
+        color-scheme: dark;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        --bg: #070c18;
+        --panel: #101a2d;
+        --panel-2: #0a1221;
+        --line: #293a58;
+        --ink: #f5f7ff;
+        --muted: #99a9c8;
+        --blue: #5da5ff;
+        --green: #65dda2;
+        --red: #ff7e89;
+      }
       * { box-sizing: border-box; }
       body {
         margin: 0;
         min-height: 100vh;
-        background: radial-gradient(circle at top, #112850, #070c1a 55%);
-        color: #f5f7ff;
+        background: radial-gradient(circle at 50% -20%, #193c69, var(--bg) 52%);
+        color: var(--ink);
+        padding: 24px;
+      }
+      button, input, select { font: inherit; }
+      .shell { width: min(1100px, 100%); margin: auto; }
+      .topbar {
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding: 2rem;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
       }
-      .shell {
-        width: min(900px, 100%);
-        background: rgba(10, 18, 35, 0.9);
-        border-radius: 32px;
-        padding: 2.5rem;
-        box-shadow: 0 30px 80px rgba(5, 5, 5, 0.6);
-      }
-      .back-btn {
-        border: 1px solid #243258;
-        background: rgba(10, 18, 35, 0.85);
-        color: #9bb0ff;
-        padding: .45rem .75rem;
+      h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+      .subtitle { margin: 5px 0 0; color: var(--muted); }
+      .actions { display: flex; gap: 9px; }
+      .btn {
+        border: 1px solid var(--line);
+        background: #162642;
+        color: var(--ink);
         border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 800;
         cursor: pointer;
-        font-weight: 600;
         text-decoration: none;
       }
-      .logout-btn {
-        border: 1px solid #4b7bff;
-        background: linear-gradient(135deg, #1f3568, #2f6bff);
-        color: #fff;
-        padding: .6rem 1.2rem;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: 600;
-        margin-top: 1rem;
+      .btn.primary { background: linear-gradient(135deg, #286fc5, #5da5ff); border: 0; }
+      .btn.danger { color: #ffadb4; border-color: #713945; }
+      .btn:disabled { opacity: .48; cursor: wait; }
+      .card {
+        background: linear-gradient(155deg, #14243bfa, #0c1627fa);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 20px;
+        box-shadow: 0 20px 60px #0006;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .card h2 { margin: 0; }
+      .card-head p { margin: 4px 0 0; color: var(--muted); font-size: .88rem; }
+      .search {
+        min-width: 240px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        color: var(--ink);
+        border-radius: 11px;
+        padding: 10px 12px;
+      }
+      .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 15px; }
+      table { width: 100%; border-collapse: collapse; min-width: 820px; }
+      th, td { padding: 12px; text-align: left; border-bottom: 1px solid #21324d; }
+      th { background: #172843; color: #b8c8e8; font-size: .73rem; text-transform: uppercase; letter-spacing: .06em; }
+      tr:last-child td { border-bottom: 0; }
+      td strong { display: block; }
+      td small { color: var(--muted); }
+      select, .pin {
+        border: 1px solid var(--line);
+        background: #070f1d;
+        color: var(--ink);
+        border-radius: 9px;
+        padding: 9px;
+      }
+      .pin { width: 135px; }
+      .switch { display: inline-flex; align-items: center; gap: 7px; font-weight: 750; }
+      .switch input { width: 19px; height: 19px; accent-color: var(--green); }
+      .status {
+        min-height: 22px;
+        margin-top: 13px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .status.good { color: var(--green); }
+      .status.error { color: var(--red); }
+      .empty { text-align: center; color: var(--muted); padding: 35px; }
+      @media (max-width: 720px) {
+        body { padding: 14px; }
+        .topbar, .card-head { align-items: stretch; flex-direction: column; }
+        .actions { flex-wrap: wrap; }
+        .search { min-width: 0; width: 100%; }
       }
     </style>
   </head>
   <body>
-    <div class="shell">
-      <a class="back-btn" href="/static/index.html">← Back</a>
-      <h1>Accounts</h1>
-      <button class="logout-btn" id="logout-btn" type="button">Log out</button>
-    </div>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Accounts and POS Access</h1>
+          <p class="subtitle">Assign secure employee numbers without creating website accounts.</p>
+        </div>
+        <div class="actions">
+          <a class="btn" href="/static/index.html">Back to Home</a>
+          <button class="btn danger" id="logoutButton" type="button">Log out</button>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>POS employee numbers</h2>
+            <p>Numbers must contain 4–6 digits. Existing numbers are never displayed; enter a new one only to assign or reset it.</p>
+          </div>
+          <input class="search" id="searchInput" type="search" placeholder="Search employees" aria-label="Search employees" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>POS role</th>
+                <th>New employee number</th>
+                <th>Enabled</th>
+                <th>Last used</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="accessRows">
+              <tr><td class="empty" colspan="6">Loading employees…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="status" id="status" role="status"></div>
+      </section>
+    </main>
+
     <script>
-      const logoutBtn = document.getElementById('logout-btn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
-          } catch (err) {
-            console.warn('Logout request failed.', err);
-          }
-          localStorage.removeItem('tss_access_token');
-          localStorage.removeItem('tss_refresh_token');
-          window.location.href = '/static/login.html';
-        });
+      const $ = id => document.getElementById(id);
+      const state = { rows: [] };
+      const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+      const authFetch = (url, options = {}) => {
+        const token = localStorage.getItem("tss_access_token");
+        const headers = {...(options.headers || {})};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return fetch(url, {...options, headers, credentials: "include"});
+      };
+      const read = async response => {
+        if (response.ok) return response.status === 204 ? null : response.json();
+        const body = await response.json().catch(() => ({}));
+        throw new Error(typeof body.detail === "string" ? body.detail : `Request failed (${response.status})`);
+      };
+      const setStatus = (message, type = "") => {
+        $("status").textContent = message;
+        $("status").className = `status ${type}`;
+      };
+      const formatDate = value => value ? new Date(value).toLocaleString() : "Never";
+
+      function render() {
+        const query = $("searchInput").value.trim().toLowerCase();
+        const rows = state.rows.filter(row =>
+          `${row.employee_name} ${row.employee_role}`.toLowerCase().includes(query)
+        );
+        $("accessRows").innerHTML = rows.length ? rows.map(row => `
+          <tr data-employee-id="${row.employee_id}">
+            <td><strong>${escapeHtml(row.employee_name)}</strong><small>${escapeHtml(row.employee_role)} · Employee #${row.employee_id}</small></td>
+            <td>
+              <select class="role" aria-label="POS role for ${escapeHtml(row.employee_name)}">
+                <option value="SERVER" ${row.access_role !== "MANAGER" ? "selected" : ""}>Server</option>
+                <option value="MANAGER" ${row.access_role === "MANAGER" ? "selected" : ""}>Manager</option>
+              </select>
+            </td>
+            <td>
+              <input class="pin" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6"
+                type="password" autocomplete="new-password"
+                placeholder="${row.has_employee_number ? "Reset (optional)" : "4–6 digits"}"
+                aria-label="New employee number for ${escapeHtml(row.employee_name)}" />
+            </td>
+            <td><label class="switch"><input class="active" type="checkbox" ${row.pos_active ? "checked" : ""} /> Active</label></td>
+            <td><small>${escapeHtml(formatDate(row.last_used_at))}</small></td>
+            <td><button class="btn primary save" type="button">${row.has_employee_number ? "Update" : "Enable"}</button></td>
+          </tr>
+        `).join("") : `<tr><td class="empty" colspan="6">No matching employees.</td></tr>`;
       }
+
+      async function loadAccess() {
+        try {
+          const me = await read(await authFetch("/auth/me"));
+          if (!["MANAGER", "ADMIN"].includes(me.role)) throw new Error("Manager access is required.");
+          state.rows = await read(await authFetch("/pos/admin/access"));
+          render();
+        } catch (error) {
+          $("accessRows").innerHTML = `<tr><td class="empty" colspan="6">${escapeHtml(error.message)}</td></tr>`;
+          setStatus(error.message, "error");
+        }
+      }
+
+      $("accessRows").addEventListener("click", async event => {
+        const button = event.target.closest(".save");
+        if (!button) return;
+        const rowElement = button.closest("[data-employee-id]");
+        const employeeId = Number(rowElement.dataset.employeeId);
+        const pin = rowElement.querySelector(".pin").value.trim();
+        if (pin && !/^\d{4,6}$/.test(pin)) return setStatus("Employee numbers must contain 4–6 digits.", "error");
+        button.disabled = true;
+        try {
+          const updated = await read(await authFetch(`/pos/admin/access/${employeeId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              employee_number: pin || null,
+              access_role: rowElement.querySelector(".role").value,
+              active: rowElement.querySelector(".active").checked,
+            }),
+          }));
+          const index = state.rows.findIndex(row => row.employee_id === employeeId);
+          state.rows[index] = updated;
+          render();
+          setStatus(`POS access updated for ${updated.employee_name}.`, "good");
+        } catch (error) {
+          button.disabled = false;
+          setStatus(error.message, "error");
+        }
+      });
+
+      $("searchInput").addEventListener("input", render);
+      $("logoutButton").addEventListener("click", async () => {
+        await fetch("/auth/logout", {method: "POST", credentials: "include"}).catch(() => {});
+        localStorage.removeItem("tss_access_token");
+        localStorage.removeItem("tss_refresh_token");
+        location.href = "/static/login.html";
+      });
+      loadAccess();
     </script>
   </body>
 </html>

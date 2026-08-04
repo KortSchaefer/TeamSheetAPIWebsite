@@ -32,6 +32,7 @@ from app.models import (
     UserRole,
 )
 from app.services.ingredient_catalog import normalize_name
+from app.services.count_sheets import populate_count_sheet
 from app.services.voice_storage import delete_audio_object
 
 
@@ -92,6 +93,11 @@ UNIT_ALIASES = {
     "bag": {"bag", "bags"},
     "head": {"head", "heads"},
     "bottle": {"bottle", "bottles"},
+    "can": {"can", "cans"},
+    "keg": {"keg", "kegs"},
+    "container": {"container", "containers"},
+    "package": {"package", "packages", "pack", "packs"},
+    "bag_in_box": {"bag in box", "bags in box", "bib"},
     "gallon": {"gallon", "gallons", "gal"},
     "quart": {"quart", "quarts", "qt", "qts"},
     "pint": {"pint", "pints", "pt", "pts"},
@@ -124,7 +130,7 @@ def split_inventory_phrases(transcript: str) -> list[str]:
     for segment in re.split(r"[;\n]+", transcript):
         cursor = 0
         for transition in TRANSITION_PATTERN.finditer(segment):
-            candidate = segment[cursor : transition.start()].strip(" \t,;:-")
+            candidate = segment[cursor : transition.start()].strip(" \t,;:-.!?")
             if not candidate:
                 continue
             action, actionless = _extract_action(candidate)
@@ -133,7 +139,7 @@ def split_inventory_phrases(transcript: str) -> list[str]:
                 continue
             phrases.append(candidate)
             cursor = transition.end()
-        remainder = segment[cursor:].strip(" \t,;:-")
+        remainder = segment[cursor:].strip(" \t,;:-.!?")
         if remainder:
             phrases.append(remainder)
     return phrases
@@ -1050,6 +1056,13 @@ def ingest_utterance(
         session.status = InventoryVoiceSessionStatus.LISTENING
     db.commit()
     db.refresh(utterance)
+    if utterance.entries and payload.get("command") not in {
+        "PAUSE",
+        "FINISH",
+        "SWITCH_LOCATION",
+    }:
+        sync_draft_counts(db, session)
+        db.refresh(utterance)
     if payload.get("command") == "FINISH":
         finish_session(db, session)
         db.refresh(utterance)
@@ -1165,13 +1178,39 @@ def sync_draft_counts(db: Session, session: InventoryVoiceSession) -> None:
     for location_id, rows in grouped.items():
         link = links.get(location_id)
         if link is None:
-            count = InventoryCount(
-                location_id=location_id,
-                counted_by_user_id=session.manager_user_id,
-                notes=f"Voice inventory session #{session.id}",
+            requested_count_id = (session.device_metadata or {}).get(
+                "target_count_id"
             )
-            db.add(count)
-            db.flush()
+            count = None
+            if requested_count_id:
+                already_linked = (
+                    db.query(InventoryVoiceSessionCount)
+                    .filter(
+                        InventoryVoiceSessionCount.inventory_count_id
+                        == requested_count_id
+                    )
+                    .first()
+                )
+                if not already_linked:
+                    count = (
+                        db.query(InventoryCount)
+                        .filter(
+                            InventoryCount.id == requested_count_id,
+                            InventoryCount.location_id == location_id,
+                            InventoryCount.status == InventoryCountStatus.DRAFT,
+                            InventoryCount.counted_by_user_id
+                            == session.manager_user_id,
+                        )
+                        .first()
+                    )
+            if count is None:
+                count = InventoryCount(
+                    location_id=location_id,
+                    counted_by_user_id=session.manager_user_id,
+                    notes=f"Voice inventory session #{session.id}",
+                )
+                db.add(count)
+                db.flush()
             link = InventoryVoiceSessionCount(
                 session_id=session.id,
                 location_id=location_id,
@@ -1181,8 +1220,23 @@ def sync_draft_counts(db: Session, session: InventoryVoiceSession) -> None:
             db.add(link)
             session.count_links.append(link)
         count = link.inventory_count
-        count.lines.clear()
-        db.flush()
+        populate_count_sheet(db, count)
+        existing_lines = {
+            line.inventory_item_id: line for line in count.lines
+        }
+        active_item_ids = {row["inventory_item_id"] for row in rows}
+        for line in count.lines:
+            if (
+                line.source == "VOICE"
+                and line.inventory_item_id not in active_item_ids
+            ):
+                line.counted_quantity = Decimal("0")
+                line.is_counted = False
+                line.source = None
+                line.confidence = None
+                line.review_status = "PENDING"
+                line.evidence = None
+                line.revision = (line.revision or 0) + 1
         for row in rows:
             balance = (
                 db.query(InventoryBalance)
@@ -1192,20 +1246,42 @@ def sync_draft_counts(db: Session, session: InventoryVoiceSession) -> None:
                 )
                 .first()
             )
-            count.lines.append(
-                InventoryCountLine(
+            line = existing_lines.get(row["inventory_item_id"])
+            if line is None:
+                line = InventoryCountLine(
                     inventory_item_id=row["inventory_item_id"],
-                    counted_quantity=row["quantity"],
                     expected_quantity=balance.quantity_on_hand if balance else Decimal("0"),
-                    notes=(
-                        "Voice inventory; source entries "
-                        + ",".join(str(entry_id) for entry_id in row["source_entry_ids"])
-                    ),
+                    display_order=len(count.lines),
+                    revision=0,
                 )
+                count.lines.append(line)
+            line.counted_quantity = row["quantity"]
+            line.is_counted = True
+            line.source = "VOICE"
+            line.confidence = 1.0
+            line.review_status = "READY"
+            line.evidence = (
+                "Voice inventory; source entries "
+                + ",".join(str(entry_id) for entry_id in row["source_entry_ids"])
             )
+            line.notes = line.evidence
+            line.updated_by_user_id = session.manager_user_id
+            line.revision = (line.revision or 0) + 1
+        count.revision = (count.revision or 0) + 1
     for location_id, link in links.items():
         if location_id not in grouped:
-            link.inventory_count.lines.clear()
+            for line in link.inventory_count.lines:
+                if line.source == "VOICE":
+                    line.counted_quantity = Decimal("0")
+                    line.is_counted = False
+                    line.source = None
+                    line.confidence = None
+                    line.review_status = "PENDING"
+                    line.evidence = None
+                    line.revision = (line.revision or 0) + 1
+            link.inventory_count.revision = (
+                link.inventory_count.revision or 0
+            ) + 1
     db.commit()
 
 
