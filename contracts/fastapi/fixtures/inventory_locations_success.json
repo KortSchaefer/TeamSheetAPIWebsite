@@ -1,0 +1,23 @@
+{
+  "description": "An authenticated user can list active inventory locations.",
+  "id": "inventory_locations_success",
+  "request": {
+    "auth": "manager",
+    "method": "GET",
+    "path": "/inventory/locations"
+  },
+  "response": {
+    "body": [
+      {
+        "active": true,
+        "description": "Fixture location",
+        "id": 1,
+        "name": "Contract Walk-In"
+      }
+    ],
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  }
+}

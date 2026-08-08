@@ -1,0 +1,22 @@
+{
+  "description": "A server cannot call a manager-only route.",
+  "id": "manager_role_required_error",
+  "request": {
+    "auth": "server",
+    "json": {
+      "active": true,
+      "name": "Forbidden Location"
+    },
+    "method": "POST",
+    "path": "/inventory/locations"
+  },
+  "response": {
+    "body": {
+      "detail": "Insufficient permissions"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 403
+  }
+}

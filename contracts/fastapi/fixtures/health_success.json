@@ -1,0 +1,19 @@
+{
+  "description": "Public health check succeeds.",
+  "id": "health_success",
+  "request": {
+    "auth": "public",
+    "method": "GET",
+    "path": "/health"
+  },
+  "response": {
+    "body": {
+      "app": "Team Sheet Studio API",
+      "status": "ok"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  }
+}

@@ -1,8 +1,14 @@
+import { randomBytes } from "node:crypto";
 import { createTestHarness } from "wrangler";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 const server = createTestHarness({
-  workers: [{ configPath: "./wrangler.jsonc" }],
+  workers: [
+    {
+      configPath: "./wrangler.jsonc",
+      secrets: { SECRET_KEY: randomBytes(32).toString("hex") },
+    },
+  ],
 });
 
 beforeAll(async () => {

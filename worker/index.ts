@@ -1,29 +1,16 @@
-const JSON_HEADERS = {
-  "Cache-Control": "no-store",
-  "Content-Type": "application/json; charset=utf-8",
-  "X-Content-Type-Options": "nosniff",
-} as const;
-
-function jsonResponse(
-  request: Request,
-  body: Record<string, string>,
-  init: ResponseInit = {},
-): Response {
-  return new Response(request.method === "HEAD" ? null : JSON.stringify(body), {
-    ...init,
-    headers: {
-      ...JSON_HEADERS,
-      ...init.headers,
-    },
-  });
-}
-
-function methodNotAllowed(request: Request): Response {
-  return jsonResponse(request, { detail: "Method Not Allowed" }, {
-    status: 405,
-    headers: { Allow: "GET, HEAD" },
-  });
-}
+import { apiError, jsonResponse, methodNotAllowed } from "./http";
+import { runtimeBindings, voiceRuntimeBindings } from "./runtime";
+import { currentUser, loginJson, loginToken, logout, register } from "./routes/auth";
+import { routeInventoryDomain } from "./routes/inventory-domain";
+import { routeIngredientCatalog } from "./routes/ingredient-catalog";
+import { routeVoiceInventory } from "./routes/voice-inventory";
+import {
+  cleanupExpiredVoiceAudio,
+  cleanupVoiceAudioRoute,
+  createVoiceAudioUploadTarget,
+  downloadVoiceAudio,
+  uploadVoiceAudio,
+} from "./routes/voice-audio";
 
 export function rewriteLegacyStaticPath(pathname: string): string | null {
   if (pathname === "/static" || pathname === "/static/") {
@@ -43,7 +30,7 @@ async function serveAsset(
   pathname: string,
 ): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
-    return methodNotAllowed(request);
+    return methodNotAllowed(request, "GET, HEAD");
   }
 
   const assetUrl = new URL(request.url);
@@ -57,7 +44,7 @@ export default {
 
     if (url.pathname === "/health") {
       if (request.method !== "GET" && request.method !== "HEAD") {
-        return methodNotAllowed(request);
+        return methodNotAllowed(request, "GET, HEAD");
       }
 
       return jsonResponse(request, {
@@ -68,7 +55,7 @@ export default {
 
     if (url.pathname === "/api/version") {
       if (request.method !== "GET" && request.method !== "HEAD") {
-        return methodNotAllowed(request);
+        return methodNotAllowed(request, "GET, HEAD");
       }
 
       return jsonResponse(request, {
@@ -77,6 +64,138 @@ export default {
         environment: env.APP_ENVIRONMENT,
         runtime: "cloudflare-workers",
       });
+    }
+
+    const audioMatch = /^\/inventory\/voice\/sessions\/(\d+)\/audio\/([0-9a-f-]{36})$/u.exec(
+      url.pathname,
+    );
+    const audioTargetMatch = /^\/inventory\/voice\/sessions\/(\d+)\/audio-upload$/u.exec(
+      url.pathname,
+    );
+    const isAudioCleanup = url.pathname === "/inventory/voice/maintenance/cleanup-audio";
+    if (audioMatch !== null || audioTargetMatch !== null || isAudioCleanup) {
+      const bindings = voiceRuntimeBindings(env);
+      if (bindings === null) return apiError(request, 500, "Internal Server Error");
+      try {
+        if (audioTargetMatch !== null) {
+          return request.method === "POST"
+            ? await createVoiceAudioUploadTarget(request, Number(audioTargetMatch[1]), bindings)
+            : methodNotAllowed(request, "POST");
+        }
+        if (audioMatch !== null) {
+          const sessionId = Number(audioMatch[1]);
+          const uploadId = audioMatch[2];
+          if (request.method === "PUT") {
+            return uploadVoiceAudio(request, sessionId, uploadId, bindings);
+          }
+          if (request.method === "GET" || request.method === "HEAD") {
+            return downloadVoiceAudio(request, sessionId, uploadId, bindings);
+          }
+          return methodNotAllowed(request, "GET, HEAD, PUT");
+        }
+        return request.method === "POST"
+          ? await cleanupVoiceAudioRoute(request, bindings)
+          : methodNotAllowed(request, "POST");
+      } catch (error) {
+        console.error(JSON.stringify({
+          message: "Worker voice audio request failed",
+          method: request.method,
+          path: url.pathname,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }));
+        return apiError(request, 500, "Internal Server Error");
+      }
+    }
+
+    const bindings = runtimeBindings(env);
+    if (url.pathname === "/ingredient-catalog" || url.pathname.startsWith("/ingredient-catalog/")) {
+      if (bindings === null) return apiError(request, 500, "Internal Server Error");
+      try {
+        const response = await routeIngredientCatalog(request, url, bindings);
+        if (response !== null) return response;
+      } catch (error) {
+        console.error(JSON.stringify({ message: "Worker ingredient catalog request failed", method: request.method, path: url.pathname, error: error instanceof Error ? error.message : "Unknown error" }));
+        return apiError(request, 500, "Internal Server Error");
+      }
+    }
+    if (url.pathname.startsWith("/inventory/voice/")) {
+      if (bindings === null) return apiError(request, 500, "Internal Server Error");
+      try {
+        const response = await routeVoiceInventory(request, url, bindings);
+        if (response !== null) return response;
+      } catch (error) {
+        console.error(JSON.stringify({
+          message: "Worker voice inventory request failed",
+          method: request.method,
+          path: url.pathname,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }));
+        return apiError(request, 500, "Internal Server Error");
+      }
+    }
+    if (url.pathname.startsWith("/inventory/") && !url.pathname.startsWith("/inventory/voice/")) {
+      if (bindings === null) return apiError(request, 500, "Internal Server Error");
+      try {
+        const response = await routeInventoryDomain(request, url, bindings);
+        if (response !== null) return response;
+      } catch (error) {
+        console.error(JSON.stringify({
+          message: "Worker inventory request failed",
+          method: request.method,
+          path: url.pathname,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }));
+        return apiError(request, 500, "Internal Server Error");
+      }
+    }
+    const apiPath =
+      url.pathname === "/auth/login" ||
+      url.pathname === "/auth/register" ||
+      url.pathname === "/auth/token" ||
+      url.pathname === "/auth/me" ||
+      url.pathname === "/auth/logout";
+    if (apiPath) {
+      if (bindings === null) {
+        return apiError(request, 500, "Internal Server Error");
+      }
+      try {
+        if (url.pathname === "/auth/login") {
+          return request.method === "POST"
+            ? await loginJson(request, bindings)
+            : methodNotAllowed(request, "POST");
+        }
+        if (url.pathname === "/auth/register") {
+          return request.method === "POST"
+            ? await register(request, bindings)
+            : methodNotAllowed(request, "POST");
+        }
+        if (url.pathname === "/auth/token") {
+          return request.method === "POST"
+            ? await loginToken(request, bindings)
+            : methodNotAllowed(request, "POST");
+        }
+        if (url.pathname === "/auth/me") {
+          return request.method === "GET"
+            ? await currentUser(request, bindings)
+            : methodNotAllowed(request, "GET");
+        }
+        if (url.pathname === "/auth/logout") {
+          return request.method === "POST"
+            ? logout(request)
+            : methodNotAllowed(request, "POST");
+        }
+        return apiError(request, 404, "Not Found");
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            message: "Worker API request failed",
+            method: request.method,
+            path: url.pathname,
+            error: error instanceof Error ? error.message : "Unknown error",
+          }),
+        );
+        return apiError(request, 500, "Internal Server Error");
+      }
     }
 
     if (url.pathname === "/") {
@@ -89,5 +208,14 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+  async scheduled(controller, env): Promise<void> {
+    const bindings = voiceRuntimeBindings(env);
+    if (bindings === null) {
+      console.error(JSON.stringify({ message: "Voice audio cleanup bindings unavailable" }));
+      return;
+    }
+    const removed = await cleanupExpiredVoiceAudio(bindings, new Date(controller.scheduledTime));
+    console.log(JSON.stringify({ message: "Voice audio cleanup complete", removed }));
   },
 } satisfies ExportedHandler<Env>;

@@ -1,0 +1,22 @@
+{
+  "description": "Invalid JSON login credentials return the authentication error.",
+  "id": "invalid_login_error",
+  "request": {
+    "auth": "public",
+    "json": {
+      "email": "missing.contract@example.com",
+      "password": "<invalid-fixture-value>"
+    },
+    "method": "POST",
+    "path": "/auth/login"
+  },
+  "response": {
+    "body": {
+      "detail": "Incorrect email or password"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 401
+  }
+}

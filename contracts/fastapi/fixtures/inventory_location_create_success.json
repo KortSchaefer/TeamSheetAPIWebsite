@@ -1,0 +1,26 @@
+{
+  "description": "A manager can create an inventory location.",
+  "id": "inventory_location_create_success",
+  "request": {
+    "auth": "manager",
+    "json": {
+      "active": true,
+      "description": "Fixture location",
+      "name": "Contract Walk-In"
+    },
+    "method": "POST",
+    "path": "/inventory/locations"
+  },
+  "response": {
+    "body": {
+      "active": true,
+      "description": "Fixture location",
+      "id": 1,
+      "name": "Contract Walk-In"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 201
+  }
+}

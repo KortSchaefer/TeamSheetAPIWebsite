@@ -17,7 +17,9 @@ Preserve the existing FastAPI application as the reference implementation until 
 - `app/schemas/`: Pydantic request and response contracts.
 - `app/services/`: domain logic for inventory, POS, voice inventory, imports, and related workflows.
 - `public/`: browser-delivered HTML, CSS, and JavaScript. Treat existing URLs and frontend API calls as compatibility requirements.
-- `worker/`: TypeScript Cloudflare Worker entrypoint plus runtime and integration tests. It currently owns only `/health`, `/api/version`, static homepage delivery, and `/static/` compatibility routing.
+- `worker/`: TypeScript Cloudflare Worker entrypoint, D1/R2 repositories, authentication/security helpers, and runtime/integration/contract tests. It owns `/auth/register`, `/auth/login`, `/auth/token`, `/auth/logout`, `/auth/me`, read-only `GET /inventory/locations`, and the private R2-backed voice-audio upload/download/cleanup routes, in addition to `/health`, `/api/version`, static homepage delivery, and `/static/` compatibility routing.
+- `contracts/`: generated FastAPI OpenAPI, route/auth/schema inventory, representative response fixtures, and reusable compatibility-test helpers. Treat these files as the reference API baseline; regenerate them only for an approved contract change.
+- `d1/`: immutable Cloudflare D1 SQL migrations and a generated schema manifest reconciled from SQLAlchemy, Alembic, and legacy startup repairs. Only append migrations after the initial baseline is established.
 - `wrangler.jsonc`: local-first Workers Static Assets configuration with distinct staging and production names; it contains no remote resource IDs or secrets.
 - `package.json`: canonical local Worker development, type generation, checking, and test commands.
 - `worker-configuration.d.ts`: generated Worker binding/runtime types. Refresh with `npm run cf:types` after changing `wrangler.jsonc`; the explicit `secrets.required` lists in Wrangler configuration keep local FastAPI variables out of Worker types and local runs.
@@ -62,6 +64,14 @@ Validate catalog inputs without changing the database:
 .\venv\Scripts\python.exe scripts\import_bar_inventory.py --dry-run
 ```
 
+Verify that the committed FastAPI contract baseline is current without rewriting it:
+
+```powershell
+$env:DATABASE_URL = "sqlite+pysqlite:///:memory:"
+.\venv\Scripts\python.exe scripts\export_api_contract.py --check
+Remove-Item Env:DATABASE_URL
+```
+
 Use the package scripts as the canonical Cloudflare commands:
 
 ```powershell
@@ -69,6 +79,13 @@ npm install
 npm run cf:dev
 npm run cf:check
 npm run test:worker
+```
+
+Verify the generated D1 schema and apply it only to isolated local state:
+
+```powershell
+.\venv\Scripts\python.exe scripts\generate_d1_schema.py --check
+npx wrangler d1 migrations apply teamsheet-studio-local --local --persist-to .wrangler/d1-schema-test
 ```
 
 Local Worker development must use local bindings and simulations unless a task explicitly authorizes a remote staging resource. The package scripts disable Wrangler's automatic FastAPI `.env` loading. No deploy script is defined intentionally; remote deployment remains a separately authorized action.

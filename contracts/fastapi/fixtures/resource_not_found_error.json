@@ -1,0 +1,18 @@
+{
+  "description": "A missing employee returns the endpoint-specific 404 detail.",
+  "id": "resource_not_found_error",
+  "request": {
+    "auth": "manager",
+    "method": "GET",
+    "path": "/employees/999999"
+  },
+  "response": {
+    "body": {
+      "detail": "Employee not found"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 404
+  }
+}

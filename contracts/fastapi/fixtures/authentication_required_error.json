@@ -1,0 +1,19 @@
+{
+  "description": "A protected route rejects a missing application token.",
+  "id": "authentication_required_error",
+  "request": {
+    "auth": "public",
+    "method": "GET",
+    "path": "/inventory/locations"
+  },
+  "response": {
+    "body": {
+      "detail": "Could not validate credentials"
+    },
+    "headers": {
+      "content-type": "application/json",
+      "www-authenticate": "Bearer"
+    },
+    "status": 401
+  }
+}
