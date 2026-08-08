@@ -399,6 +399,12 @@ def update_planning_settings(
             vendor_item.unit_price_cents = row.unit_price_cents
         if row.purchase_unit:
             item.purchase_unit = row.purchase_unit
+        item.purchase_to_base = row.pack_quantity
+        item.cost_cents = int(
+            (Decimal(row.unit_price_cents) / row.pack_quantity).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+        )
     db.commit()
     return {
         "location_id": payload.location_id,

@@ -113,12 +113,14 @@ describe("Worker inventory domain", () => {
   });
 
   it("runs planning, draft ordering, receiving, and count-sheet workflows", async () => {
-    const item = await request("/inventory/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Synthetic Lettuce", category: "Produce", base_unit: "case", purchase_unit: "case", purchase_to_base: 1, default_location_id: 10, cost_cents: 1200 }) }).then(response => response.json<{ id: number }>());
+    const item = await request("/inventory/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Synthetic Lettuce", category: "Produce", base_unit: "each", purchase_unit: "case", purchase_to_base: 1, default_location_id: 10, cost_cents: 0 }) }).then(response => response.json<{ id: number }>());
     const vendor = await request("/inventory/vendors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Synthetic Produce Vendor", lead_time_days: 1 }) }).then(response => response.json<{ id: number }>());
-    const settings = await request("/inventory/settings/targets", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location_id: 10, rows: [{ inventory_item_id: item.id, planning_active: true, weekday_targets: { "0": 8 }, preferred_vendor_id: vendor.id, purchase_unit: "case", pack_quantity: 1, unit_price_cents: 1200 }] }) });
+    const settings = await request("/inventory/settings/targets", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location_id: 10, rows: [{ inventory_item_id: item.id, planning_active: true, weekday_targets: { "0": 8 }, preferred_vendor_id: vendor.id, purchase_unit: "case", pack_quantity: 4, unit_price_cents: 1200 }] }) });
     expect(settings.status).toBe(200);
+    const configuredItem = await testEnv.DB.prepare("SELECT purchase_to_base, cost_cents FROM inventory_items WHERE id=?").bind(item.id).first<{ purchase_to_base: number; cost_cents: number }>();
+    expect(configuredItem).toMatchObject({ purchase_to_base: 4, cost_cents: 300 });
     const planner = await request("/inventory/purchase-order-planner?location_id=10&delivery_date=2026-08-03");
-    await expect(planner.json()).resolves.toMatchObject({ rows: [expect.objectContaining({ inventory_item_id: item.id, target_quantity: 8, recommended_purchase_quantity: 8 })] });
+    await expect(planner.json()).resolves.toMatchObject({ rows: [expect.objectContaining({ inventory_item_id: item.id, target_quantity: 8, recommended_purchase_quantity: 2 })] });
 
     const planned = await request("/inventory/purchase-orders/from-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_date: "2026-08-03", lines: [{ inventory_item_id: item.id, location_id: 10, purchase_quantity: 8 }] }) });
     expect(planned.status).toBe(201);

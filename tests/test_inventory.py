@@ -253,6 +253,14 @@ async def test_weekday_planner_vendor_split_incoming_and_bulk_receiving(client):
     }
     assert configured[items[0]["id"]]["weekday_targets"]["2"] == "10.0000"
     assert configured[items[0]["id"]]["effective_lower_tolerance_percent"] == "5.00"
+    saved_items = {
+        item["id"]: item
+        for item in (await client.get("/inventory/items", headers=headers)).json()
+    }
+    assert saved_items[items[0]["id"]]["purchase_to_base"] == "4.0000"
+    assert saved_items[items[0]["id"]]["cost_cents"] == 250
+    assert saved_items[items[1]["id"]]["purchase_to_base"] == "3.0000"
+    assert saved_items[items[1]["id"]]["cost_cents"] == 500
 
     count = await client.post(
         "/inventory/counts",

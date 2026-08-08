@@ -1209,7 +1209,8 @@ async function planningRows(database: D1Database, locationId: number): Promise<J
       COALESCE(i.purchase_unit,i.base_unit) AS purchase_unit, i.purchase_to_base,
       b.planning_active,b.lower_tolerance_percent,b.upper_tolerance_percent,
       vi.vendor_id AS preferred_vendor_id,v.name AS preferred_vendor_name,vi.vendor_sku,
-      COALESCE(vi.pack_quantity,i.purchase_to_base,1) AS pack_quantity,COALESCE(vi.unit_price_cents,0) AS unit_price_cents
+      COALESCE(vi.pack_quantity,i.purchase_to_base,1) AS pack_quantity,
+      COALESCE(NULLIF(vi.unit_price_cents,0),ROUND(i.cost_cents*COALESCE(vi.pack_quantity,i.purchase_to_base,1)),0) AS unit_price_cents
       FROM inventory_items i LEFT JOIN inventory_balances b ON b.inventory_item_id=i.id AND b.location_id=?
       LEFT JOIN inventory_vendor_items vi ON vi.inventory_item_id=i.id AND vi.preferred=1
       LEFT JOIN inventory_vendors v ON v.id=vi.vendor_id AND v.active=1
@@ -1249,12 +1250,16 @@ async function planningSettings(request: Request, url: URL, bindings: RuntimeBin
       VALUES (?,?,?,0,0,0,NULL,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
       ON CONFLICT(inventory_item_id,location_id) DO UPDATE SET planning_active=excluded.planning_active,lower_tolerance_percent=excluded.lower_tolerance_percent,upper_tolerance_percent=excluded.upper_tolerance_percent,updated_at=CURRENT_TIMESTAMP`)
       .bind(randomId(), itemId, locationId, row.planning_active === false ? 0 : 1, row.lower_tolerance_percent ?? null, row.upper_tolerance_percent ?? null));
-    if (row.purchase_unit !== undefined || row.pack_quantity !== undefined) {
+    if (row.purchase_unit !== undefined || row.pack_quantity !== undefined || row.unit_price_cents !== undefined) {
+      const packQuantity = numberValue(row.pack_quantity, 1);
+      const unitPriceCents = Math.max(0, Math.trunc(numberValue(row.unit_price_cents)));
+      if (packQuantity <= 0) return apiError(request, 422, "pack_quantity must be greater than 0");
       statements.push(bindings.database.prepare(
         `UPDATE inventory_items SET purchase_unit = COALESCE(?, purchase_unit),
           purchase_to_base = COALESCE(?, purchase_to_base),
+          cost_cents = ?,
           updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      ).bind(row.purchase_unit ?? null, row.pack_quantity ?? null, itemId));
+      ).bind(row.purchase_unit ?? null, packQuantity, Math.round(unitPriceCents / packQuantity), itemId));
     }
     if (isObject(row.weekday_targets)) for (const [dayText, target] of Object.entries(row.weekday_targets)) {
       const day = numberValue(dayText, -1); if (day < 0 || day > 6) return apiError(request, 400, "Weekday keys must be between 0 and 6");
