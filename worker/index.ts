@@ -4,6 +4,7 @@ import { currentUser, loginJson, loginToken, logout, register } from "./routes/a
 import { routeInventoryDomain } from "./routes/inventory-domain";
 import { routeIngredientCatalog } from "./routes/ingredient-catalog";
 import { routeVoiceInventory } from "./routes/voice-inventory";
+import { routeAGMFloor } from "./routes/agm-floor";
 import {
   cleanupExpiredVoiceAudio,
   cleanupVoiceAudioRoute,
@@ -11,6 +12,8 @@ import {
   downloadVoiceAudio,
   uploadVoiceAudio,
 } from "./routes/voice-audio";
+
+export { AGMServiceRoom } from "./durable-objects/agm-service";
 
 export function rewriteLegacyStaticPath(pathname: string): string | null {
   if (pathname === "/static" || pathname === "/static/") {
@@ -108,6 +111,26 @@ export default {
     }
 
     const bindings = runtimeBindings(env);
+    if (url.pathname.startsWith("/agm/")) {
+      if (bindings === null || env.AGM_SERVICE === undefined) {
+        return apiError(request, 500, "Internal Server Error");
+      }
+      try {
+        const response = await routeAGMFloor(request, url, {
+          ...bindings,
+          serviceRooms: env.AGM_SERVICE,
+        });
+        if (response !== null) return response;
+      } catch (error) {
+        console.error(JSON.stringify({
+          message: "Worker AGM floor request failed",
+          method: request.method,
+          path: url.pathname,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }));
+        return apiError(request, 500, "Internal Server Error");
+      }
+    }
     if (url.pathname === "/ingredient-catalog" || url.pathname.startsWith("/ingredient-catalog/")) {
       if (bindings === null) return apiError(request, 500, "Internal Server Error");
       try {

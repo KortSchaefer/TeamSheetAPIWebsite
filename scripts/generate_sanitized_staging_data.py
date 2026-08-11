@@ -143,6 +143,9 @@ def generate(output: Path, manifest_path: Path, reconciliation_path: Path) -> di
 
     expected_counts = {table: 0 for table in tables}
     expected_counts["menu_categories"] = 11
+    # AGM Floor's default store is schema-level configuration seeded by its
+    # migration; it contains no guest, service, or operational data.
+    expected_counts["agm_stores"] = 1
     for table, (_, rows) in staged.items():
         expected_counts[table] = len(rows)
     count_expressions = [

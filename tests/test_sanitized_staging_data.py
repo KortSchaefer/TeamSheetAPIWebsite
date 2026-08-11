@@ -18,8 +18,8 @@ def test_sanitized_staging_dataset_matches_schema_and_contains_no_operational_ro
 
     connection = sqlite3.connect(":memory:")
     connection.row_factory = sqlite3.Row
-    connection.executescript((ROOT / "d1/migrations/0001_initial_schema.sql").read_text(encoding="utf-8"))
-    connection.executescript((ROOT / "d1/migrations/0002_seed_pos_categories.sql").read_text(encoding="utf-8"))
+    for migration in sorted((ROOT / "d1/migrations").glob("*.sql")):
+        connection.executescript(migration.read_text(encoding="utf-8"))
     connection.executescript(output.read_text(encoding="utf-8"))
 
     actual_counts = {

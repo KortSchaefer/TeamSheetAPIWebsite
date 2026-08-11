@@ -17,6 +17,7 @@
       "/auth/token",
       "/auth/logout",
       "/auth/me",
+      "/agm/*",
       "/inventory/*",
       "/ingredient-catalog*",
       "/static/*"
@@ -39,6 +40,14 @@
       "database_id": "00000000-0000-0000-0000-000000000001",
       "migrations_dir": "d1/migrations"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "agm-floor-v1", "new_sqlite_classes": ["AGMServiceRoom"] }
   ],
   "r2_buckets": [
     {
@@ -76,6 +85,11 @@
           "migrations_dir": "d1/migrations"
         }
       ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+        ]
+      },
       "r2_buckets": [
         {
           "binding": "VOICE_AUDIO",
@@ -100,6 +114,11 @@
         "VOICE_AUDIO_RETENTION_HOURS": "24",
         "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608"
         ,"OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna"
+      },
+      "durable_objects": {
+        "bindings": [
+          { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+        ]
       },
       "triggers": {
         "crons": []

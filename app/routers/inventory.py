@@ -1,4 +1,7 @@
 import csv
+import hashlib
+import json as jsonlib
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from html import escape
@@ -27,6 +30,7 @@ from app.models import (
     InventoryVoiceSessionCount,
     InventoryVoiceSessionStatus,
     InventoryItem,
+    InventoryEasyManagerCommit,
     InventoryLocation,
     InventoryWeekdayTarget,
     InventoryReceiving,
@@ -227,6 +231,557 @@ def create_item(
     db.commit()
     db.refresh(item)
     return item
+
+
+def _easy_normalize(value: str | None) -> str:
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).split())
+
+
+def _easy_manager_bootstrap(db: Session, location_id: int) -> dict:
+    location = get_location(db, location_id)
+    locations = (
+        db.query(InventoryLocation)
+        .filter(InventoryLocation.active.is_(True))
+        .order_by(InventoryLocation.name)
+        .all()
+    )
+    vendors = (
+        db.query(Vendor)
+        .filter(Vendor.active.is_(True))
+        .order_by(Vendor.name)
+        .all()
+    )
+    items = (
+        db.query(InventoryItem)
+        .filter(InventoryItem.active.is_(True))
+        .order_by(InventoryItem.category, InventoryItem.name)
+        .all()
+    )
+    balances = {
+        row.inventory_item_id: row
+        for row in db.query(InventoryBalance)
+        .filter(InventoryBalance.location_id == location_id)
+        .all()
+    }
+    preferred = {
+        row.inventory_item_id: row
+        for row in db.query(VendorItem)
+        .options(joinedload(VendorItem.vendor))
+        .filter(VendorItem.preferred.is_(True))
+        .all()
+    }
+    rows = []
+    for item in items:
+        balance = balances.get(item.id)
+        vendor_item = preferred.get(item.id)
+        pack_quantity = Decimal(
+            vendor_item.pack_quantity
+            if vendor_item and vendor_item.pack_quantity is not None
+            else item.purchase_to_base or 1
+        )
+        pack_cost_cents = (
+            vendor_item.unit_price_cents
+            if vendor_item
+            else int(
+                (Decimal(item.cost_cents or 0) * pack_quantity).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+            )
+        )
+        rows.append(
+            {
+                "client_row_id": f"item-{item.id}",
+                "action": "UPDATE" if balance else "STOCK_AT_LOCATION",
+                "inventory_item_id": item.id,
+                "catalog_id": item.ingredient.external_id if item.ingredient else None,
+                "name": item.name,
+                "category": item.category,
+                "sku": item.sku,
+                "base_unit": item.base_unit,
+                "location_id": location_id,
+                "purchase_unit": item.purchase_unit or item.base_unit,
+                "pack_quantity": pack_quantity,
+                "pack_cost_cents": pack_cost_cents,
+                "base_unit_cost_cents": item.cost_cents,
+                "opening_quantity": None,
+                "minimum_quantity": balance.minimum_quantity if balance else Decimal("0"),
+                "par_quantity": balance.par_quantity if balance else Decimal("0"),
+                "maximum_quantity": balance.maximum_quantity if balance else None,
+                "quantity_on_hand": balance.quantity_on_hand if balance else Decimal("0"),
+                "has_balance": balance is not None,
+                "preferred_vendor_id": vendor_item.vendor_id if vendor_item else None,
+                "preferred_vendor_name": (
+                    vendor_item.vendor.name if vendor_item and vendor_item.vendor else None
+                ),
+                "vendor_sku": vendor_item.vendor_sku if vendor_item else None,
+                "shelf_life_days": item.shelf_life_days,
+                "updated_at": item.updated_at,
+            }
+        )
+    return {
+        "location_id": location.id,
+        "location_name": location.name,
+        "locations": [
+            {"id": row.id, "name": row.name, "description": row.description}
+            for row in locations
+        ],
+        "vendors": [
+            {"id": row.id, "name": row.name, "lead_time_days": row.lead_time_days}
+            for row in vendors
+        ],
+        "categories": sorted({item.category for item in items if item.category}),
+        "rows": rows,
+    }
+
+
+def _easy_inventory_preview_rows(
+    db: Session, rows: list[schemas.EasyInventoryRowInput]
+) -> list[dict]:
+    items = db.query(InventoryItem).filter(InventoryItem.active.is_(True)).all()
+    item_by_id = {item.id: item for item in items}
+    sku_map: dict[str, list[InventoryItem]] = {}
+    name_map: dict[str, list[InventoryItem]] = {}
+    for item in items:
+        if item.sku:
+            sku_map.setdefault(item.sku.strip().lower(), []).append(item)
+        name_map.setdefault(_easy_normalize(item.name), []).append(item)
+    locations = {
+        row.id
+        for row in db.query(InventoryLocation)
+        .filter(InventoryLocation.active.is_(True))
+        .all()
+    }
+    vendors = {
+        row.id
+        for row in db.query(Vendor).filter(Vendor.active.is_(True)).all()
+    }
+    balances = {
+        (row.inventory_item_id, row.location_id): row
+        for row in db.query(InventoryBalance).all()
+    }
+    preferred = {
+        row.inventory_item_id: row
+        for row in db.query(VendorItem).filter(VendorItem.preferred.is_(True)).all()
+    }
+    ingredients = db.query(Ingredient).filter(Ingredient.active.is_(True)).all()
+    ingredient_by_external = {row.external_id: row for row in ingredients if row.external_id}
+    ingredient_by_name: dict[str, list[Ingredient]] = {}
+    for ingredient in ingredients:
+        ingredient_by_name.setdefault(_easy_normalize(ingredient.name), []).append(ingredient)
+    client_ids: set[str] = set()
+    proposed_skus: set[str] = set()
+    proposed_names: set[str] = set()
+    proposed_targets: set[tuple[int, int]] = set()
+    output: list[dict] = []
+
+    for index, row in enumerate(rows):
+        errors: list[str] = []
+        warnings: list[str] = []
+        client_row_id = row.client_row_id.strip()
+        if client_row_id in client_ids:
+            errors.append("Client row IDs must be unique.")
+        client_ids.add(client_row_id)
+
+        item = item_by_id.get(row.inventory_item_id) if row.inventory_item_id else None
+        if row.inventory_item_id and item is None:
+            errors.append("Inventory item was not found or is inactive.")
+        fields_set = row.model_fields_set
+        name_value = row.name if "name" in fields_set else (item.name if item else None)
+        name = (name_value or "").strip()
+        sku = (
+            (row.sku.strip() if row.sku else None)
+            if "sku" in fields_set
+            else (item.sku if item else None)
+        )
+        if not item:
+            candidates = sku_map.get(sku.lower(), []) if sku else []
+            if not candidates and name:
+                candidates = name_map.get(_easy_normalize(name), [])
+            if len(candidates) == 1:
+                item = candidates[0]
+                warnings.append(f"Matched existing inventory item #{item.id}.")
+            elif len(candidates) > 1:
+                errors.append("Multiple existing items match this row; choose one explicitly.")
+        if not name:
+            errors.append("Item name is required.")
+
+        location_id = row.location_id
+        if location_id not in locations:
+            errors.append("Choose an active inventory location.")
+        if row.preferred_vendor_id is not None and row.preferred_vendor_id not in vendors:
+            errors.append("Preferred vendor was not found or is inactive.")
+
+        current_vendor = preferred.get(item.id) if item else None
+        base_unit_value = (
+            row.base_unit if "base_unit" in fields_set else (item.base_unit if item else None)
+        )
+        base_unit = (base_unit_value or "").strip()
+        if not base_unit:
+            errors.append("Count unit is required.")
+        purchase_unit = (
+            row.purchase_unit
+            if "purchase_unit" in fields_set
+            else (item.purchase_unit if item else base_unit)
+        )
+        pack_quantity = Decimal(
+            row.pack_quantity
+            if row.pack_quantity is not None
+            else (
+                current_vendor.pack_quantity
+                if current_vendor and current_vendor.pack_quantity is not None
+                else (item.purchase_to_base if item else 1)
+            )
+        )
+        if pack_quantity <= 0:
+            errors.append("Units per pack must be greater than zero.")
+        pack_cost_cents = row.pack_cost_cents
+        if pack_cost_cents is None:
+            if current_vendor:
+                pack_cost_cents = current_vendor.unit_price_cents
+            elif item:
+                pack_cost_cents = int(
+                    (Decimal(item.cost_cents or 0) * pack_quantity).quantize(
+                        Decimal("1"), rounding=ROUND_HALF_UP
+                    )
+                )
+            else:
+                pack_cost_cents = 0
+        if pack_cost_cents < 0:
+            errors.append("Pack cost cannot be negative.")
+        base_cost = (
+            int(
+                (Decimal(pack_cost_cents) / pack_quantity).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+            )
+            if pack_quantity > 0
+            else 0
+        )
+
+        opening = Decimal(row.opening_quantity or 0)
+        existing_balance = balances.get((item.id, location_id)) if item and location_id else None
+        minimum = Decimal(
+            row.minimum_quantity
+            if row.minimum_quantity is not None
+            else (existing_balance.minimum_quantity if existing_balance else 0)
+        )
+        par = Decimal(
+            row.par_quantity
+            if row.par_quantity is not None
+            else (existing_balance.par_quantity if existing_balance else 0)
+        )
+        maximum = (
+            Decimal(row.maximum_quantity) if row.maximum_quantity is not None else None
+        ) if "maximum_quantity" in fields_set else (
+            existing_balance.maximum_quantity if existing_balance else None
+        )
+        if min(opening, minimum, par) < 0 or (maximum is not None and maximum < 0):
+            errors.append("Inventory quantities cannot be negative.")
+        if maximum is not None and maximum < max(minimum, par):
+            errors.append("Maximum quantity must be at least the minimum and par quantities.")
+
+        balance = existing_balance
+        if opening > 0 and balance is not None:
+            errors.append("Opening quantity is only allowed for a new item/location balance.")
+        action = "CREATE" if item is None else ("UPDATE" if balance else "STOCK_AT_LOCATION")
+        if sku:
+            normalized_sku = sku.lower()
+            if normalized_sku in proposed_skus and not item:
+                errors.append("SKU is duplicated in this batch.")
+            proposed_skus.add(normalized_sku)
+
+        normalized_name = _easy_normalize(name)
+        if item is None and normalized_name:
+            if normalized_name in proposed_names:
+                errors.append("Item name is duplicated in this batch.")
+            proposed_names.add(normalized_name)
+        if item is not None and location_id:
+            target = (item.id, location_id)
+            if target in proposed_targets:
+                errors.append("The same item and location appears more than once in this batch.")
+            proposed_targets.add(target)
+        catalog_id = row.catalog_id
+        if catalog_id is None and item is None:
+            exact_catalog = ingredient_by_name.get(normalized_name, [])
+            if len(exact_catalog) == 1:
+                catalog_id = exact_catalog[0].external_id
+                warnings.append(f"Matched catalog item {exact_catalog[0].name}.")
+        match_candidates = [
+            {"source": "inventory", "id": candidate.id, "name": candidate.name, "sku": candidate.sku}
+            for candidate in items
+            if candidate.id != (item.id if item else None)
+            and normalized_name
+            and (
+                normalized_name in _easy_normalize(candidate.name)
+                or _easy_normalize(candidate.name) in normalized_name
+            )
+        ][:5]
+        if catalog_id and catalog_id not in ingredient_by_external:
+            errors.append("Catalog ingredient was not found or is inactive.")
+        elif not item and normalized_name:
+            match_candidates.extend(
+                {
+                    "source": "catalog",
+                    "id": ingredient.external_id,
+                    "name": ingredient.name,
+                    "sku": None,
+                }
+                for ingredient in ingredients
+                if normalized_name in _easy_normalize(ingredient.name)
+                or _easy_normalize(ingredient.name) in normalized_name
+            )
+            match_candidates = match_candidates[:5]
+
+        output.append(
+            {
+                "row_number": index + 1,
+                "client_row_id": client_row_id,
+                "action": action,
+                "inventory_item_id": item.id if item else None,
+                "catalog_id": catalog_id,
+                "name": name,
+                "category": row.category if "category" in fields_set else (item.category if item else None),
+                "sku": sku,
+                "base_unit": base_unit,
+                "location_id": location_id,
+                "purchase_unit": purchase_unit,
+                "pack_quantity": pack_quantity,
+                "pack_cost_cents": pack_cost_cents,
+                "base_unit_cost_cents": base_cost,
+                "opening_quantity": opening if row.opening_quantity is not None else None,
+                "minimum_quantity": minimum,
+                "par_quantity": par,
+                "maximum_quantity": maximum,
+                "preferred_vendor_id": (
+                    row.preferred_vendor_id
+                    if "preferred_vendor_id" in fields_set
+                    else (current_vendor.vendor_id if current_vendor else None)
+                ),
+                "vendor_sku": (
+                    row.vendor_sku
+                    if "vendor_sku" in fields_set
+                    else (current_vendor.vendor_sku if current_vendor else None)
+                ),
+                "shelf_life_days": (
+                    row.shelf_life_days
+                    if "shelf_life_days" in fields_set
+                    else (item.shelf_life_days if item else None)
+                ),
+                "has_balance": balance is not None,
+                "quantity_on_hand": balance.quantity_on_hand if balance else Decimal("0"),
+                "match_candidates": match_candidates,
+                "warnings": warnings,
+                "errors": errors,
+            }
+        )
+    return output
+
+
+@router.get("/easy-manager", response_model=dict)
+def easy_inventory_manager(
+    location_id: int = Query(gt=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_manager_or_admin),
+):
+    return _easy_manager_bootstrap(db, location_id)
+
+
+@router.post("/easy-manager/preview", response_model=dict)
+def preview_easy_inventory(
+    payload: schemas.EasyInventoryPreviewRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_manager_or_admin),
+):
+    rows = _easy_inventory_preview_rows(db, payload.rows)
+    return {
+        "valid": all(not row["errors"] for row in rows),
+        "row_count": len(rows),
+        "rows": rows,
+    }
+
+
+@router.post("/easy-manager/commit", response_model=dict, status_code=status.HTTP_201_CREATED)
+def commit_easy_inventory(
+    payload: schemas.EasyInventoryCommitRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_manager_or_admin),
+):
+    request_data = payload.model_dump(mode="json")
+    request_hash = hashlib.sha256(
+        jsonlib.dumps(request_data, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    existing_commit = (
+        db.query(InventoryEasyManagerCommit)
+        .filter(InventoryEasyManagerCommit.idempotency_key == payload.idempotency_key)
+        .first()
+    )
+    if existing_commit:
+        if existing_commit.request_hash != request_hash:
+            raise HTTPException(
+                status_code=409,
+                detail="Idempotency key was already used with different inventory data",
+            )
+        return jsonlib.loads(existing_commit.response_json)
+
+    preview_rows = _easy_inventory_preview_rows(db, payload.rows)
+    invalid = [row for row in preview_rows if row["errors"]]
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "Resolve invalid Easy Inventory Manager rows", "rows": invalid},
+        )
+
+    results = []
+    opening_movements: list[int] = []
+    created_count = 0
+    updated_count = 0
+    stocked_count = 0
+    try:
+        for row in preview_rows:
+            item = (
+                db.query(InventoryItem)
+                .filter(InventoryItem.id == row["inventory_item_id"])
+                .first()
+                if row["inventory_item_id"]
+                else None
+            )
+            if item is None:
+                ingredient = None
+                if row["catalog_id"]:
+                    ingredient = (
+                        db.query(Ingredient)
+                        .filter(Ingredient.external_id == row["catalog_id"], Ingredient.active.is_(True))
+                        .first()
+                    )
+                    if ingredient and ingredient.inventory_items:
+                        raise HTTPException(
+                            status_code=409,
+                            detail=f"Catalog item {row['catalog_id']} is already activated",
+                        )
+                item = InventoryItem(
+                    ingredient_id=ingredient.id if ingredient else None,
+                    name=row["name"],
+                    category=row["category"],
+                    sku=row["sku"],
+                    base_unit=row["base_unit"],
+                    purchase_unit=row["purchase_unit"],
+                    purchase_to_base=row["pack_quantity"],
+                    default_location_id=row["location_id"],
+                    cost_cents=row["base_unit_cost_cents"],
+                    shelf_life_days=row["shelf_life_days"],
+                    active=True,
+                )
+                db.add(item)
+                db.flush()
+                created_count += 1
+            else:
+                item.name = row["name"]
+                item.category = row["category"]
+                item.sku = row["sku"]
+                item.base_unit = row["base_unit"]
+                item.purchase_unit = row["purchase_unit"]
+                item.purchase_to_base = row["pack_quantity"]
+                item.cost_cents = row["base_unit_cost_cents"]
+                item.shelf_life_days = row["shelf_life_days"]
+                updated_count += 1
+
+            balance = (
+                db.query(InventoryBalance)
+                .filter(
+                    InventoryBalance.inventory_item_id == item.id,
+                    InventoryBalance.location_id == row["location_id"],
+                )
+                .first()
+            )
+            if balance is None:
+                balance = InventoryBalance(
+                    inventory_item_id=item.id,
+                    location_id=row["location_id"],
+                    quantity_on_hand=Decimal("0"),
+                    planning_active=True,
+                )
+                db.add(balance)
+                db.flush()
+                stocked_count += 1
+            balance.minimum_quantity = row["minimum_quantity"]
+            balance.par_quantity = row["par_quantity"]
+            balance.maximum_quantity = row["maximum_quantity"]
+
+            db.query(VendorItem).filter(VendorItem.inventory_item_id == item.id).update(
+                {VendorItem.preferred: False}, synchronize_session=False
+            )
+            if row["preferred_vendor_id"] is not None:
+                vendor_item = (
+                    db.query(VendorItem)
+                    .filter(
+                        VendorItem.inventory_item_id == item.id,
+                        VendorItem.vendor_id == row["preferred_vendor_id"],
+                    )
+                    .first()
+                )
+                if vendor_item is None:
+                    vendor_item = VendorItem(
+                        inventory_item_id=item.id,
+                        vendor_id=row["preferred_vendor_id"],
+                    )
+                    db.add(vendor_item)
+                vendor_item.vendor_sku = row["vendor_sku"]
+                vendor_item.unit_price_cents = row["pack_cost_cents"]
+                vendor_item.pack_quantity = row["pack_quantity"]
+                vendor_item.preferred = True
+
+            movement = None
+            if row["opening_quantity"] is not None and row["opening_quantity"] > 0:
+                movement = post_movement(
+                    db,
+                    schemas.InventoryMovementCreate(
+                        inventory_item_id=item.id,
+                        location_id=row["location_id"],
+                        quantity_change=row["opening_quantity"],
+                        reason="EASY_MANAGER_OPENING_BALANCE",
+                        source_event_key=f"easy:{payload.idempotency_key}:{row['client_row_id']}",
+                        notes="Opening quantity from Easy Inventory Manager",
+                    ),
+                    current_user.id,
+                )
+                opening_movements.append(movement.id)
+            results.append(
+                {
+                    "client_row_id": row["client_row_id"],
+                    "action": row["action"],
+                    "inventory_item_id": item.id,
+                    "balance_id": balance.id,
+                    "opening_movement_id": movement.id if movement else None,
+                }
+            )
+
+        response = {
+            "idempotency_key": payload.idempotency_key,
+            "created_count": created_count,
+            "updated_count": updated_count,
+            "stocked_count": stocked_count,
+            "opening_movement_ids": opening_movements,
+            "rows": results,
+        }
+        db.add(
+            InventoryEasyManagerCommit(
+                idempotency_key=payload.idempotency_key,
+                request_hash=request_hash,
+                response_json=jsonlib.dumps(response, separators=(",", ":")),
+                created_by_user_id=current_user.id,
+            )
+        )
+        db.commit()
+        return response
+    except HTTPException:
+        db.rollback()
+        raise
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Inventory changed while this Easy Inventory Manager batch was saving",
+        ) from error
 
 
 @router.post(

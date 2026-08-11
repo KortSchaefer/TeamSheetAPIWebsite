@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AGM Floor</title>
+    <link rel="stylesheet" href="/static/agm-floor.css?v=20260810g" />
+  </head>
+  <body>
+    <div class="agm-app" id="agm-app">
+      <header class="app-header">
+        <div class="brand-row">
+          <a class="back-link" href="/static/index.html" aria-label="Back to selector wheel">←</a>
+          <div><span class="eyebrow">Assistant General Manager</span><h1>AGM Floor</h1></div>
+        </div>
+        <div class="service-controls">
+          <label><span>Restaurant</span><select id="store-select"></select></label>
+          <label><span>Date</span><input id="service-date" type="date" /></label>
+          <label><span>Service</span><select id="service-select"></select></label>
+          <button class="secondary" id="new-service-btn" type="button">Open service</button>
+          <span class="sync-state" id="sync-state" role="status"><i></i>Connecting</span>
+        </div>
+      </header>
+
+      <nav class="workspace-tabs" aria-label="AGM Floor workspaces">
+        <button class="active" data-view="floor" type="button">Live floor</button>
+        <button data-view="waitlist" type="button">Waitlist <b id="waitlist-count">0</b></button>
+        <button data-view="reservations" type="button">Reservations <b id="reservation-count">0</b></button>
+        <button data-view="pacing" type="button">Pacing</button>
+        <button data-view="layouts" type="button">Layouts &amp; settings</button>
+      </nav>
+
+      <div class="notice hidden" id="notice" role="status" aria-live="polite"></div>
+
+      <main>
+        <section class="workspace active" id="floor-view" data-workspace="floor">
+          <div class="metric-strip" id="metric-strip"></div>
+          <div class="floor-workspace">
+            <aside class="queue-rail panel">
+              <div class="panel-heading"><div><span class="eyebrow">Next parties</span><h2>Seat queue</h2></div><button class="primary compact" data-open-party="WAITLIST" type="button">+ Party</button></div>
+              <div class="recommendation" id="recommendation-card"></div>
+              <div class="queue-list" id="queue-list"></div>
+            </aside>
+            <section class="floor-stage panel">
+              <div class="floor-toolbar">
+                <div><span class="eyebrow">Published service map</span><h2 id="floor-title">Floor</h2></div>
+                <div class="legend" aria-label="Table status legend">
+                  <span class="available">Available</span><span class="seated">Seated</span><span class="cleaning">Cleaning</span><span class="held">Held</span>
+                </div>
+                <div class="zoom-tools"><button data-zoom="-0.1" aria-label="Zoom out">−</button><output id="zoom-label">100%</output><button data-zoom="0.1" aria-label="Zoom in">+</button></div>
+              </div>
+              <div class="canvas-viewport" id="floor-viewport"><div class="floor-canvas" id="floor-canvas"></div></div>
+            </section>
+            <aside class="detail-rail panel">
+              <div class="panel-heading"><div><span class="eyebrow">Floor activity</span><h2>Table details</h2></div></div>
+              <div id="table-detail" class="empty-detail"><span>Select a table</span><p>Seat a party, review timing, change dining stage, move, or clear the table.</p></div>
+              <div class="rotation-block"><div class="panel-heading compact-heading"><div><span class="eyebrow">Server pacing</span><h3>Rotation</h3></div></div><div id="rotation-list"></div></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="workspace list-workspace" id="waitlist-view" data-workspace="waitlist">
+          <header class="workspace-heading"><div><span class="eyebrow">Arrival queue</span><h2>Waitlist</h2><p>Quote accurately, notify with consent, and seat from one shared queue.</p></div><button class="primary" data-open-party="WAITLIST" type="button">Add to waitlist</button></header>
+          <div class="data-panel" id="waitlist-table"></div>
+        </section>
+
+        <section class="workspace list-workspace" id="reservations-view" data-workspace="reservations">
+          <header class="workspace-heading"><div><span class="eyebrow">Staff-managed bookings</span><h2>Reservations</h2><p>Track confirmed bookings, arrivals, table holds, and no-shows.</p></div><button class="primary" data-open-party="RESERVATION" type="button">New reservation</button></header>
+          <div class="data-panel" id="reservation-table"></div>
+        </section>
+
+        <section class="workspace list-workspace" id="pacing-view" data-workspace="pacing">
+          <header class="workspace-heading"><div><span class="eyebrow">Service intelligence</span><h2>Pacing</h2><p>Watch covers, turns, upcoming demand, and section balance.</p></div></header>
+          <div class="pacing-grid"><div class="data-panel"><h3>15-minute cover outlook</h3><div id="pacing-chart" class="pacing-chart"></div></div><div class="data-panel"><h3>Server balance</h3><div id="pacing-servers"></div></div><div class="data-panel"><h3>Operational alerts</h3><div id="pacing-alerts"></div></div><div class="data-panel rotation-setup"><div class="panel-heading"><div><span class="eyebrow">Service setup</span><h3>Server rotation</h3></div><button class="primary compact" id="save-rotation-btn" type="button">Save rotation</button></div><p>Today’s published TeamSheet is preselected. Adjust the list before service if needed.</p><div id="rotation-options"></div><button class="danger" id="close-service-btn" type="button">Close service</button></div></div>
+        </section>
+
+        <section class="workspace list-workspace" id="layouts-view" data-workspace="layouts">
+          <header class="workspace-heading"><div><span class="eyebrow">Draft and publish</span><h2>Layouts &amp; settings</h2><p>Published layouts are immutable and pinned when a service opens.</p></div><button class="primary" id="new-layout-btn" type="button">New layout</button></header>
+          <div class="layout-shell">
+            <aside class="layout-list panel" id="layout-list"></aside>
+            <section class="layout-editor panel">
+              <div class="editor-header">
+                <label><span>Layout name</span><input id="layout-name" placeholder="Main dining room" /></label>
+                <div class="editor-actions"><button class="secondary" id="add-table-btn" type="button">Add table</button><button class="secondary" id="add-text-block-btn" type="button">Add text block</button><button class="secondary" id="save-layout-btn" type="button">Save draft</button><button class="primary" id="publish-layout-btn" type="button">Publish</button></div>
+              </div>
+              <div class="editor-tools">
+                <div class="tool-group"><strong><span id="selected-table-label">Selected table</span><button class="secondary compact" id="duplicate-table-btn" type="button">Duplicate table</button></strong><label>Number<input id="table-number" maxlength="20" placeholder="Select table" /></label><label>Display label<input id="table-label" maxlength="60" placeholder="Select table" /></label><label>Shape<select id="table-shape"><option>ROUND</option><option>SQUARE</option><option>RECTANGLE</option><option>BOOTH</option><option>BAR</option></select></label><label>Capacity<input id="table-capacity" type="number" min="1" max="40" value="4" /></label></div>
+                <div class="tool-group"><strong>Main floor</strong><label>Name<input id="area-name" maxlength="80" value="Main dining" /></label><label>Shape<select id="area-shape"><option value="RECTANGLE">Rectangle</option><option value="ROUNDED">Rounded</option><option value="CIRCLE">Circle</option></select></label><label>Width<input id="area-width" type="number" min="160" max="5000" step="12" /></label><label>Height<input id="area-height" type="number" min="160" max="5000" step="12" /></label></div>
+                <div class="tool-group text-block-tools"><strong>Selected text block</strong><label>Text<input id="fixture-text" maxlength="120" placeholder="Select text block" /></label></div>
+                <span class="editor-hint">Drag empty floor space to select multiple tables, then drag any selected table to move the group. Ctrl/Cmd-click toggles tables; Ctrl/Cmd+C and Ctrl/Cmd+V copy and paste one table.</span>
+              </div>
+              <div class="editor-viewport"><div class="floor-canvas editor-canvas" id="editor-canvas"></div></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="party-dialog">
+      <form method="dialog" id="party-form">
+        <div class="dialog-header"><div><span class="eyebrow" id="party-dialog-eyebrow">Walk-in</span><h2 id="party-dialog-title">Add party</h2></div><button class="icon-btn" value="cancel" aria-label="Close">×</button></div>
+        <input id="party-source" type="hidden" />
+        <div class="form-grid">
+          <label class="wide"><span>Guest name</span><input id="party-name" maxlength="120" required /></label>
+          <label><span>Party size</span><input id="party-size" type="number" min="1" max="40" value="2" required /></label>
+          <label><span>Quoted wait</span><div class="input-suffix"><input id="party-quote" type="number" min="0" max="480" /><span>min</span></div></label>
+          <label><span>Phone</span><input id="party-phone" type="tel" maxlength="32" /></label>
+          <label id="reservation-time-field"><span>Reservation time</span><input id="party-reservation-at" type="datetime-local" /></label>
+          <label class="check-label wide"><input id="party-sms-consent" type="checkbox" /><span>Guest consents to transactional seating messages</span></label>
+          <label class="wide"><span>Notes and accessibility needs</span><textarea id="party-notes" maxlength="1000"></textarea></label>
+        </div>
+        <div class="dialog-actions"><button class="secondary" value="cancel">Cancel</button><button class="primary" id="save-party-btn" value="default">Save party</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="seat-dialog">
+      <form method="dialog" id="seat-form">
+        <div class="dialog-header"><div><span class="eyebrow">AGM confirmation</span><h2 id="seat-dialog-title">Seat party</h2></div><button class="icon-btn" value="cancel" aria-label="Close">×</button></div>
+        <p id="seat-summary"></p>
+        <label><span>Party</span><select id="seat-party"></select></label>
+        <label><span>Table</span><select id="seat-table"></select></label>
+        <label><span>Server</span><select id="seat-server"><option value="">Unassigned</option></select></label>
+        <div class="dialog-actions"><button class="secondary" value="cancel">Cancel</button><button class="primary" id="confirm-seat-btn" value="default">Confirm seating</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="service-dialog">
+      <form method="dialog" id="service-form">
+        <div class="dialog-header"><div><span class="eyebrow">Start host operations</span><h2>Open service</h2></div><button class="icon-btn" value="cancel" aria-label="Close">×</button></div>
+        <label><span>Published layout</span><select id="service-layout" required></select></label>
+        <label><span>Service name</span><input id="service-name" value="Dinner" required /></label>
+        <div class="form-grid"><label><span>Starts</span><input id="service-start" type="time" value="16:00" /></label><label><span>Ends</span><input id="service-end" type="time" value="23:00" /></label></div>
+        <div class="dialog-actions"><button class="secondary" value="cancel">Cancel</button><button class="primary" id="confirm-service-btn" value="default">Open service</button></div>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+    <script src="/static/agm-floor.js?v=20260810g"></script>
+  </body>
+</html>

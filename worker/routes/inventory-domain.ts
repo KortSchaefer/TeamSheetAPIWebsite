@@ -1378,12 +1378,391 @@ async function csvPreview(request:Request,bindings:RuntimeBindings,forImport=fal
   try{await bindings.database.batch(statements)}catch(error){if(error instanceof Error&&/UNIQUE/iu.test(error.message))return apiError(request,409,"This purchase order CSV or vendor reference was imported by another request.");throw error}return jsonResponse(request,await serializePurchaseOrder(bindings.database,orderId),{status:201});
 }
 
+function easyNormalize(value: unknown): string {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/gu, " ").trim().replace(/\s+/gu, " ");
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (isObject(value)) {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function easyData(database: D1Database): Promise<{
+  items: JsonObject[];
+  locations: JsonObject[];
+  vendors: JsonObject[];
+  balances: JsonObject[];
+  vendorItems: JsonObject[];
+  ingredients: JsonObject[];
+}> {
+  const [items, locations, vendors, balances, vendorItems, ingredients] = await database.batch([
+    database.prepare(`SELECT id,ingredient_id,name,category,sku,base_unit,purchase_unit,
+      purchase_to_base,default_location_id,cost_cents,shelf_life_days,active,created_at,updated_at
+      FROM inventory_items WHERE active=1 ORDER BY category,name`),
+    database.prepare("SELECT id,name,description,active FROM inventory_locations WHERE active=1 ORDER BY name"),
+    database.prepare(`SELECT id,name,contact_name,email,phone,lead_time_days,active,created_at,updated_at
+      FROM inventory_vendors WHERE active=1 ORDER BY name`),
+    database.prepare(`SELECT id,inventory_item_id,location_id,quantity_on_hand,minimum_quantity,
+      par_quantity,maximum_quantity,planning_active FROM inventory_balances`),
+    database.prepare(`SELECT vi.id,vi.vendor_id,vi.inventory_item_id,vi.vendor_sku,vi.unit_price_cents,
+      vi.pack_quantity,vi.preferred,v.name AS vendor_name FROM inventory_vendor_items vi
+      LEFT JOIN inventory_vendors v ON v.id=vi.vendor_id WHERE vi.preferred=1`),
+    database.prepare(`SELECT id,external_id,name,normalized_name,category,unit,active
+      FROM ingredients WHERE active=1 ORDER BY name`),
+  ]);
+  return {
+    items: items.results as JsonObject[],
+    locations: locations.results as JsonObject[],
+    vendors: vendors.results as JsonObject[],
+    balances: balances.results as JsonObject[],
+    vendorItems: vendorItems.results as JsonObject[],
+    ingredients: ingredients.results as JsonObject[],
+  };
+}
+
+async function easyBootstrap(request: Request, url: URL, bindings: RuntimeBindings): Promise<Response> {
+  const auth = await requireManager(request, bindings);
+  if (auth.response !== null) return auth.response;
+  const locationId = numberValue(url.searchParams.get("location_id"));
+  if (locationId <= 0) return apiError(request, 422, "location_id is required");
+  const data = await easyData(bindings.database);
+  const location = data.locations.find((row) => numberValue(row.id) === locationId);
+  if (!location) return apiError(request, 404, "Inventory location not found");
+  const balances = new Map(data.balances.filter((row) => numberValue(row.location_id) === locationId)
+    .map((row) => [numberValue(row.inventory_item_id), row]));
+  const preferred = new Map(data.vendorItems.map((row) => [numberValue(row.inventory_item_id), row]));
+  const ingredients = new Map(data.ingredients.map((row) => [numberValue(row.id), row]));
+  const rows = data.items.map((item) => {
+    const itemId = numberValue(item.id);
+    const balance = balances.get(itemId);
+    const vendor = preferred.get(itemId);
+    const packQuantity = numberValue(vendor?.pack_quantity ?? item.purchase_to_base, 1);
+    const packCost = numberValue(vendor?.unit_price_cents, Math.round(numberValue(item.cost_cents) * packQuantity));
+    return {
+      client_row_id: `item-${itemId}`,
+      action: balance ? "UPDATE" : "STOCK_AT_LOCATION",
+      inventory_item_id: itemId,
+      catalog_id: ingredients.get(numberValue(item.ingredient_id))?.external_id ?? null,
+      name: item.name,
+      category: item.category,
+      sku: item.sku,
+      base_unit: item.base_unit,
+      location_id: locationId,
+      purchase_unit: item.purchase_unit ?? item.base_unit,
+      pack_quantity: packQuantity,
+      pack_cost_cents: packCost,
+      base_unit_cost_cents: numberValue(item.cost_cents),
+      opening_quantity: null,
+      minimum_quantity: numberValue(balance?.minimum_quantity),
+      par_quantity: numberValue(balance?.par_quantity),
+      maximum_quantity: balance?.maximum_quantity ?? null,
+      quantity_on_hand: numberValue(balance?.quantity_on_hand),
+      has_balance: Boolean(balance),
+      preferred_vendor_id: vendor?.vendor_id ?? null,
+      preferred_vendor_name: vendor?.vendor_name ?? null,
+      vendor_sku: vendor?.vendor_sku ?? null,
+      shelf_life_days: item.shelf_life_days,
+      updated_at: iso(String(item.updated_at)),
+    };
+  });
+  const categories = [...new Set(data.items.map((item) => item.category).filter((value): value is string => typeof value === "string"))].sort();
+  return jsonResponse(request, {
+    location_id: locationId,
+    location_name: location.name,
+    locations: data.locations.map((row) => ({ id: row.id, name: row.name, description: row.description })),
+    vendors: data.vendors.map((row) => ({ id: row.id, name: row.name, lead_time_days: row.lead_time_days })),
+    categories,
+    rows,
+  });
+}
+
+async function easyPreviewRows(database: D1Database, inputRows: JsonObject[]): Promise<JsonObject[]> {
+  const data = await easyData(database);
+  const itemById = new Map(data.items.map((row) => [numberValue(row.id), row]));
+  const locations = new Set(data.locations.map((row) => numberValue(row.id)));
+  const vendors = new Set(data.vendors.map((row) => numberValue(row.id)));
+  const balances = new Map(data.balances.map((row) => [`${row.inventory_item_id}:${row.location_id}`, row]));
+  const preferred = new Map(data.vendorItems.map((row) => [numberValue(row.inventory_item_id), row]));
+  const skuMap = new Map<string, JsonObject[]>();
+  const nameMap = new Map<string, JsonObject[]>();
+  for (const item of data.items) {
+    if (typeof item.sku === "string" && item.sku.trim()) {
+      const key = item.sku.trim().toLowerCase();
+      skuMap.set(key, [...(skuMap.get(key) ?? []), item]);
+    }
+    const name = easyNormalize(item.name);
+    nameMap.set(name, [...(nameMap.get(name) ?? []), item]);
+  }
+  const ingredientByExternal = new Map(data.ingredients.filter((row) => typeof row.external_id === "string")
+    .map((row) => [String(row.external_id), row]));
+  const ingredientByName = new Map(data.ingredients.map((row) => [easyNormalize(row.name), row]));
+  const clientIds = new Set<string>();
+  const proposedSkus = new Set<string>();
+  const proposedNames = new Set<string>();
+  const proposedTargets = new Set<string>();
+
+  return inputRows.map((input, index) => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const clientRowId = typeof input.client_row_id === "string" ? input.client_row_id.trim() : "";
+    if (!clientRowId) errors.push("Client row ID is required.");
+    else if (clientIds.has(clientRowId)) errors.push("Client row IDs must be unique.");
+    clientIds.add(clientRowId);
+    let item = input.inventory_item_id === null || input.inventory_item_id === undefined
+      ? undefined : itemById.get(numberValue(input.inventory_item_id));
+    if (input.inventory_item_id !== null && input.inventory_item_id !== undefined && !item) {
+      errors.push("Inventory item was not found or is inactive.");
+    }
+    const name = String(Object.hasOwn(input, "name") ? input.name ?? "" : item?.name ?? "").trim();
+    const sku = Object.hasOwn(input, "sku")
+      ? (typeof input.sku === "string" && input.sku.trim() ? input.sku.trim() : null)
+      : (typeof item?.sku === "string" ? item.sku : null);
+    if (!item) {
+      let candidates = sku ? (skuMap.get(sku.toLowerCase()) ?? []) : [];
+      if (!candidates.length && name) candidates = nameMap.get(easyNormalize(name)) ?? [];
+      if (candidates.length === 1) {
+        item = candidates[0];
+        warnings.push(`Matched existing inventory item #${item.id}.`);
+      } else if (candidates.length > 1) errors.push("Multiple existing items match this row; choose one explicitly.");
+    }
+    if (!name) errors.push("Item name is required.");
+    const locationId = numberValue(input.location_id);
+    if (!locations.has(locationId)) errors.push("Choose an active inventory location.");
+    const vendorId = input.preferred_vendor_id === null || input.preferred_vendor_id === undefined
+      ? null : numberValue(input.preferred_vendor_id);
+    if (vendorId !== null && !vendors.has(vendorId)) errors.push("Preferred vendor was not found or is inactive.");
+    const itemId = item ? numberValue(item.id) : null;
+    const currentVendor = itemId === null ? undefined : preferred.get(itemId);
+    const baseUnit = String(Object.hasOwn(input, "base_unit") ? input.base_unit ?? "" : item?.base_unit ?? "").trim();
+    if (!baseUnit) errors.push("Count unit is required.");
+    const purchaseUnit = Object.hasOwn(input, "purchase_unit")
+      ? (typeof input.purchase_unit === "string" && input.purchase_unit.trim() ? input.purchase_unit.trim() : null)
+      : (typeof item?.purchase_unit === "string" ? item.purchase_unit : (item ? null : baseUnit));
+    const packQuantity = numberValue(input.pack_quantity, numberValue(currentVendor?.pack_quantity ?? item?.purchase_to_base, 1));
+    if (packQuantity <= 0) errors.push("Units per pack must be greater than zero.");
+    const packCost = input.pack_cost_cents === null || input.pack_cost_cents === undefined
+      ? numberValue(currentVendor?.unit_price_cents, Math.round(numberValue(item?.cost_cents) * packQuantity))
+      : Math.trunc(numberValue(input.pack_cost_cents, -1));
+    if (packCost < 0) errors.push("Pack cost cannot be negative.");
+    const baseCost = packQuantity > 0 ? Math.round(packCost / packQuantity) : 0;
+    const opening = input.opening_quantity === null || input.opening_quantity === undefined ? null : numberValue(input.opening_quantity, -1);
+    const balance = itemId === null ? undefined : balances.get(`${itemId}:${locationId}`);
+    const minimum = input.minimum_quantity === null || input.minimum_quantity === undefined
+      ? numberValue(balance?.minimum_quantity) : numberValue(input.minimum_quantity, -1);
+    const par = input.par_quantity === null || input.par_quantity === undefined
+      ? numberValue(balance?.par_quantity) : numberValue(input.par_quantity, -1);
+    const maximum = Object.hasOwn(input, "maximum_quantity")
+      ? (input.maximum_quantity === null ? null : numberValue(input.maximum_quantity, -1))
+      : (balance?.maximum_quantity === null || balance?.maximum_quantity === undefined
+        ? null : numberValue(balance.maximum_quantity, -1));
+    if (minimum < 0 || par < 0 || (opening !== null && opening < 0) || (maximum !== null && maximum < 0)) errors.push("Inventory quantities cannot be negative.");
+    if (maximum !== null && maximum < Math.max(minimum, par)) errors.push("Maximum quantity must be at least the minimum and par quantities.");
+    if (opening !== null && opening > 0 && balance) errors.push("Opening quantity is only allowed for a new item/location balance.");
+    const action = itemId === null ? "CREATE" : balance ? "UPDATE" : "STOCK_AT_LOCATION";
+    if (sku) {
+      const key = sku.toLowerCase();
+      if (proposedSkus.has(key) && itemId === null) errors.push("SKU is duplicated in this batch.");
+      proposedSkus.add(key);
+    }
+    const normalizedName = easyNormalize(name);
+    if (itemId === null && normalizedName) {
+      if (proposedNames.has(normalizedName)) errors.push("Item name is duplicated in this batch.");
+      proposedNames.add(normalizedName);
+    }
+    if (itemId !== null && locationId > 0) {
+      const target = `${itemId}:${locationId}`;
+      if (proposedTargets.has(target)) errors.push("The same item and location appears more than once in this batch.");
+      proposedTargets.add(target);
+    }
+    let catalogId = typeof input.catalog_id === "string" && input.catalog_id ? input.catalog_id : null;
+    let catalogIngredient = catalogId ? ingredientByExternal.get(catalogId) : undefined;
+    if (!catalogIngredient && catalogId === null && itemId === null) {
+      const exact = ingredientByName.get(normalizedName);
+      if (exact && typeof exact.external_id === "string") {
+        catalogIngredient = exact;
+        catalogId = exact.external_id;
+        warnings.push(`Matched catalog item ${String(exact.name)}.`);
+      }
+    }
+    if (catalogId && !catalogIngredient) errors.push("Catalog ingredient was not found or is inactive.");
+    const exactIngredient = catalogIngredient ?? ingredientByName.get(easyNormalize(name));
+    const matches: JsonObject[] = data.items.filter((candidate) => numberValue(candidate.id) !== itemId && normalizedName &&
+      (easyNormalize(candidate.name).includes(normalizedName) || normalizedName.includes(easyNormalize(candidate.name))))
+      .slice(0, 5).map((candidate) => ({ source: "inventory", id: candidate.id, name: candidate.name, sku: candidate.sku }));
+    if (itemId === null && matches.length < 5) {
+      matches.push(...data.ingredients.filter((candidate) => normalizedName &&
+        (easyNormalize(candidate.name).includes(normalizedName) || normalizedName.includes(easyNormalize(candidate.name))))
+        .slice(0, 5 - matches.length).map((candidate) => ({ source: "catalog", id: candidate.external_id, name: candidate.name, sku: null })));
+    }
+    return {
+      row_number: index + 1,
+      client_row_id: clientRowId,
+      action,
+      inventory_item_id: itemId,
+      ingredient_id: item?.ingredient_id ?? exactIngredient?.id ?? null,
+      catalog_id: catalogId,
+      name,
+      category: Object.hasOwn(input, "category") ? input.category ?? null : item?.category ?? null,
+      sku,
+      base_unit: baseUnit,
+      location_id: locationId,
+      purchase_unit: purchaseUnit,
+      pack_quantity: packQuantity,
+      pack_cost_cents: packCost,
+      base_unit_cost_cents: baseCost,
+      opening_quantity: opening,
+      minimum_quantity: minimum,
+      par_quantity: par,
+      maximum_quantity: maximum,
+      preferred_vendor_id: input.preferred_vendor_id !== undefined ? vendorId : currentVendor?.vendor_id ?? null,
+      vendor_sku: input.vendor_sku !== undefined ? input.vendor_sku : currentVendor?.vendor_sku ?? null,
+      shelf_life_days: input.shelf_life_days !== undefined ? input.shelf_life_days : item?.shelf_life_days ?? null,
+      balance_id: balance?.id ?? null,
+      has_balance: Boolean(balance),
+      quantity_on_hand: numberValue(balance?.quantity_on_hand),
+      match_candidates: matches,
+      warnings,
+      errors,
+    };
+  });
+}
+
+async function easyPreview(request: Request, bindings: RuntimeBindings): Promise<Response> {
+  const auth = await requireManager(request, bindings);
+  if (auth.response !== null) return auth.response;
+  const body = await jsonBody(request);
+  if (body instanceof Response) return body;
+  const rows = Array.isArray(body.rows) ? body.rows.filter(isObject) : [];
+  if (!rows.length || rows.length > 250) return apiError(request, 422, "Easy Inventory Manager requires between 1 and 250 rows");
+  const preview = await easyPreviewRows(bindings.database, rows);
+  return jsonResponse(request, { valid: preview.every((row) => Array.isArray(row.errors) && row.errors.length === 0), row_count: preview.length, rows: preview });
+}
+
+async function easyCommit(request: Request, bindings: RuntimeBindings): Promise<Response> {
+  const auth = await requireManager(request, bindings);
+  if (auth.response !== null || auth.user === null) return auth.response ?? apiError(request, 401, "Could not validate credentials");
+  const body = await jsonBody(request);
+  if (body instanceof Response) return body;
+  const key = typeof body.idempotency_key === "string" ? body.idempotency_key.trim() : "";
+  const rows = Array.isArray(body.rows) ? body.rows.filter(isObject) : [];
+  if (key.length < 8 || key.length > 100) return apiError(request, 422, "idempotency_key must contain 8 to 100 characters");
+  if (!rows.length || rows.length > 250) return apiError(request, 422, "Easy Inventory Manager requires between 1 and 250 rows");
+  const requestHash = await sha256Hex(stableJson(body));
+  const existing = await bindings.database.prepare(`SELECT request_hash,response_json FROM inventory_easy_manager_commits
+    WHERE idempotency_key=?`).bind(key).first<{ request_hash: string; response_json: string }>();
+  if (existing) {
+    if (existing.request_hash !== requestHash) return apiError(request, 409, "Idempotency key was already used with different inventory data");
+    return jsonResponse(request, JSON.parse(existing.response_json), { status: 201 });
+  }
+  const preview = await easyPreviewRows(bindings.database, rows);
+  const invalid = preview.filter((row) => Array.isArray(row.errors) && row.errors.length > 0);
+  if (invalid.length) return jsonResponse(request, { detail: { message: "Resolve invalid Easy Inventory Manager rows", rows: invalid } }, { status: 400 });
+
+  let createdCount = 0;
+  let updatedCount = 0;
+  let stockedCount = 0;
+  const movementIds: number[] = [];
+  const writeRows = preview.map((row) => {
+    const isCreate = row.action === "CREATE";
+    const itemId = isCreate ? randomId() : numberValue(row.inventory_item_id);
+    let ingredientId = row.ingredient_id === null || row.ingredient_id === undefined ? null : numberValue(row.ingredient_id);
+    const opening = numberValue(row.opening_quantity);
+    const createIngredient = opening > 0 && ingredientId === null;
+    if (createIngredient) ingredientId = randomId();
+    const balanceId = row.balance_id === null || row.balance_id === undefined ? randomId() : numberValue(row.balance_id);
+    const movementId = opening > 0 ? randomId() : null;
+    if (movementId !== null) movementIds.push(movementId);
+    if (isCreate) createdCount += 1; else updatedCount += 1;
+    if (!row.has_balance) stockedCount += 1;
+    return { ...row, item_id: itemId, ingredient_id: ingredientId, create_ingredient: createIngredient,
+      balance_id: balanceId, vendor_item_id: randomId(), movement_id: movementId,
+      source_event_key: `easy:${key}:${row.client_row_id}` };
+  });
+  const responseRows = writeRows.map((row, index) => ({ client_row_id: preview[index].client_row_id, action: preview[index].action,
+    inventory_item_id: row.item_id, balance_id: row.balance_id, opening_movement_id: row.movement_id }));
+  const response = { idempotency_key: key, created_count: createdCount, updated_count: updatedCount,
+    stocked_count: stockedCount, opening_movement_ids: movementIds, rows: responseRows };
+  const encoded = JSON.stringify(writeRows);
+  const statements = [
+    bindings.database.prepare(`INSERT INTO ingredients
+      (id,name,unit,active,external_id,normalized_name,category,stage,added_to_complete_lineage)
+      SELECT json_extract(value,'$.ingredient_id'),json_extract(value,'$.name'),json_extract(value,'$.base_unit'),1,
+        'inventory-item-'||json_extract(value,'$.item_id'),LOWER(json_extract(value,'$.name')),
+        json_extract(value,'$.category'),'raw_material',0 FROM json_each(?)
+      WHERE json_extract(value,'$.create_ingredient')=1`).bind(encoded),
+    bindings.database.prepare(`INSERT INTO inventory_items
+      (id,ingredient_id,name,category,sku,base_unit,purchase_unit,purchase_to_base,default_location_id,cost_cents,shelf_life_days,active,created_at,updated_at)
+      SELECT json_extract(value,'$.item_id'),json_extract(value,'$.ingredient_id'),json_extract(value,'$.name'),
+        json_extract(value,'$.category'),json_extract(value,'$.sku'),json_extract(value,'$.base_unit'),
+        json_extract(value,'$.purchase_unit'),json_extract(value,'$.pack_quantity'),json_extract(value,'$.location_id'),
+        json_extract(value,'$.base_unit_cost_cents'),json_extract(value,'$.shelf_life_days'),1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP
+      FROM json_each(?) WHERE json_extract(value,'$.action')='CREATE'`).bind(encoded),
+    bindings.database.prepare(`WITH input AS (SELECT value FROM json_each(?)) UPDATE inventory_items SET
+      ingredient_id=COALESCE(ingredient_id,(SELECT json_extract(value,'$.ingredient_id') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id)),
+      name=(SELECT json_extract(value,'$.name') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      category=(SELECT json_extract(value,'$.category') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      sku=(SELECT json_extract(value,'$.sku') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      base_unit=(SELECT json_extract(value,'$.base_unit') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      purchase_unit=(SELECT json_extract(value,'$.purchase_unit') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      purchase_to_base=(SELECT json_extract(value,'$.pack_quantity') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      cost_cents=(SELECT json_extract(value,'$.base_unit_cost_cents') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      shelf_life_days=(SELECT json_extract(value,'$.shelf_life_days') FROM input WHERE json_extract(value,'$.item_id')=inventory_items.id),
+      updated_at=CURRENT_TIMESTAMP WHERE id IN (SELECT json_extract(value,'$.item_id') FROM input WHERE json_extract(value,'$.action')!='CREATE')`).bind(encoded),
+    bindings.database.prepare(`INSERT INTO inventory_balances
+      (id,inventory_item_id,location_id,quantity_on_hand,minimum_quantity,par_quantity,maximum_quantity,planning_active,created_at,updated_at)
+      SELECT json_extract(value,'$.balance_id'),json_extract(value,'$.item_id'),json_extract(value,'$.location_id'),
+        COALESCE(json_extract(value,'$.opening_quantity'),0),json_extract(value,'$.minimum_quantity'),
+        json_extract(value,'$.par_quantity'),json_extract(value,'$.maximum_quantity'),1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP
+      FROM json_each(?) WHERE 1 ON CONFLICT(inventory_item_id,location_id) DO UPDATE SET
+        minimum_quantity=excluded.minimum_quantity,par_quantity=excluded.par_quantity,maximum_quantity=excluded.maximum_quantity,
+        updated_at=CURRENT_TIMESTAMP`).bind(encoded),
+    bindings.database.prepare(`UPDATE inventory_vendor_items SET preferred=0,updated_at=CURRENT_TIMESTAMP
+      WHERE inventory_item_id IN (SELECT json_extract(value,'$.item_id') FROM json_each(?))`).bind(encoded),
+    bindings.database.prepare(`INSERT INTO inventory_vendor_items
+      (id,vendor_id,inventory_item_id,vendor_sku,unit_price_cents,pack_quantity,preferred,created_at,updated_at)
+      SELECT json_extract(value,'$.vendor_item_id'),json_extract(value,'$.preferred_vendor_id'),json_extract(value,'$.item_id'),
+        json_extract(value,'$.vendor_sku'),json_extract(value,'$.pack_cost_cents'),json_extract(value,'$.pack_quantity'),1,
+        CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM json_each(?) WHERE json_extract(value,'$.preferred_vendor_id') IS NOT NULL
+      AND 1 ON CONFLICT(vendor_id,inventory_item_id) DO UPDATE SET vendor_sku=excluded.vendor_sku,
+        unit_price_cents=excluded.unit_price_cents,pack_quantity=excluded.pack_quantity,preferred=1,updated_at=CURRENT_TIMESTAMP`).bind(encoded),
+    bindings.database.prepare(`INSERT INTO stock_movements
+      (id,ingredient_id,inventory_item_id,location_id,quantity_change,reason,source_event_key,created_by_user_id,notes,created_at,updated_at)
+      SELECT json_extract(value,'$.movement_id'),json_extract(value,'$.ingredient_id'),json_extract(value,'$.item_id'),
+        json_extract(value,'$.location_id'),json_extract(value,'$.opening_quantity'),'EASY_MANAGER_OPENING_BALANCE',
+        json_extract(value,'$.source_event_key'),?,'Opening quantity from Easy Inventory Manager',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP
+      FROM json_each(?) WHERE COALESCE(json_extract(value,'$.opening_quantity'),0)>0`).bind(auth.user.id, encoded),
+    bindings.database.prepare(`INSERT INTO inventory_easy_manager_commits
+      (id,idempotency_key,request_hash,response_json,created_by_user_id,created_at,updated_at)
+      VALUES(?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`).bind(randomId(), key, requestHash, JSON.stringify(response), auth.user.id),
+  ];
+  try {
+    await bindings.database.batch(statements);
+  } catch (error) {
+    if (error instanceof Error && /unique|constraint|foreign key/iu.test(error.message)) {
+      return apiError(request, 409, "Inventory changed while this Easy Inventory Manager batch was saving");
+    }
+    throw error;
+  }
+  return jsonResponse(request, response, { status: 201 });
+}
+
 export async function routeInventoryDomain(
   request: Request,
   url: URL,
   bindings: RuntimeBindings,
 ): Promise<Response | null> {
   const method = request.method;
+  if (url.pathname === "/inventory/easy-manager") return method === "GET" ? easyBootstrap(request, url, bindings) : methodNotAllowed(request, "GET");
+  if (url.pathname === "/inventory/easy-manager/preview") return method === "POST" ? easyPreview(request, bindings) : methodNotAllowed(request, "POST");
+  if (url.pathname === "/inventory/easy-manager/commit") return method === "POST" ? easyCommit(request, bindings) : methodNotAllowed(request, "POST");
   if (url.pathname === "/inventory/settings/targets") return planningSettings(request, url, bindings);
   if (url.pathname === "/inventory/purchase-order-planner") return method === "GET" ? purchasePlanner(request, url, bindings) : methodNotAllowed(request, "GET");
   if (url.pathname === "/inventory/receiving") return method === "POST" ? receiveOrder(request, bindings) : methodNotAllowed(request, "POST");

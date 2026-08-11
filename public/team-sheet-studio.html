@@ -558,15 +558,19 @@
         </div>
         <div class="workspace-actions">
           <button id="auto-assign-btn" class="secondary-action" type="button">Auto-assign</button>
-          <button id="remove-servers-btn" class="danger-action" type="button">Clear assignments</button>
-          <details class="action-menu" id="roster-menu">
-            <summary>Roster</summary>
-            <div class="action-menu-popover">
+          <details class="action-menu" id="workspace-menu">
+            <summary>Tools</summary>
+            <div class="action-menu-popover" aria-label="Workspace tools">
+              <span class="action-menu-label">Floor setup</span>
+              <button id="change-teamsheet-btn" type="button">Configure floor</button>
+              <div class="action-menu-divider" role="separator"></div>
+              <span class="action-menu-label">Roster data</span>
               <button id="import-daily-roster-btn" type="button">Upload daily roster</button>
               <button id="import-btn" type="button">Import employee CSV</button>
+              <div class="action-menu-divider server-only-action" role="separator"></div>
+              <button id="remove-servers-btn" class="menu-danger server-only-action" type="button">Clear all assignments</button>
             </div>
           </details>
-          <button id="change-teamsheet-btn" class="secondary-action" type="button">Configure floor</button>
           <input type="file" id="csv-input" accept=".csv" hidden />
           <input type="file" id="daily-roster-input" accept=".csv" hidden />
         </div>
@@ -583,7 +587,6 @@
           <pre id="json-content"></pre>
           <div class="panel-actions sticky-actions">
             <button id="copy-json-btn" class="secondary-action" type="button">Copy JSON</button>
-            <button id="close-json-footer-btn" class="primary-action" type="button">Done</button>
           </div>
         </div>
       </div>
@@ -593,20 +596,25 @@
             <div><span class="studio-eyebrow">Layout and defaults</span><h2 id="section-panel-title">Configure floor</h2></div>
             <button id="close-section-panel" class="icon-action" type="button" aria-label="Close floor configuration">×</button>
           </div>
-          <div class="preset-toolbar">
-            <div class="preset-field">
-              <label for="preset-select">Preset</label>
-              <select id="preset-select" class="compact-input"></select>
+          <details class="floor-disclosure">
+            <summary>
+              <span><strong>Floor presets</strong><small>Reuse a saved section layout</small></span>
+            </summary>
+            <div class="preset-toolbar">
+              <div class="preset-field">
+                <label for="preset-select">Preset</label>
+                <select id="preset-select" class="compact-input"></select>
+              </div>
+              <div class="preset-field">
+                <label for="preset-name">Preset name</label>
+                <input id="preset-name" class="compact-input" placeholder="Weekday Floor" />
+              </div>
+              <div class="preset-actions">
+                <button id="load-preset" class="secondary-action" type="button">Load</button>
+                <button id="save-preset" class="secondary-action" type="button">Save as preset</button>
+              </div>
             </div>
-            <div class="preset-field">
-              <label for="preset-name">Preset name</label>
-              <input id="preset-name" class="compact-input" placeholder="Weekday Floor" />
-            </div>
-            <div class="preset-actions">
-              <button id="load-preset" class="secondary-action" type="button">Load preset</button>
-              <button id="save-preset" class="secondary-action" type="button">Save preset</button>
-            </div>
-          </div>
+          </details>
           <div class="team-rules-bar">
             <div>
               <span class="studio-eyebrow">Server placement rule</span>
@@ -614,7 +622,6 @@
               <p>Servers below the minimum are flagged for a two-table section.</p>
             </div>
             <label for="blast-threshold-input"><span>Minimum</span><input id="blast-threshold-input" class="compact-input" type="number" min="0" max="250" step="1" value="98" /><b>%</b></label>
-            <button id="save-blast-threshold-btn" class="secondary-action" type="button">Save requirement</button>
           </div>
           <div class="floor-table-wrap table-scroll">
             <table class="panel-table">
@@ -624,7 +631,7 @@
           </div>
           <div class="panel-actions sticky-actions">
             <button id="add-section-row" class="secondary-action" type="button">Add section</button>
-            <button id="save-sections" class="primary-action" type="button">Save sections</button>
+            <button id="save-sections" class="primary-action" type="button">Save floor</button>
           </div>
         </div>
       </div>
@@ -717,7 +724,6 @@
       const jsonOutput = document.getElementById('json-output');
       const jsonContent = document.getElementById('json-content');
       const closeJsonBtn = document.getElementById('close-json-btn');
-      const closeJsonFooterBtn = document.getElementById('close-json-footer-btn');
       const copyJsonBtn = document.getElementById('copy-json-btn');
       const saveStateEl = document.getElementById('save-state');
       const workspaceStatusEl = document.getElementById('workspace-status');
@@ -732,7 +738,6 @@
       const assignmentProgressBar = document.getElementById('assignment-progress-bar');
       const blastThresholdLabel = document.getElementById('blast-threshold-label');
       const blastThresholdInput = document.getElementById('blast-threshold-input');
-      const saveBlastThresholdBtn = document.getElementById('save-blast-threshold-btn');
       const toastRegion = document.getElementById('toast-region');
       const toggleModeBtn = document.getElementById('toggle-mode-btn');
       const registerFields = document.getElementById('register-fields');
@@ -2287,14 +2292,14 @@
           hostsBoard.style.display = 'none';
           autoAssignBtn.disabled = false;
           autoAssignBtn.classList.remove('hidden');
-          removeServersBtn?.classList.remove('hidden');
+          document.querySelectorAll('.server-only-action').forEach((item) => item.classList.remove('hidden'));
           renderServers();
         } else {
           serversBoard.style.display = 'none';
           hostsBoard.style.display = 'grid';
           autoAssignBtn.disabled = true;
           autoAssignBtn.classList.add('hidden');
-          removeServersBtn?.classList.add('hidden');
+          document.querySelectorAll('.server-only-action').forEach((item) => item.classList.add('hidden'));
           renderHosts();
           renderSas();
         }
@@ -2403,6 +2408,7 @@
       if (removeServersBtn) {
         removeServersBtn.addEventListener('click', () => {
           if (currentMode !== 'servers') return;
+          document.getElementById('workspace-menu')?.removeAttribute('open');
           const assignedCount = document.querySelectorAll('.dropzone[data-accept-type="server"][data-item]').length;
           if (assignedCount && !window.confirm(`Clear all ${assignedCount} server assignments?`)) return;
           removeAllServers();
@@ -2418,12 +2424,12 @@
         renderSas();
       });
       importBtn.addEventListener('click', () => {
-        document.getElementById('roster-menu')?.removeAttribute('open');
+        document.getElementById('workspace-menu')?.removeAttribute('open');
         csvInput.click();
       });
       if (importDailyRosterBtn) {
         importDailyRosterBtn.addEventListener('click', () => {
-          document.getElementById('roster-menu')?.removeAttribute('open');
+          document.getElementById('workspace-menu')?.removeAttribute('open');
           dailyRosterInput?.click();
         });
       }
@@ -2501,7 +2507,6 @@
         });
       }
       closeJsonBtn?.addEventListener('click', closeJsonOutput);
-      closeJsonFooterBtn?.addEventListener('click', closeJsonOutput);
       jsonOutput?.addEventListener('click', (event) => {
         if (event.target === jsonOutput) closeJsonOutput();
       });
@@ -2515,6 +2520,7 @@
       });
       if (changeTeamsheetBtn) {
         changeTeamsheetBtn.addEventListener('click', () => {
+          document.getElementById('workspace-menu')?.removeAttribute('open');
           openSectionPanel('Configure floor');
         });
       }
@@ -2559,28 +2565,25 @@
         if (blastThresholdLabel) blastThresholdLabel.textContent = `Minimum ${blastThreshold}%`;
         renderServers();
       });
-      saveBlastThresholdBtn?.addEventListener('click', async () => {
-        saveBlastThresholdBtn.disabled = true;
-        try {
-          await saveBlastThreshold();
-          showToast(`BLAST minimum saved at ${blastThreshold}%.`, 'success');
-        } catch (err) {
-          console.error(err);
-          showToast(err.message || 'Unable to save the BLAST requirement.', 'error');
-        } finally {
-          saveBlastThresholdBtn.disabled = false;
-        }
-      });
-
       if (saveSectionsBtn) {
         saveSectionsBtn.addEventListener('click', async () => {
+          saveSectionsBtn.disabled = true;
           try {
             await saveSections();
+            try {
+              await saveBlastThreshold();
+            } catch (err) {
+              console.error(err);
+              showToast(err.message || 'Sections were saved, but the BLAST requirement was not.', 'error');
+              return;
+            }
             closeSectionPanel();
-            showToast('Floor sections saved.', 'success');
+            showToast('Floor configuration saved.', 'success');
           } catch (err) {
             console.error(err);
-            showToast(err.message || 'Unable to save sections.', 'error');
+            showToast(err.message || 'Unable to save the floor configuration.', 'error');
+          } finally {
+            saveSectionsBtn.disabled = false;
           }
         });
       }
@@ -2624,6 +2627,12 @@
         closeSectionPanel();
         clearRosterSelection();
         document.querySelectorAll('.action-menu[open]').forEach((menu) => menu.removeAttribute('open'));
+      });
+
+      document.addEventListener('click', (event) => {
+        document.querySelectorAll('.action-menu[open]').forEach((menu) => {
+          if (!menu.contains(event.target)) menu.removeAttribute('open');
+        });
       });
 
       csvInput.addEventListener('change', (event) => {

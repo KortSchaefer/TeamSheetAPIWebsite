@@ -757,6 +757,20 @@ class InventoryItem(Base, TimestampMixin):
     vendor_items = relationship("VendorItem", back_populates="item", cascade="all, delete-orphan")
 
 
+class InventoryEasyManagerCommit(Base, TimestampMixin):
+    __tablename__ = "inventory_easy_manager_commits"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    idempotency_key: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
+    request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    response_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"), nullable=False, index=True
+    )
+
+
 class InventoryBalance(Base, TimestampMixin):
     __tablename__ = "inventory_balances"
 

@@ -10,13 +10,1305 @@
       "0006_repair_pos_table_request_id",
       "0007_purchase_order_csv_import",
       "0008_inventory_planning",
-      "0009_store_blast_threshold"
+      "0009_store_blast_threshold",
+      "0010_easy_inventory_manager",
+      "0011_agm_floor"
     ],
     "sqlalchemy_models": "app/models/models.py",
     "startup_repairs": "app/database.py"
   },
-  "table_count": 57,
+  "table_count": 68,
   "tables": [
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "service_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "sequence",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "command_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(64)"
+        },
+        {
+          "default": null,
+          "name": "event_type",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(40)"
+        },
+        {
+          "default": null,
+          "name": "payload",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "actor_user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        },
+        {
+          "columns": [
+            "service_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_services"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "event_type"
+          ],
+          "name": "ix_agm_events_event_type",
+          "unique": false
+        },
+        {
+          "columns": [
+            "service_id"
+          ],
+          "name": "ix_agm_events_service_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_events",
+      "unique_constraints": [
+        [
+          "service_id",
+          "command_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "version",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "revision",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "canvas_width",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "canvas_height",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "areas",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "fixtures",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "published_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "created_by_user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "created_by_user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_stores"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_agm_layouts_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "name": "ix_agm_layouts_store_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_layouts",
+      "unique_constraints": [
+        [
+          "store_id",
+          "name",
+          "version"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "service_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "source",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(24)"
+        },
+        {
+          "default": null,
+          "name": "guest_name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "phone",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "default": null,
+          "name": "party_size",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "reservation_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "quoted_minutes",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "notes",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "TEXT"
+        },
+        {
+          "default": null,
+          "name": "sms_consent",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "table_numbers",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "server_employee_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "dining_stage",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(30)"
+        },
+        {
+          "default": null,
+          "name": "seated_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "cleared_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "revision",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "server_employee_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "employees"
+        },
+        {
+          "columns": [
+            "service_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_services"
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_stores"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "service_id"
+          ],
+          "name": "ix_agm_parties_service_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "source"
+          ],
+          "name": "ix_agm_parties_source",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_agm_parties_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "name": "ix_agm_parties_store_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_parties",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "service_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "employee_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "section_name",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(80)"
+        },
+        {
+          "default": null,
+          "name": "paused",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "turns",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "covers",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "last_sat_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "rotation_index",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "employee_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "employees"
+        },
+        {
+          "columns": [
+            "service_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_services"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "service_id"
+          ],
+          "name": "ix_agm_server_rotations_service_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_server_rotations",
+      "unique_constraints": [
+        [
+          "service_id",
+          "employee_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "layout_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "service_date",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATE"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(60)"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "starts_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(10)"
+        },
+        {
+          "default": null,
+          "name": "ends_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(10)"
+        },
+        {
+          "default": null,
+          "name": "revision",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "opened_by_user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "closed_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "layout_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_layouts"
+        },
+        {
+          "columns": [
+            "opened_by_user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_stores"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "service_date"
+          ],
+          "name": "ix_agm_services_service_date",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_agm_services_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "name": "ix_agm_services_store_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_services",
+      "unique_constraints": [
+        [
+          "store_id",
+          "service_date",
+          "name"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "party_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "template_key",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(40)"
+        },
+        {
+          "default": null,
+          "name": "recipient_phone",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(32)"
+        },
+        {
+          "default": null,
+          "name": "body",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(480)"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(24)"
+        },
+        {
+          "default": null,
+          "name": "provider_message_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "error_detail",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(255)"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "party_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_parties"
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_stores"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "party_id"
+          ],
+          "name": "ix_agm_sms_outbox_party_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "store_id"
+          ],
+          "name": "ix_agm_sms_outbox_store_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_sms_outbox",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "access_role",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "store_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_stores"
+        },
+        {
+          "columns": [
+            "user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "store_id"
+          ],
+          "name": "ix_agm_store_memberships_store_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "user_id"
+          ],
+          "name": "ix_agm_store_memberships_user_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_store_memberships",
+      "unique_constraints": [
+        [
+          "store_id",
+          "user_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "store_number",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(30)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(150)"
+        },
+        {
+          "default": null,
+          "name": "timezone",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(80)"
+        },
+        {
+          "default": null,
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "store_number"
+          ],
+          "name": "ix_agm_stores_store_number",
+          "unique": true
+        }
+      ],
+      "name": "agm_stores",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "layout_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "table_number",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "label",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(60)"
+        },
+        {
+          "default": null,
+          "name": "capacity",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "shape",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "x",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "y",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "width",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "height",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "rotation",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "area_name",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(80)"
+        },
+        {
+          "default": null,
+          "name": "section_name",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(80)"
+        },
+        {
+          "default": null,
+          "name": "combinable_with",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "layout_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_layouts"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "layout_id"
+          ],
+          "name": "ix_agm_table_definitions_layout_id",
+          "unique": false
+        }
+      ],
+      "name": "agm_table_definitions",
+      "unique_constraints": [
+        [
+          "layout_id",
+          "table_number"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "service_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "table_number",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "status",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": null,
+          "name": "party_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "revision",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "party_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_parties"
+        },
+        {
+          "columns": [
+            "service_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "agm_services"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "service_id"
+          ],
+          "name": "ix_agm_table_states_service_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_agm_table_states_status",
+          "unique": false
+        }
+      ],
+      "name": "agm_table_states",
+      "unique_constraints": [
+        [
+          "service_id",
+          "table_number"
+        ]
+      ]
+    },
     {
       "columns": [
         {
@@ -1291,6 +2583,90 @@
         }
       ],
       "name": "inventory_counts",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "idempotency_key",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "request_hash",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(64)"
+        },
+        {
+          "default": null,
+          "name": "response_json",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "TEXT"
+        },
+        {
+          "default": null,
+          "name": "created_by_user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "created_by_user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "created_by_user_id"
+          ],
+          "name": "ix_inventory_easy_manager_commits_created_by_user_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "idempotency_key"
+          ],
+          "name": "ix_inventory_easy_manager_commits_idempotency_key",
+          "unique": true
+        }
+      ],
+      "name": "inventory_easy_manager_commits",
       "unique_constraints": []
     },
     {

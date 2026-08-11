@@ -139,6 +139,35 @@ been configured, so newly activated zero-balance items do not overwhelm the
 action center. The dashboard identifies missing item costs because value and
 variance totals remain incomplete until those costs are entered.
 
+## Easy Inventory Manager
+
+Managers and admins can open the Easy Inventory Manager from
+`/static/inventory.html` to create inventory in a keyboard-first grid or bulk
+edit existing items. It supports spreadsheet paste previews, per-location
+draft recovery, inherited defaults, pack-cost entry with calculated base-unit
+costs, compact location/vendor creation, and responsive editable cards.
+
+Preview requests perform matching and validation without writes. Commits save
+the entire batch atomically with an idempotency key; nonzero opening quantities
+are recorded as audited `EASY_MANAGER_OPENING_BALANCE` stock movements instead
+of direct on-hand overrides. FastAPI and the Cloudflare Worker expose matching
+`GET`, preview, and commit contracts under `/inventory/easy-manager`.
+
+## AGM Floor
+
+The selector wheel opens `/static/agm-floor.html` for manager/admin host
+operations. Managers can draft and publish immutable floor versions, edit table
+numbers and shapes, box-select and move table groups, reshape the main dining
+area, and place draggable text blocks for non-table landmarks such as a host stand. An open service pins one
+published layout and adds live seating, waitlist/reservations, table moves and
+combinations, cleaning states, pacing, and TeamSheet-backed server rotation.
+
+FastAPI and the Cloudflare Worker expose the matching `/agm` contract. The
+Worker serializes service commands with `AGMServiceRoom`; D1 migration
+`0005_agm_floor.sql` adds the operational tables. SMS notifications remain in a
+consent-aware outbox with `PROVIDER_UNCONFIGURED` status until an adapter is
+configured, and guest maintenance anonymizes contact data after 90 days.
+
 ## POS terminal V1
 
 Open `/static/pos.html` for the touch-first POS terminal. A manager first opens

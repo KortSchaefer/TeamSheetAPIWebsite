@@ -206,6 +206,8 @@ def build_manifest() -> dict[str, Any]:
                 "0007_purchase_order_csv_import",
                 "0008_inventory_planning",
                 "0009_store_blast_threshold",
+                "0010_easy_inventory_manager",
+                "0011_agm_floor",
             ],
             "startup_repairs": "app/database.py",
         },
@@ -216,7 +218,6 @@ def build_manifest() -> dict[str, Any]:
 
 def expected_files() -> dict[Path, str]:
     return {
-        INITIAL_SCHEMA_PATH: render_initial_schema(),
         POS_SEED_PATH: render_pos_seed(),
         MANIFEST_PATH: canonical_json(build_manifest()),
     }
@@ -250,7 +251,7 @@ def main() -> int:
     for path, content in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-    print(f"Generated {len(Base.metadata.tables)} D1 tables in {MIGRATIONS_DIR}")
+    print(f"Generated the D1 manifest for {len(Base.metadata.tables)} SQLAlchemy tables")
     return 0
 
 

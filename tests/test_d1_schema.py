@@ -39,8 +39,8 @@ def test_generated_d1_artifacts_are_current():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_initial_schema_matches_all_sqlalchemy_tables_columns_and_relationships():
-    connection = migrated_database(through=1)
+def test_migrated_schema_matches_all_sqlalchemy_tables_columns_and_relationships():
+    connection = migrated_database()
     actual_tables = {
         row["name"]
         for row in connection.execute(
@@ -48,8 +48,9 @@ def test_initial_schema_matches_all_sqlalchemy_tables_columns_and_relationships(
         )
     }
     expected_tables = {table["name"] for table in MANIFEST["tables"]}
-    assert actual_tables == expected_tables
-    assert len(actual_tables) == MANIFEST["table_count"] == 57
+    # Worker-only R2 metadata is intentionally outside the SQLAlchemy model set.
+    assert actual_tables - {"inventory_voice_audio_objects"} == expected_tables
+    assert len(expected_tables) == MANIFEST["table_count"] == 68
 
     for table in MANIFEST["tables"]:
         name = table["name"]
@@ -139,4 +140,3 @@ def test_pos_seed_is_incremental_and_idempotent():
         "active": 1,
         "display_order": 1,
     }
-

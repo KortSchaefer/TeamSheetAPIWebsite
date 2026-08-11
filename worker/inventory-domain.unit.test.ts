@@ -24,7 +24,7 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
 
 beforeEach(async () => {
   await applyD1Migrations(testEnv.DB, testEnv.TEST_MIGRATIONS);
-  await testEnv.DB.exec("DELETE FROM inventory_receiving_lines; DELETE FROM inventory_receiving; DELETE FROM inventory_purchase_order_lines; DELETE FROM inventory_purchase_orders; DELETE FROM inventory_count_lines; DELETE FROM inventory_counts; DELETE FROM inventory_count_template_lines; DELETE FROM inventory_count_templates; DELETE FROM inventory_weekday_targets; DELETE FROM stock_movements; DELETE FROM inventory_balances; DELETE FROM inventory_vendor_items; DELETE FROM inventory_vendors; DELETE FROM inventory_items; DELETE FROM inventory_locations; DELETE FROM ingredients; DELETE FROM users;");
+  await testEnv.DB.exec("DELETE FROM inventory_easy_manager_commits; DELETE FROM inventory_receiving_lines; DELETE FROM inventory_receiving; DELETE FROM inventory_purchase_order_lines; DELETE FROM inventory_purchase_orders; DELETE FROM inventory_count_lines; DELETE FROM inventory_counts; DELETE FROM inventory_count_template_lines; DELETE FROM inventory_count_templates; DELETE FROM inventory_weekday_targets; DELETE FROM stock_movements; DELETE FROM inventory_balances; DELETE FROM inventory_vendor_items; DELETE FROM inventory_vendors; DELETE FROM inventory_items; DELETE FROM inventory_locations; DELETE FROM ingredients; DELETE FROM users;");
   await testEnv.DB.prepare(
     `INSERT INTO users (id, email, password_hash, full_name, role, employee_id, created_at, updated_at)
      VALUES (501, ?, ?, 'Inventory Manager', 'MANAGER', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
@@ -110,6 +110,88 @@ describe("Worker inventory domain", () => {
       location_count: 1,
       total_inventory_value_cents: 3000,
     });
+  });
+
+  it("previews and commits Easy Inventory Manager rows atomically and idempotently", async () => {
+    const vendor = await request("/inventory/vendors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Easy Worker Vendor", lead_time_days: 1 }),
+    }).then((response) => response.json<{ id: number }>());
+    const row = {
+      client_row_id: "worker-easy-1",
+      name: "Worker Easy Limes",
+      category: "Produce",
+      sku: "WORKER-EASY-LIME",
+      base_unit: "each",
+      location_id: 10,
+      purchase_unit: "case",
+      pack_quantity: 20,
+      pack_cost_cents: 1000,
+      opening_quantity: 8,
+      minimum_quantity: 3,
+      par_quantity: 24,
+      preferred_vendor_id: vendor.id,
+    };
+    const preview = await request("/inventory/easy-manager/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows: [row] }),
+    });
+    await expect(preview.json()).resolves.toMatchObject({
+      valid: true,
+      rows: [expect.objectContaining({ action: "CREATE", base_unit_cost_cents: 50 })],
+    });
+    const payload = { idempotency_key: "worker-easy-commit-1", rows: [row] };
+    const first = await request("/inventory/easy-manager/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(first.status).toBe(201);
+    const firstBody = await first.json<{ rows: Array<{ inventory_item_id: number }>; opening_movement_ids: number[] }>();
+    expect(firstBody.opening_movement_ids).toHaveLength(1);
+    const replay = await request("/inventory/easy-manager/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(await replay.json()).toEqual(firstBody);
+    const itemId = firstBody.rows[0].inventory_item_id;
+    await expect(testEnv.DB.prepare("SELECT cost_cents,purchase_to_base FROM inventory_items WHERE id=?").bind(itemId).first())
+      .resolves.toMatchObject({ cost_cents: 50, purchase_to_base: 20 });
+    await expect(testEnv.DB.prepare("SELECT quantity_on_hand,par_quantity FROM inventory_balances WHERE inventory_item_id=? AND location_id=10").bind(itemId).first())
+      .resolves.toMatchObject({ quantity_on_hand: 8, par_quantity: 24 });
+    expect(await testEnv.DB.prepare("SELECT COUNT(*) AS total FROM stock_movements WHERE inventory_item_id=?").bind(itemId).first("total")).toBe(1);
+
+    const partial = await request("/inventory/easy-manager/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idempotency_key: "worker-easy-partial-1",
+        rows: [{
+          client_row_id: "worker-easy-partial-row",
+          inventory_item_id: itemId,
+          location_id: 10,
+          pack_quantity: 10,
+          pack_cost_cents: 750,
+          category: null,
+          sku: null,
+        }],
+      }),
+    });
+    expect(partial.status).toBe(201);
+    await expect(testEnv.DB.prepare("SELECT category,sku,base_unit,cost_cents FROM inventory_items WHERE id=?").bind(itemId).first())
+      .resolves.toMatchObject({ category: null, sku: null, base_unit: "each", cost_cents: 75 });
+    await expect(testEnv.DB.prepare("SELECT quantity_on_hand,par_quantity FROM inventory_balances WHERE inventory_item_id=? AND location_id=10").bind(itemId).first())
+      .resolves.toMatchObject({ quantity_on_hand: 8, par_quantity: 24 });
+
+    const conflict = await request("/inventory/easy-manager/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, rows: [{ ...row, pack_cost_cents: 1200 }] }),
+    });
+    expect(conflict.status).toBe(409);
   });
 
   it("runs planning, draft ordering, receiving, and count-sheet workflows", async () => {

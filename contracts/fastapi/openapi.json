@@ -1,6 +1,659 @@
 {
   "components": {
     "schemas": {
+      "AGMCommand": {
+        "properties": {
+          "command_id": {
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Command Id",
+            "type": "string"
+          },
+          "dining_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dining Stage"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "paused": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paused"
+          },
+          "server_employee_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Employee Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "table_numbers": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Table Numbers",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "SEAT",
+              "MOVE",
+              "COMBINE",
+              "SET_TABLE_STATUS",
+              "ADVANCE_STAGE",
+              "CLEAR",
+              "NOTIFY",
+              "PAUSE_SERVER",
+              "CLOSE_SERVICE"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command_id",
+          "expected_revision",
+          "type"
+        ],
+        "title": "AGMCommand",
+        "type": "object"
+      },
+      "AGMLayoutCreate": {
+        "properties": {
+          "areas": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Areas",
+            "type": "array"
+          },
+          "canvas_height": {
+            "default": 760,
+            "maximum": 5000.0,
+            "minimum": 320.0,
+            "title": "Canvas Height",
+            "type": "integer"
+          },
+          "canvas_width": {
+            "default": 1200,
+            "maximum": 5000.0,
+            "minimum": 320.0,
+            "title": "Canvas Width",
+            "type": "integer"
+          },
+          "fixtures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Fixtures",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "tables": {
+            "items": {
+              "$ref": "#/components/schemas/AGMTableInput"
+            },
+            "maxItems": 400,
+            "title": "Tables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AGMLayoutCreate",
+        "type": "object"
+      },
+      "AGMLayoutUpdate": {
+        "properties": {
+          "areas": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Areas",
+            "type": "array"
+          },
+          "canvas_height": {
+            "default": 760,
+            "maximum": 5000.0,
+            "minimum": 320.0,
+            "title": "Canvas Height",
+            "type": "integer"
+          },
+          "canvas_width": {
+            "default": 1200,
+            "maximum": 5000.0,
+            "minimum": 320.0,
+            "title": "Canvas Width",
+            "type": "integer"
+          },
+          "fixtures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Fixtures",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "tables": {
+            "items": {
+              "$ref": "#/components/schemas/AGMTableInput"
+            },
+            "maxItems": 400,
+            "title": "Tables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "revision"
+        ],
+        "title": "AGMLayoutUpdate",
+        "type": "object"
+      },
+      "AGMPartyCreate": {
+        "properties": {
+          "guest_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Guest Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "party_size": {
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Party Size",
+            "type": "integer"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "quoted_minutes": {
+            "anyOf": [
+              {
+                "maximum": 480.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quoted Minutes"
+          },
+          "reservation_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reservation At"
+          },
+          "sms_consent": {
+            "default": false,
+            "title": "Sms Consent",
+            "type": "boolean"
+          },
+          "source": {
+            "default": "WAITLIST",
+            "enum": [
+              "WALK_IN",
+              "WAITLIST",
+              "RESERVATION"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "guest_name",
+          "party_size"
+        ],
+        "title": "AGMPartyCreate",
+        "type": "object"
+      },
+      "AGMPartyUpdate": {
+        "properties": {
+          "guest_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "party_size": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Size"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "quoted_minutes": {
+            "anyOf": [
+              {
+                "maximum": 480.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quoted Minutes"
+          },
+          "reservation_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reservation At"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "sms_consent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Consent"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "title": "AGMPartyUpdate",
+        "type": "object"
+      },
+      "AGMRotationInput": {
+        "properties": {
+          "employee_id": {
+            "title": "Employee Id",
+            "type": "integer"
+          },
+          "section_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Name"
+          }
+        },
+        "required": [
+          "employee_id"
+        ],
+        "title": "AGMRotationInput",
+        "type": "object"
+      },
+      "AGMServiceCreate": {
+        "properties": {
+          "ends_at": {
+            "anyOf": [
+              {
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "layout_id": {
+            "title": "Layout Id",
+            "type": "integer"
+          },
+          "name": {
+            "default": "Dinner",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "service_date": {
+            "format": "date",
+            "title": "Service Date",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          }
+        },
+        "required": [
+          "layout_id",
+          "service_date"
+        ],
+        "title": "AGMServiceCreate",
+        "type": "object"
+      },
+      "AGMStoreCreate": {
+        "properties": {
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "store_number": {
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Store Number",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "America/Chicago",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "store_number",
+          "name"
+        ],
+        "title": "AGMStoreCreate",
+        "type": "object"
+      },
+      "AGMStoreMembershipCreate": {
+        "properties": {
+          "access_role": {
+            "default": "AGM",
+            "enum": [
+              "AGM",
+              "ADMIN"
+            ],
+            "title": "Access Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "AGMStoreMembershipCreate",
+        "type": "object"
+      },
+      "AGMTableInput": {
+        "properties": {
+          "area_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Name"
+          },
+          "capacity": {
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "combinable_with": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Combinable With",
+            "type": "array"
+          },
+          "height": {
+            "default": 88,
+            "maximum": 1000.0,
+            "minimum": 40.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "label": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "rotation": {
+            "default": 0,
+            "maximum": 359.0,
+            "minimum": 0.0,
+            "title": "Rotation",
+            "type": "integer"
+          },
+          "section_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Name"
+          },
+          "shape": {
+            "default": "ROUND",
+            "enum": [
+              "ROUND",
+              "SQUARE",
+              "RECTANGLE",
+              "BOOTH",
+              "BAR"
+            ],
+            "title": "Shape",
+            "type": "string"
+          },
+          "table_number": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Table Number",
+            "type": "string"
+          },
+          "width": {
+            "default": 88,
+            "maximum": 1000.0,
+            "minimum": 40.0,
+            "title": "Width",
+            "type": "integer"
+          },
+          "x": {
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "X",
+            "type": "integer"
+          },
+          "y": {
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "Y",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "table_number",
+          "label",
+          "capacity",
+          "x",
+          "y"
+        ],
+        "title": "AGMTableInput",
+        "type": "object"
+      },
       "Body_import_daily_roster_imports_daily_roster_post": {
         "properties": {
           "file": {
@@ -1083,6 +1736,294 @@
           "day"
         ],
         "title": "DailyScheduleEntry",
+        "type": "object"
+      },
+      "EasyInventoryCommitRequest": {
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EasyInventoryRowInput"
+            },
+            "maxItems": 250,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "idempotency_key"
+        ],
+        "title": "EasyInventoryCommitRequest",
+        "type": "object"
+      },
+      "EasyInventoryPreviewRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EasyInventoryRowInput"
+            },
+            "maxItems": 250,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "EasyInventoryPreviewRequest",
+        "type": "object"
+      },
+      "EasyInventoryRowInput": {
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "enum": [
+                  "CREATE",
+                  "UPDATE",
+                  "STOCK_AT_LOCATION"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "base_unit": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Unit"
+          },
+          "catalog_id": {
+            "anyOf": [
+              {
+                "maxLength": 150,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "client_row_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Client Row Id",
+            "type": "string"
+          },
+          "inventory_item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory Item Id"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          },
+          "maximum_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Quantity"
+          },
+          "minimum_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Quantity"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 150,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "opening_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Quantity"
+          },
+          "pack_cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack Cost Cents"
+          },
+          "pack_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack Quantity"
+          },
+          "par_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par Quantity"
+          },
+          "preferred_vendor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Vendor Id"
+          },
+          "purchase_unit": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Unit"
+          },
+          "shelf_life_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shelf Life Days"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "vendor_sku": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Sku"
+          }
+        },
+        "required": [
+          "client_row_id"
+        ],
+        "title": "EasyInventoryRowInput",
         "type": "object"
       },
       "EmployeeCreate": {
@@ -8042,6 +8983,879 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/agm/bootstrap": {
+      "get": {
+        "operationId": "bootstrap_agm_bootstrap_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Bootstrap",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/layouts/{layout_id}": {
+      "get": {
+        "operationId": "get_layout_agm_layouts__layout_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Layout",
+        "tags": [
+          "agm-floor"
+        ]
+      },
+      "put": {
+        "operationId": "update_layout_agm_layouts__layout_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Layout",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/layouts/{layout_id}/publish": {
+      "post": {
+        "operationId": "publish_layout_agm_layouts__layout_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Publish Layout",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/maintenance/anonymize": {
+      "post": {
+        "operationId": "anonymize_expired_guests_agm_maintenance_anonymize_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Anonymize Expired Guests",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/parties/{party_id}": {
+      "patch": {
+        "operationId": "update_party_agm_parties__party_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "party_id",
+            "required": true,
+            "schema": {
+              "title": "Party Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMPartyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Party",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/services/{service_id}/bootstrap": {
+      "get": {
+        "operationId": "service_bootstrap_agm_services__service_id__bootstrap_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Service Bootstrap",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/services/{service_id}/commands": {
+      "post": {
+        "operationId": "apply_command_agm_services__service_id__commands_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Apply Command",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/services/{service_id}/parties": {
+      "get": {
+        "operationId": "list_parties_agm_services__service_id__parties_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Parties",
+        "tags": [
+          "agm-floor"
+        ]
+      },
+      "post": {
+        "operationId": "create_party_agm_services__service_id__parties_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMPartyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Party",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/services/{service_id}/rotation": {
+      "get": {
+        "operationId": "get_rotation_options_agm_services__service_id__rotation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Rotation Options",
+        "tags": [
+          "agm-floor"
+        ]
+      },
+      "post": {
+        "operationId": "set_rotation_agm_services__service_id__rotation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/AGMRotationInput"
+                },
+                "title": "Rows",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Set Rotation",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/stores": {
+      "post": {
+        "operationId": "create_store_agm_stores_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMStoreCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Store",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/stores/{store_id}/layouts": {
+      "get": {
+        "operationId": "list_layouts_agm_stores__store_id__layouts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Layouts",
+        "tags": [
+          "agm-floor"
+        ]
+      },
+      "post": {
+        "operationId": "create_layout_agm_stores__store_id__layouts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMLayoutCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Layout",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/stores/{store_id}/memberships": {
+      "post": {
+        "operationId": "add_membership_agm_stores__store_id__memberships_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMStoreMembershipCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add Membership",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
+    "/agm/stores/{store_id}/services": {
+      "get": {
+        "operationId": "list_services_agm_stores__store_id__services_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "service_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Services",
+        "tags": [
+          "agm-floor"
+        ]
+      },
+      "post": {
+        "operationId": "create_service_agm_stores__store_id__services_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMServiceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Service",
+        "tags": [
+          "agm-floor"
+        ]
+      }
+    },
     "/auth/link-employee/{user_id}": {
       "post": {
         "operationId": "link_employee_auth_link_employee__user_id__post",
@@ -10262,6 +12076,152 @@
           }
         ],
         "summary": "Dashboard",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/inventory/easy-manager": {
+      "get": {
+        "operationId": "easy_inventory_manager_inventory_easy_manager_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Location Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Easy Inventory Manager Inventory Easy Manager Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Easy Inventory Manager",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/inventory/easy-manager/commit": {
+      "post": {
+        "operationId": "commit_easy_inventory_inventory_easy_manager_commit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EasyInventoryCommitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Commit Easy Inventory Inventory Easy Manager Commit Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Commit Easy Inventory",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/inventory/easy-manager/preview": {
+      "post": {
+        "operationId": "preview_easy_inventory_inventory_easy_manager_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EasyInventoryPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Preview Easy Inventory Inventory Easy Manager Preview Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Preview Easy Inventory",
         "tags": [
           "inventory"
         ]

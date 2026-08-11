@@ -2,7 +2,7 @@
   "application": "Team Sheet Studio API",
   "authentication_counts": {
     "authenticated_user": 60,
-    "manager_or_admin": 82,
+    "manager_or_admin": 103,
     "optional_pos_session": 1,
     "pos_session": 9,
     "public": 7,
@@ -57,7 +57,7 @@
     }
   ],
   "openapi_version": "3.1.0",
-  "operation_count": 160,
+  "operation_count": 181,
   "operations": [
     {
       "authentication": {
@@ -77,6 +77,1185 @@
       "responses": {},
       "success_status": 200,
       "tags": []
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "bootstrap",
+      "path": "/agm/bootstrap",
+      "request": {
+        "body": null,
+        "parameters": [],
+        "schema_refs": []
+      },
+      "response_schema_refs": [],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "get_layout",
+      "path": "/agm/layouts/{layout_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_layout",
+      "path": "/agm/layouts/{layout_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMLayoutUpdate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "publish_layout",
+      "path": "/agm/layouts/{layout_id}/publish",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "title": "Layout Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "anonymize_expired_guests",
+      "path": "/agm/maintenance/anonymize",
+      "request": {
+        "body": null,
+        "parameters": [],
+        "schema_refs": []
+      },
+      "response_schema_refs": [],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PATCH",
+      "name": "update_party",
+      "path": "/agm/parties/{party_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMPartyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "party_id",
+            "required": true,
+            "schema": {
+              "title": "Party Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMPartyUpdate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "service_bootstrap",
+      "path": "/agm/services/{service_id}/bootstrap",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "apply_command",
+      "path": "/agm/services/{service_id}/commands",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMCommand"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "list_parties",
+      "path": "/agm/services/{service_id}/parties",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_party",
+      "path": "/agm/services/{service_id}/parties",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMPartyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMPartyCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "get_rotation_options",
+      "path": "/agm/services/{service_id}/rotation",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "set_rotation",
+      "path": "/agm/services/{service_id}/rotation",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/AGMRotationInput"
+                },
+                "title": "Rows",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_id",
+            "required": true,
+            "schema": {
+              "title": "Service Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMRotationInput"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_store",
+      "path": "/agm/stores",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMStoreCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "AGMStoreCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "list_layouts",
+      "path": "/agm/stores/{store_id}/layouts",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_layout",
+      "path": "/agm/stores/{store_id}/layouts",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMLayoutCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMLayoutCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "add_membership",
+      "path": "/agm/stores/{store_id}/memberships",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMStoreMembershipCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMStoreMembershipCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "list_services",
+      "path": "/agm/stores/{store_id}/services",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "service_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service Date"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "agm-floor"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_service",
+      "path": "/agm/stores/{store_id}/services",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AGMServiceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "store_id",
+            "required": true,
+            "schema": {
+              "title": "Store Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "AGMServiceCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "agm-floor"
+      ]
     },
     {
       "authentication": {
@@ -3061,6 +4240,204 @@
             }
           },
           "description": "Successful Response"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "inventory"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "easy_inventory_manager",
+      "path": "/inventory/easy-manager",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Location Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Response Easy Inventory Manager Inventory Easy Manager Get",
+                "type": "object"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "inventory"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "commit_easy_inventory",
+      "path": "/inventory/easy-manager/commit",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EasyInventoryCommitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "EasyInventoryCommitRequest"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Response Commit Easy Inventory Inventory Easy Manager Commit Post",
+                "type": "object"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "inventory"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "preview_easy_inventory",
+      "path": "/inventory/easy-manager/preview",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EasyInventoryPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "EasyInventoryPreviewRequest"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Response Preview Easy Inventory Inventory Easy Manager Preview Post",
+                "type": "object"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
         }
       },
       "success_status": 200,
