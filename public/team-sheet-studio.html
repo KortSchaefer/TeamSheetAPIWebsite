@@ -557,6 +557,7 @@
           <button id="hosts-tab" role="tab" aria-selected="false">Hosts &amp; SAs</button>
         </div>
         <div class="workspace-actions">
+          <button id="import-daily-roster-btn" class="primary-action" type="button">Load daily roster</button>
           <button id="auto-assign-btn" class="secondary-action" type="button">Auto-assign</button>
           <details class="action-menu" id="workspace-menu">
             <summary>Tools</summary>
@@ -565,8 +566,7 @@
               <button id="change-teamsheet-btn" type="button">Configure floor</button>
               <div class="action-menu-divider" role="separator"></div>
               <span class="action-menu-label">Roster data</span>
-              <button id="import-daily-roster-btn" type="button">Upload daily roster</button>
-              <button id="import-btn" type="button">Import employee CSV</button>
+              <button id="import-btn" type="button">Manage employee profiles from CSV</button>
               <div class="action-menu-divider server-only-action" role="separator"></div>
               <button id="remove-servers-btn" class="menu-danger server-only-action" type="button">Clear all assignments</button>
             </div>
@@ -577,6 +577,35 @@
       </nav>
 
       <div id="workspace-status" class="workspace-status hidden" role="status" aria-live="polite"></div>
+
+      <div id="daily-roster-panel" class="panel-overlay hidden">
+        <div class="panel-card roster-import-dialog" role="dialog" aria-modal="true" aria-labelledby="daily-roster-panel-title">
+          <div class="panel-header">
+            <div><span class="studio-eyebrow">Guided import</span><h2 id="daily-roster-panel-title">Load daily roster</h2></div>
+            <button id="close-daily-roster-panel" class="icon-action" type="button" aria-label="Close daily roster import">×</button>
+          </div>
+          <div class="roster-import-body">
+            <div class="roster-import-context">
+              <div><span>Store</span><strong id="daily-roster-store">—</strong></div>
+              <div><span>Date</span><strong id="daily-roster-date">Choose a date</strong></div>
+            </div>
+            <label class="roster-file-picker" for="daily-roster-input">
+              <strong id="daily-roster-file-label">Choose a server CSV</strong>
+              <span>Required: name. Optional: nickname, upsell_score or BLAST %, pitty, employment_days, max_guests, in_time.</span>
+              <b>Browse files</b>
+            </label>
+            <div id="daily-roster-preview" class="roster-import-preview hidden" aria-live="polite">
+              <div class="roster-preview-summary"><strong id="daily-roster-count">0 servers</strong><span id="daily-roster-columns"></span></div>
+              <div id="daily-roster-names" class="roster-preview-names"></div>
+              <p id="daily-roster-warning" class="roster-import-warning hidden"></p>
+            </div>
+          </div>
+          <div class="panel-actions sticky-actions roster-import-actions">
+            <button id="cancel-daily-roster" class="secondary-action" type="button">Cancel</button>
+            <button id="confirm-daily-roster" class="primary-action" type="button" disabled>Choose a CSV first</button>
+          </div>
+        </div>
+      </div>
 
       <div id="json-output" class="json-output panel-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="json-dialog-title">
         <div class="json-dialog panel-card">
@@ -709,6 +738,18 @@
       const importDailyRosterBtn = document.getElementById('import-daily-roster-btn');
       const csvInput = document.getElementById('csv-input');
       const dailyRosterInput = document.getElementById('daily-roster-input');
+      const dailyRosterPanel = document.getElementById('daily-roster-panel');
+      const closeDailyRosterPanelBtn = document.getElementById('close-daily-roster-panel');
+      const cancelDailyRosterBtn = document.getElementById('cancel-daily-roster');
+      const confirmDailyRosterBtn = document.getElementById('confirm-daily-roster');
+      const dailyRosterFileLabel = document.getElementById('daily-roster-file-label');
+      const dailyRosterPreview = document.getElementById('daily-roster-preview');
+      const dailyRosterCount = document.getElementById('daily-roster-count');
+      const dailyRosterColumns = document.getElementById('daily-roster-columns');
+      const dailyRosterNames = document.getElementById('daily-roster-names');
+      const dailyRosterWarning = document.getElementById('daily-roster-warning');
+      const dailyRosterStore = document.getElementById('daily-roster-store');
+      const dailyRosterDate = document.getElementById('daily-roster-date');
       const serversTab = document.getElementById('servers-tab');
       const hostsTab = document.getElementById('hosts-tab');
       const serversBoard = document.getElementById('servers-board');
@@ -774,6 +815,8 @@
       let currentShiftId = null;
       let currentTeamSheetId = null;
       let dailyRoster = [];
+      let pendingDailyRosterFile = null;
+      let pendingDailyRosterRows = [];
       let blastThreshold = 98;
 
       const sectionTemplates = [
@@ -868,6 +911,7 @@
             max_guests: emp.max_section_load ?? 0,
             hours: emp.notes ?? emp.max_section_load ?? '-',
             clockIn: emp.notes ?? '--:--',
+            in_time: emp.notes ?? null,
           }));
         } catch (err) {
           console.warn('Using fallback roster because DB roster fetch failed.', err);
@@ -1057,14 +1101,22 @@
           const name = (entry.name || '').trim();
           const base = lookup.get(name.toLowerCase());
           const inTime = entry.in_time || entry.inTime || null;
-          if (base) return { ...base, in_time: inTime || base.in_time || null };
+          const imported = {
+            nickname: entry.nickname || null,
+            upsellScore: entry.upsell_score ?? null,
+            length_of_employment: entry.employment_days ?? null,
+            pitty: entry.pitty ?? null,
+            max_guests: entry.max_guests ?? null,
+          };
+          if (base) return { ...base, ...Object.fromEntries(Object.entries(imported).filter(([, value]) => value !== null)), in_time: inTime || base.in_time || null };
           return {
             id: `roster-${index}-${Date.now()}`,
             name,
-            upsellScore: 0,
-            length_of_employment: 1,
-            pitty: 0,
-            max_guests: 0,
+            nickname: imported.nickname,
+            upsellScore: imported.upsellScore ?? 0,
+            length_of_employment: imported.length_of_employment ?? 1,
+            pitty: imported.pitty ?? 0,
+            max_guests: imported.max_guests ?? 0,
             hours: '-',
             clockIn: '--:--',
             in_time: inTime,
@@ -1095,6 +1147,58 @@
           throw new Error(detail.detail || `Daily roster import failed (${resp.status})`);
         }
         return resp.json();
+      };
+
+      const resetDailyRosterImport = () => {
+        pendingDailyRosterFile = null;
+        pendingDailyRosterRows = [];
+        if (dailyRosterInput) dailyRosterInput.value = '';
+        if (dailyRosterFileLabel) dailyRosterFileLabel.textContent = 'Choose a server CSV';
+        dailyRosterPreview?.classList.add('hidden');
+        dailyRosterWarning?.classList.add('hidden');
+        if (confirmDailyRosterBtn) { confirmDailyRosterBtn.disabled = true; confirmDailyRosterBtn.textContent = 'Choose a CSV first'; }
+      };
+
+      const openDailyRosterPanel = () => {
+        const dateValue = shiftDateInput?.value;
+        if (!dateValue) {
+          setWorkspaceStatus('Choose the roster date before loading a daily roster.', true);
+          shiftDateInput?.focus();
+          return;
+        }
+        resetDailyRosterImport();
+        if (dailyRosterStore) dailyRosterStore.textContent = storeNumberInput?.value?.trim() || 'Not specified';
+        if (dailyRosterDate) dailyRosterDate.textContent = new Date(`${dateValue}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        dailyRosterPanel?.classList.remove('hidden');
+        document.getElementById('workspace-menu')?.removeAttribute('open');
+      };
+
+      const closeDailyRosterPanel = () => {
+        dailyRosterPanel?.classList.add('hidden');
+        resetDailyRosterImport();
+      };
+
+      const previewDailyRosterFile = async (file) => {
+        const text = await file.text();
+        const roster = parseCsv(text);
+        if (!roster.length) throw new Error('No servers found. The CSV must have a name column and at least one server row.');
+        const headers = splitCsvLine(text.split(/\r?\n/u).find((line) => line.trim()) || '').map((header) => header.trim()).filter(Boolean);
+        const normalized = headers.map((header) => header.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''));
+        if (!normalized.includes('name')) throw new Error('The CSV needs a name column. Example: name,nickname,upsell_score,pitty,employment_days,max_guests,in_time');
+        pendingDailyRosterFile = file;
+        pendingDailyRosterRows = roster;
+        if (dailyRosterFileLabel) dailyRosterFileLabel.textContent = file.name;
+        if (dailyRosterCount) dailyRosterCount.textContent = `${roster.length} server${roster.length === 1 ? '' : 's'} ready`;
+        if (dailyRosterColumns) dailyRosterColumns.textContent = `Detected: ${headers.join(' · ')}`;
+        if (dailyRosterNames) dailyRosterNames.textContent = roster.map((row) => `${row.name}${row.in_time ? ` — ${row.in_time}` : ''}`).join('  •  ');
+        const metricColumns = ['upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load'];
+        const hasMetrics = normalized.some((header) => metricColumns.includes(header));
+        if (dailyRosterWarning) {
+          dailyRosterWarning.textContent = hasMetrics ? 'Server profile data will be updated, then this roster will be loaded for the selected date.' : 'This file has names only. Existing employee BLAST and capacity data will be used when names match.';
+          dailyRosterWarning.classList.remove('hidden');
+        }
+        dailyRosterPreview?.classList.remove('hidden');
+        if (confirmDailyRosterBtn) { confirmDailyRosterBtn.disabled = false; confirmDailyRosterBtn.textContent = `Load ${roster.length} server${roster.length === 1 ? '' : 's'}`; }
       };
 
       const buildShiftTitle = () => {
@@ -2176,7 +2280,7 @@
         const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         const headersRaw = splitCsvLine(rows[0]);
         const normalizedHeaders = headersRaw.map(normalizeHeader);
-        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
+        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs', 'in_time', 'clock_in', 'clockin', 'start_time'];
         const hasHeader = normalizedHeaders.some((h) => expectedHeaders.includes(h));
 
         const dataRows = hasHeader ? rows.slice(1) : rows;
@@ -2215,6 +2319,7 @@
             const employment_days = toNumber(resolveField(headers, cells, ['employment_days', 'employment']));
             const max_guests = toNumber(resolveField(headers, cells, ['max_guests', 'capacity', 'max_section_load']));
             const hours = toNumber(hasHeader ? resolveField(headers, cells, ['hours', 'hrs']) : cells[1]);
+            const in_time = hasHeader ? resolveField(headers, cells, ['in_time', 'clock_in', 'clockin', 'start_time']) : undefined;
 
             return {
               name: name || '',
@@ -2224,6 +2329,7 @@
               employment_days,
               max_guests,
               hours,
+              in_time,
             };
           })
           .filter((item) => item.name);
@@ -2248,6 +2354,8 @@
               nickname: entry.nickname || base.nickname,
               ...mergedMetrics,
               hours: entry.hours ?? base.hours,
+              in_time: entry.in_time ?? base.in_time ?? null,
+              clockIn: entry.in_time ?? base.clockIn ?? '--:--',
               rosterName: entry.name,
             });
           } else {
@@ -2258,7 +2366,8 @@
               nickname: entry.nickname,
               ...mergedMetrics,
               hours: entry.hours ?? '-',
-              clockIn: '--:--',
+              in_time: entry.in_time ?? null,
+              clockIn: entry.in_time ?? '--:--',
             });
           }
         });
@@ -2434,11 +2543,11 @@
         csvInput.click();
       });
       if (importDailyRosterBtn) {
-        importDailyRosterBtn.addEventListener('click', () => {
-          document.getElementById('workspace-menu')?.removeAttribute('open');
-          dailyRosterInput?.click();
-        });
+        importDailyRosterBtn.addEventListener('click', openDailyRosterPanel);
       }
+      closeDailyRosterPanelBtn?.addEventListener('click', closeDailyRosterPanel);
+      cancelDailyRosterBtn?.addEventListener('click', closeDailyRosterPanel);
+      dailyRosterPanel?.addEventListener('click', (event) => { if (event.target === dailyRosterPanel) closeDailyRosterPanel(); });
       const resetShiftContext = () => {
         currentShiftId = null;
         currentTeamSheetId = null;
@@ -2631,6 +2740,7 @@
         if (event.key !== 'Escape') return;
         closeJsonOutput();
         closeSectionPanel();
+        closeDailyRosterPanel();
         clearRosterSelection();
         document.querySelectorAll('.action-menu[open]').forEach((menu) => menu.removeAttribute('open'));
       });
@@ -2678,17 +2788,36 @@
           const file = event.target.files?.[0];
           if (!file) return;
           try {
-            await uploadDailyRosterCsv(file);
-            await refreshDailyRoster();
-            setWorkspaceStatus(`Daily roster loaded with ${dailyRoster.length} team member${dailyRoster.length === 1 ? '' : 's'}.`);
-            showToast('Daily roster uploaded.', 'success');
+            await previewDailyRosterFile(file);
           } catch (err) {
             console.error(err);
-            setWorkspaceStatus(err.message || 'Daily roster upload failed.', true);
+            resetDailyRosterImport();
+            setWorkspaceStatus(err.message || 'Unable to preview that roster CSV.', true);
+            showToast(err.message || 'Unable to preview that roster CSV.', 'error');
           }
-          dailyRosterInput.value = '';
         });
       }
+      confirmDailyRosterBtn?.addEventListener('click', async () => {
+        if (!pendingDailyRosterFile || !pendingDailyRosterRows.length) return;
+        confirmDailyRosterBtn.disabled = true;
+        confirmDailyRosterBtn.textContent = 'Loading roster…';
+        try {
+          const result = await uploadDailyRosterCsv(pendingDailyRosterFile);
+          await loadInternalRoster();
+          await refreshDailyRoster();
+          closeDailyRosterPanel();
+          markDirty();
+          updateAssignmentMetrics();
+          setWorkspaceStatus(`Loaded ${dailyRoster.length} server${dailyRoster.length === 1 ? '' : 's'} for ${shiftDateInput.value}. ${result.employees_created || 0} employee profile${result.employees_created === 1 ? '' : 's'} created and ${result.employees_updated || 0} updated.`);
+          showToast('Daily roster is ready for assignment.', 'success');
+        } catch (err) {
+          console.error(err);
+          confirmDailyRosterBtn.disabled = false;
+          confirmDailyRosterBtn.textContent = `Load ${pendingDailyRosterRows.length} server${pendingDailyRosterRows.length === 1 ? '' : 's'}`;
+          setWorkspaceStatus(err.message || 'Daily roster upload failed.', true);
+          showToast(err.message || 'Daily roster upload failed.', 'error');
+        }
+      });
 
       const ensureAuthenticated = async () => {
         try {

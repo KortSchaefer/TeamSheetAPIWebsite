@@ -85,6 +85,7 @@ async def import_servers(
         employment_days = _parse_int(_row_value(row, "employment_days", "employment"))
         max_guests = _parse_int(_row_value(row, "max_guests", "capacity", "max_section_load"))
         nickname = _row_value(row, "nickname")
+        in_time = _row_value(row, "in_time", "clock_in", "clockin", "start_time")
 
         employee = (
             db.query(Employee)
@@ -116,6 +117,8 @@ async def import_servers(
             employee.employment_start_date = date.today() - timedelta(days=employment_days)
         if max_guests is not None:
             employee.max_section_load = max_guests
+        if in_time is not None:
+            employee.notes = in_time
 
     db.commit()
     return {"created": created, "updated": updated}
@@ -144,15 +147,45 @@ async def import_daily_roster(
         raise HTTPException(status_code=400, detail="CSV must include a 'name' column.")
 
     entries = []
+    created = 0
+    updated = 0
     for row in reader:
         name = _row_value(row, "name")
         if not name:
             continue
         entry = {"name": name.strip()}
-        in_time = _row_value(row, "in_time")
+        in_time = _row_value(row, "in_time", "clock_in", "clockin", "start_time")
         if in_time:
             entry["in_time"] = in_time
+        nickname = _row_value(row, "nickname")
+        upsell_score = _parse_blast(_row_value(row, "upsell_score", "upsell", "blast", "blast_percent", "blast_percentage", "blast_score"))
+        pitty = _parse_int(_row_value(row, "pitty", "pity"))
+        employment_days = _parse_int(_row_value(row, "employment_days", "employment"))
+        max_guests = _parse_int(_row_value(row, "max_guests", "capacity", "max_section_load"))
+        if nickname: entry["nickname"] = nickname
+        if upsell_score is not None: entry["upsell_score"] = upsell_score
+        if pitty is not None: entry["pitty"] = pitty
+        if employment_days is not None: entry["employment_days"] = employment_days
+        if max_guests is not None: entry["max_guests"] = max_guests
         entries.append(entry)
+
+        parts = name.strip().split()
+        first_name, last_name = parts[0], " ".join(parts[1:])
+        employee = db.query(Employee).filter(Employee.first_name == first_name, Employee.last_name == last_name).first()
+        if employee is None:
+            employee = Employee(first_name=first_name, last_name=last_name, nickname=nickname, role=EmployeeRole.SERVER, employment_start_date=date.today(), active=True)
+            db.add(employee)
+            created += 1
+        else:
+            updated += 1
+        if nickname: employee.nickname = nickname
+        if upsell_score is not None: employee.upsell_score = upsell_score
+        if pitty is not None: employee.pitty_score = pitty
+        if employment_days is not None:
+            employee.employment_days = employment_days
+            employee.employment_start_date = date.today() - timedelta(days=employment_days)
+        if max_guests is not None: employee.max_section_load = max_guests
+        if in_time: employee.notes = in_time
 
     roster = (
         db.query(DailyRoster)
@@ -167,4 +200,4 @@ async def import_daily_roster(
 
     db.commit()
     db.refresh(roster)
-    return {"date": roster.date.isoformat(), "store_id": roster.store_id, "count": len(entries)}
+    return {"date": roster.date.isoformat(), "store_id": roster.store_id, "count": len(entries), "employees_created": created, "employees_updated": updated}

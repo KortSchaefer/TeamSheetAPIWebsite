@@ -1,5 +1,6 @@
 import { createTestHarness } from "wrangler";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import serverListCsv from "../scripts/Server_List.csv?raw";
 
 type TestEnv = Env & { DB: D1Database };
 const PASSWORD = "worker-compatibility-fixture";
@@ -26,6 +27,37 @@ beforeEach(async () => {
 afterAll(async () => { await server.close(); });
 
 describe("Cloudflare migrated business domains", () => {
+  it("imports the bundled server list with every metric populated", async () => {
+    const manager = await login("domains.manager@example.com");
+    const boundary = "----server-list-upload-boundary";
+    const multipart = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="Server_List.csv"\r\nContent-Type: text/csv\r\n\r\n${serverListCsv.trim()}\r\n--${boundary}--\r\n`;
+
+    const imported = await server.fetch("/imports/daily-roster?date=2026-08-20&store_id=1", {
+      method: "POST",
+      headers: { Authorization: manager, "Content-Type": `multipart/form-data; boundary=${boundary}` },
+      body: multipart,
+    });
+    expect(imported.status).toBe(201);
+    await expect(imported.json()).resolves.toEqual({ date: "2026-08-20", store_id: 1, count: 23, employees_created: 23, employees_updated: 0 });
+
+    const roster = await server.fetch("/employees?role=SERVER&active=true", { headers: { Authorization: manager } });
+    expect(roster.status).toBe(200);
+    const employees = await roster.json() as Array<Record<string, unknown>>;
+    expect(employees).toHaveLength(24);
+    expect(employees).toEqual(expect.arrayContaining([
+      expect.objectContaining({ first_name: "Alex", last_name: "Thompson", nickname: "AT", upsell_score: 109, pitty_score: 5, employment_days: 990, max_section_load: 10, notes: "2:00 PM" }),
+      expect.objectContaining({ first_name: "Wyatt", last_name: "Phillips", nickname: "WP", upsell_score: 158, pitty_score: 1, employment_days: 1361, max_section_load: 26, notes: "4:00 PM" }),
+    ]));
+    const dailyRoster = await server.fetch("/daily-rosters?date=2026-08-20&store_id=1", { headers: { Authorization: manager } });
+    expect(dailyRoster.status).toBe(200);
+    await expect(dailyRoster.json()).resolves.toEqual([
+      expect.objectContaining({ entries: expect.arrayContaining([
+        expect.objectContaining({ name: "Alex Thompson", upsell_score: 109, pitty: 5, employment_days: 990, max_guests: 10, in_time: "2:00 PM" }),
+        expect.objectContaining({ name: "Wyatt Phillips", upsell_score: 158, pitty: 1, employment_days: 1361, max_guests: 26, in_time: "4:00 PM" }),
+      ]) }),
+    ]);
+  });
+
   it("runs team sheets, accounting, PYOS, and CSV imports on D1", async () => {
     const manager = await login("domains.manager@example.com"), jsonHeaders = { Authorization: manager, "Content-Type": "application/json" };
     const sheet = await server.fetch("/team-sheets", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ shift_id: 401, title: "Dinner floor", status: "PUBLISHED", assignments: [{ employee_id: 102, section_id: 301, role_label: "Server", order_index: 1 }], sidework: [{ label: "Polish", employee_ids: [102] }], outwork: [] }) });

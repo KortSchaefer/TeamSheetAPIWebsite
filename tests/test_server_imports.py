@@ -18,7 +18,7 @@ async def register_and_login(client, email: str) -> str:
 async def test_server_csv_import_accepts_blast_header_and_percent_value(client):
     token = await register_and_login(client, "blast-import-manager@example.com")
     headers = {"Authorization": f"Bearer {token}"}
-    csv_data = "name,BLAST %,max_guests\nCasey Blast,112%,16\n"
+    csv_data = "name,BLAST %,max_guests,in_time\nCasey Blast,112%,16,4:30 PM\n"
 
     imported = await client.post(
         "/imports/servers",
@@ -32,3 +32,4 @@ async def test_server_csv_import_accepts_blast_header_and_percent_value(client):
     employee = next(item for item in roster.json() if item["first_name"] == "Casey")
     assert employee["upsell_score"] == 112
     assert employee["max_section_load"] == 16
+    assert employee["notes"] == "4:30 PM"

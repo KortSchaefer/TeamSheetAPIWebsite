@@ -301,6 +301,29 @@ body {
   color: #ffb4ba;
 }
 
+.roster-import-dialog { width: min(680px, calc(100% - 2rem)) !important; padding: 0 !important; border-radius: var(--studio-radius-lg) !important; background: #0b1220 !important; }
+.roster-import-dialog > .panel-header { margin: 0; padding: 1rem 1.15rem; border-bottom: 1px solid var(--studio-border); }
+.roster-import-dialog .panel-header h2 { margin: .18rem 0 0; font-size: 1.15rem; }
+.roster-import-body { display: grid; gap: 1rem; padding: 1.15rem; }
+.roster-import-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.roster-import-context > div { padding: .75rem .85rem; border: 1px solid var(--studio-border); border-radius: var(--studio-radius-sm); background: var(--studio-surface); }
+.roster-import-context span { display: block; margin-bottom: .25rem; color: var(--studio-subtle); font-size: .64rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.roster-import-context strong { font-size: .86rem; }
+.roster-file-picker { display: grid; gap: .38rem; padding: 1rem; border: 1px dashed var(--studio-border-strong); border-radius: var(--studio-radius); background: rgba(111, 141, 255, .05); cursor: pointer; }
+.roster-file-picker:hover { border-color: var(--studio-accent); background: rgba(111, 141, 255, .09); }
+.roster-file-picker strong { color: var(--studio-text); font-size: .9rem; }
+.roster-file-picker span { color: var(--studio-muted); font-size: .72rem; line-height: 1.45; }
+.roster-file-picker b { width: fit-content; margin-top: .25rem; color: #aebeff; font-size: .72rem; }
+.roster-import-preview { display: grid; gap: .7rem; padding: .85rem; border: 1px solid rgba(72, 214, 155, .22); border-radius: var(--studio-radius); background: rgba(72, 214, 155, .045); }
+.roster-preview-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.roster-preview-summary strong { color: #9ff3ce; font-size: .88rem; }
+.roster-preview-summary span { color: var(--studio-muted); font-size: .68rem; }
+.roster-preview-names { max-height: 145px; overflow: auto; color: var(--studio-text); font-size: .72rem; line-height: 1.65; }
+.roster-import-warning { margin: 0; color: var(--studio-warning); font-size: .7rem; line-height: 1.45; }
+.roster-import-actions { justify-content: flex-end; margin: 0 !important; padding: .85rem 1.15rem; border-top: 1px solid var(--studio-border); }
+.roster-import-actions button { min-width: 130px; }
+.roster-import-actions button:disabled { cursor: not-allowed; opacity: .5; }
+
 .board {
   grid-template-columns: minmax(260px, 310px) minmax(0, 1fr);
   gap: 1rem;

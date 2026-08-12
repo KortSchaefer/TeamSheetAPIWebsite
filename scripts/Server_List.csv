@@ -1,24 +1,24 @@
 name,nickname,upsell_score,pitty,employment_days,max_guests,in_time
-Alex Thompson,AT,109,5,990,10,2
-Brianna Lopez,Bree,102,5,834,24,2
-Carlos Mendoza,CM,144,5,220,27,2
-Danielle Harper,Dani,130,4,1296,14,2
-Ethan Brooks,,137,5,773,31,2
-Faith Reynolds,Faye,102,3,501,17,2
-Gabriel Ortiz,Gabe,151,0,1058,26,2
-Hannah Whitmore,Han,151,0,788,15,2
-Isaac Turner,,123,5,1178,25,2
-Jasmine Patel,Jazz,158,4,112,19,2
-Kevin O'Neal,KO,151,0,744,20,2
-Lauren Mitchell,Lolo,130,1,477,17,2
-Marcus Bennett,,144,3,563,34,3
-Natalie Kim,Nat,109,4,910,19,3
-Owen Fitzgerald,,137,1,1242,38,3
-Paige Sullivan,PS,137,5,351,32,3
-Quentin Ross,Q,137,0,1177,29,3
-Rachel Navarro,Ray,109,5,255,19,4
-Steven Miller,Steve,137,5,970,15,4
-Tanya Brooks,T,158,3,1314,13,4
-Ulysses Grant,UG,95,3,1752,15,4
-Victoria Chen,V,130,0,666,31,4
-Wyatt Phillips,WP,158,1,1361,26,4
+Alex Thompson,AT,109,5,990,10,2:00 PM
+Brianna Lopez,Bree,102,5,834,24,2:00 PM
+Carlos Mendoza,CM,144,5,220,27,2:00 PM
+Danielle Harper,Dani,130,4,1296,14,2:00 PM
+Ethan Brooks,Ethan,137,5,773,31,2:00 PM
+Faith Reynolds,Faye,102,3,501,17,2:00 PM
+Gabriel Ortiz,Gabe,151,0,1058,26,2:00 PM
+Hannah Whitmore,Han,151,0,788,15,2:00 PM
+Isaac Turner,Isaac,123,5,1178,25,2:00 PM
+Jasmine Patel,Jazz,158,4,112,19,2:00 PM
+Kevin O'Neal,KO,151,0,744,20,2:00 PM
+Lauren Mitchell,Lolo,130,1,477,17,2:00 PM
+Marcus Bennett,Marcus,144,3,563,34,3:00 PM
+Natalie Kim,Nat,109,4,910,19,3:00 PM
+Owen Fitzgerald,Owen,137,1,1242,38,3:00 PM
+Paige Sullivan,PS,137,5,351,32,3:00 PM
+Quentin Ross,Q,137,0,1177,29,3:00 PM
+Rachel Navarro,Ray,109,5,255,19,4:00 PM
+Steven Miller,Steve,137,5,970,15,4:00 PM
+Tanya Brooks,T,158,3,1314,13,4:00 PM
+Ulysses Grant,UG,95,3,1752,15,4:00 PM
+Victoria Chen,V,130,0,666,31,4:00 PM
+Wyatt Phillips,WP,158,1,1361,26,4:00 PM

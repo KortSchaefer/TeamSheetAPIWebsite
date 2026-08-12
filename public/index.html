@@ -587,6 +587,7 @@
             max_guests: emp.max_section_load ?? 0,
             hours: emp.notes ?? emp.max_section_load ?? '-',
             clockIn: emp.notes ?? '--:--',
+            in_time: emp.notes ?? null,
           }));
         } catch (err) {
           console.warn('Using fallback roster because DB roster fetch failed.', err);
@@ -888,7 +889,7 @@
         const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         const headersRaw = splitCsvLine(rows[0]);
         const normalizedHeaders = headersRaw.map(normalizeHeader);
-        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
+        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs', 'in_time', 'clock_in', 'clockin', 'start_time'];
         const hasHeader = normalizedHeaders.some((h) => expectedHeaders.includes(h));
 
         const dataRows = hasHeader ? rows.slice(1) : rows;
@@ -927,6 +928,7 @@
             const employment_days = toNumber(resolveField(headers, cells, ['employment_days', 'employment']));
             const max_guests = toNumber(resolveField(headers, cells, ['max_guests', 'capacity', 'max_section_load']));
             const hours = toNumber(hasHeader ? resolveField(headers, cells, ['hours', 'hrs']) : cells[1]);
+            const in_time = hasHeader ? resolveField(headers, cells, ['in_time', 'clock_in', 'clockin', 'start_time']) : undefined;
 
             return {
               name: name || '',
@@ -936,6 +938,7 @@
               employment_days,
               max_guests,
               hours,
+              in_time,
             };
           })
           .filter((item) => item.name);
@@ -960,6 +963,8 @@
               nickname: entry.nickname || base.nickname,
               ...mergedMetrics,
               hours: entry.hours ?? base.hours,
+              in_time: entry.in_time ?? base.in_time ?? null,
+              clockIn: entry.in_time ?? base.clockIn ?? '--:--',
               rosterName: entry.name,
             });
           } else {
@@ -970,7 +975,8 @@
               nickname: entry.nickname,
               ...mergedMetrics,
               hours: entry.hours ?? '-',
-              clockIn: '--:--',
+              in_time: entry.in_time ?? null,
+              clockIn: entry.in_time ?? '--:--',
             });
           }
         });
