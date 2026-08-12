@@ -276,6 +276,7 @@
 
     const authFetch = (url, options = {}) => fetch(url, {
       credentials: "include",
+      cache: "no-store",
       ...options,
       headers: {"Content-Type": "application/json", ...(options.headers || {})},
     });
@@ -341,6 +342,29 @@
       } catch (_) {
         localStorage.removeItem(key);
       }
+    }
+
+    function mergePendingIntoSheet(sheet) {
+      state.pending.forEach(edit => {
+        const line = sheet.lines.find(row => row.id === edit.line_id);
+        if (!line) return;
+        edit.client_revision = line.revision;
+        line.counted_quantity = edit.counted_quantity;
+        line.is_counted = edit.is_counted;
+        line.source = edit.source;
+        if (edit.review_status) line.review_status = edit.review_status;
+      });
+      return sheet;
+    }
+
+    async function refreshOpenSheet() {
+      if (!state.sheet || state.flushing || document.visibilityState === "hidden") return;
+      try {
+        const current = await read(await authFetch(`/inventory/count-sheets/${state.sheet.id}`));
+        state.sheet = mergePendingIntoSheet(current);
+        recalculateSummary();
+        render();
+      } catch (_) {}
     }
 
     function lineDelta(line) {
@@ -960,6 +984,10 @@
       flushEdits();
     });
     window.addEventListener("offline", () => setSaveState("offline", "Saved on device"));
+    window.addEventListener("focus", refreshOpenSheet);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refreshOpenSheet();
+    });
     window.addEventListener("keydown", event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();

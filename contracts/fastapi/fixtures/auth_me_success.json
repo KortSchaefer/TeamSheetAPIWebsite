@@ -1,0 +1,24 @@
+{
+  "description": "A valid application token resolves the current user.",
+  "id": "auth_me_success",
+  "request": {
+    "auth": "manager",
+    "method": "GET",
+    "path": "/auth/me"
+  },
+  "response": {
+    "body": {
+      "created_at": "<datetime>",
+      "email": "manager.contract@example.com",
+      "employee_id": null,
+      "full_name": "Contract Manager",
+      "id": 1001,
+      "role": "MANAGER",
+      "updated_at": "<datetime>"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 200
+  }
+}

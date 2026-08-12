@@ -88,6 +88,195 @@ async def test_inventory_count_posts_difference(client):
 
 
 @pytest.mark.asyncio
+async def test_easy_inventory_manager_creates_values_and_replays_atomically(client):
+    token = await login_manager(client, "easy-inventory@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+    location = await client.post(
+        "/inventory/locations", json={"name": "Easy Walk-in"}, headers=headers
+    )
+    vendor = await client.post(
+        "/inventory/vendors",
+        json={"name": "Easy Produce Vendor", "lead_time_days": 1},
+        headers=headers,
+    )
+    location_id = location.json()["id"]
+    vendor_id = vendor.json()["id"]
+    row = {
+        "client_row_id": "easy-row-1",
+        "name": "Easy Avocados",
+        "category": "Produce",
+        "sku": "EASY-AVO",
+        "base_unit": "each",
+        "location_id": location_id,
+        "purchase_unit": "case",
+        "pack_quantity": 12,
+        "pack_cost_cents": 2400,
+        "opening_quantity": 6,
+        "minimum_quantity": 2,
+        "par_quantity": 18,
+        "preferred_vendor_id": vendor_id,
+        "vendor_sku": "V-AVO",
+    }
+    preview = await client.post(
+        "/inventory/easy-manager/preview", json={"rows": [row]}, headers=headers
+    )
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["valid"] is True
+    assert preview.json()["rows"][0]["base_unit_cost_cents"] == 200
+    assert preview.json()["rows"][0]["action"] == "CREATE"
+
+    payload = {"idempotency_key": "easy-commit-create-1", "rows": [row]}
+    first = await client.post(
+        "/inventory/easy-manager/commit", json=payload, headers=headers
+    )
+    replay = await client.post(
+        "/inventory/easy-manager/commit", json=payload, headers=headers
+    )
+    assert first.status_code == 201, first.text
+    assert replay.status_code == 201
+    assert replay.json() == first.json()
+    assert len(first.json()["opening_movement_ids"]) == 1
+
+    bootstrap = await client.get(
+        f"/inventory/easy-manager?location_id={location_id}", headers=headers
+    )
+    assert bootstrap.status_code == 200, bootstrap.text
+    created = next(row for row in bootstrap.json()["rows"] if row["name"] == "Easy Avocados")
+    assert created["pack_cost_cents"] == 2400
+    assert created["base_unit_cost_cents"] == 200
+    assert Decimal(str(created["quantity_on_hand"])) == 6
+    assert Decimal(str(created["par_quantity"])) == 18
+
+    changed = {**payload, "rows": [{**row, "pack_cost_cents": 2500}]}
+    conflict = await client.post(
+        "/inventory/easy-manager/commit", json=changed, headers=headers
+    )
+    assert conflict.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_easy_inventory_manager_preserves_existing_on_hand_and_permissions(client):
+    token = await login_manager(client, "easy-edit@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+    location = await client.post(
+        "/inventory/locations", json={"name": "Easy Existing"}, headers=headers
+    )
+    item = await client.post(
+        "/inventory/items",
+        json={
+            "name": "Easy Existing Milk",
+            "category": "Dairy",
+            "sku": "EASY-EXISTING-MILK",
+            "base_unit": "gallon",
+        },
+        headers=headers,
+    )
+    await client.post(
+        "/inventory/movements",
+        json={
+            "inventory_item_id": item.json()["id"],
+            "location_id": location.json()["id"],
+            "quantity_change": 9,
+            "reason": "RECEIVING",
+        },
+        headers=headers,
+    )
+    row = {
+        "client_row_id": "easy-existing-1",
+        "inventory_item_id": item.json()["id"],
+        "name": "Easy Existing Milk",
+        "base_unit": "gallon",
+        "location_id": location.json()["id"],
+        "purchase_unit": "case",
+        "pack_quantity": 4,
+        "pack_cost_cents": 2000,
+        "par_quantity": 12,
+    }
+    saved = await client.post(
+        "/inventory/easy-manager/commit",
+        json={"idempotency_key": "easy-existing-save", "rows": [row]},
+        headers=headers,
+    )
+    assert saved.status_code == 201, saved.text
+    partial = await client.post(
+        "/inventory/easy-manager/commit",
+        json={
+            "idempotency_key": "easy-existing-partial",
+            "rows": [
+                {
+                    "client_row_id": "easy-existing-partial-1",
+                    "inventory_item_id": item.json()["id"],
+                    "location_id": location.json()["id"],
+                    "pack_quantity": 8,
+                    "pack_cost_cents": 2400,
+                    "category": None,
+                    "sku": None,
+                }
+            ],
+        },
+        headers=headers,
+    )
+    assert partial.status_code == 201, partial.text
+    bootstrap = await client.get(
+        f"/inventory/easy-manager?location_id={location.json()['id']}", headers=headers
+    )
+    partial_row = next(
+        row for row in bootstrap.json()["rows"] if row["inventory_item_id"] == item.json()["id"]
+    )
+    assert partial_row["category"] is None
+    assert partial_row["sku"] is None
+    assert partial_row["base_unit"] == "gallon"
+    assert Decimal(str(partial_row["par_quantity"])) == 12
+    stock = await client.get(
+        f"/inventory/stock?location_id={location.json()['id']}", headers=headers
+    )
+    assert Decimal(stock.json()[0]["quantity_on_hand"]) == 9
+
+    invalid = await client.post(
+        "/inventory/easy-manager/preview",
+        json={"rows": [{**row, "opening_quantity": 5}]},
+        headers=headers,
+    )
+    assert invalid.json()["valid"] is False
+    assert "Opening quantity" in invalid.json()["rows"][0]["errors"][0]
+
+    missing_unit = await client.post(
+        "/inventory/easy-manager/preview",
+        json={
+            "rows": [
+                {
+                    "client_row_id": "easy-missing-unit",
+                    "name": "Needs a count unit",
+                    "location_id": location.json()["id"],
+                }
+            ]
+        },
+        headers=headers,
+    )
+    assert missing_unit.json()["valid"] is False
+    assert "Count unit is required." in missing_unit.json()["rows"][0]["errors"]
+
+    await client.post(
+        "/auth/register",
+        json={
+            "email": "easy-server@example.com",
+            "password": "secret123",
+            "full_name": "Easy Server",
+            "role": UserRole.SERVER.value,
+        },
+    )
+    server_login = await client.post(
+        "/auth/login", json={"email": "easy-server@example.com", "password": "secret123"}
+    )
+    server_headers = {"Authorization": f"Bearer {server_login.json()['access_token']}"}
+    denied = await client.get(
+        f"/inventory/easy-manager?location_id={location.json()['id']}",
+        headers=server_headers,
+    )
+    assert denied.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_purchase_order_csv_preview_import_and_duplicate_protection(client):
     token = await login_manager(client, "po-import@example.com")
     headers = {"Authorization": f"Bearer {token}"}
@@ -253,6 +442,14 @@ async def test_weekday_planner_vendor_split_incoming_and_bulk_receiving(client):
     }
     assert configured[items[0]["id"]]["weekday_targets"]["2"] == "10.0000"
     assert configured[items[0]["id"]]["effective_lower_tolerance_percent"] == "5.00"
+    saved_items = {
+        item["id"]: item
+        for item in (await client.get("/inventory/items", headers=headers)).json()
+    }
+    assert saved_items[items[0]["id"]]["purchase_to_base"] == "4.0000"
+    assert saved_items[items[0]["id"]]["cost_cents"] == 250
+    assert saved_items[items[1]["id"]]["purchase_to_base"] == "3.0000"
+    assert saved_items[items[1]["id"]]["cost_cents"] == 500
 
     count = await client.post(
         "/inventory/counts",

@@ -104,7 +104,18 @@ def inventory_settings_rows(db: Session, location_id: int) -> list[dict[str, Any
                 "vendor_sku": vendor_item.vendor_sku if vendor_item else None,
                 "purchase_unit": item.purchase_unit or item.base_unit,
                 "pack_quantity": vendor_item.pack_quantity if vendor_item else item.purchase_to_base,
-                "unit_price_cents": vendor_item.unit_price_cents if vendor_item else 0,
+                "unit_price_cents": (
+                    vendor_item.unit_price_cents
+                    if vendor_item
+                    else int(
+                        (
+                            Decimal(item.cost_cents or 0)
+                            * Decimal(item.purchase_to_base or 1)
+                        ).quantize(
+                            Decimal("1"), rounding=ROUND_HALF_UP
+                        )
+                    )
+                ),
             }
         )
     return results

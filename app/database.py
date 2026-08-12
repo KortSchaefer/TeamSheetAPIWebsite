@@ -345,6 +345,28 @@ def ensure_sqlite_pos_columns(target_engine=None):
                     "ON pos_tables (client_request_id)"
                 )
             )
+
+        recipe_columns = [
+            row[1] for row in conn.execute(text("PRAGMA table_info(recipe_items)"))
+        ]
+        if recipe_columns:
+            if "selection_type" not in recipe_columns:
+                conn.execute(text("ALTER TABLE recipe_items ADD COLUMN selection_type VARCHAR(20) NOT NULL DEFAULT 'INCLUDED'"))
+            if "display_order" not in recipe_columns:
+                conn.execute(text("ALTER TABLE recipe_items ADD COLUMN display_order INTEGER NOT NULL DEFAULT 0"))
+
+        order_item_columns = [
+            row[1] for row in conn.execute(text("PRAGMA table_info(pos_order_items)"))
+        ]
+        if order_item_columns:
+            order_item_additions = {
+                "modifier_total_cents": "INTEGER NOT NULL DEFAULT 0",
+                "display_name_snapshot": "VARCHAR(150)",
+                "configuration_snapshot": "JSON",
+            }
+            for name, sql_type in order_item_additions.items():
+                if name not in order_item_columns:
+                    conn.execute(text(f"ALTER TABLE pos_order_items ADD COLUMN {name} {sql_type}"))
         conn.commit()
 
 

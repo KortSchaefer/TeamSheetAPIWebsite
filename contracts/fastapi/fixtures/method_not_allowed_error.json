@@ -1,0 +1,19 @@
+{
+  "description": "An unsupported method returns FastAPI's 405 envelope.",
+  "id": "method_not_allowed_error",
+  "request": {
+    "auth": "public",
+    "method": "POST",
+    "path": "/health"
+  },
+  "response": {
+    "body": {
+      "detail": "Method Not Allowed"
+    },
+    "headers": {
+      "allow": "GET",
+      "content-type": "application/json"
+    },
+    "status": 405
+  }
+}

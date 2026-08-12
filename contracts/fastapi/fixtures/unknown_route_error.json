@@ -1,0 +1,18 @@
+{
+  "description": "An unknown API path returns FastAPI's default 404 envelope.",
+  "id": "unknown_route_error",
+  "request": {
+    "auth": "public",
+    "method": "GET",
+    "path": "/contract-route-that-does-not-exist"
+  },
+  "response": {
+    "body": {
+      "detail": "Not Found"
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 404
+  }
+}

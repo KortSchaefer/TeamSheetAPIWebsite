@@ -1,0 +1,60 @@
+{
+  "fixtures": [
+    {
+      "description": "Public health check succeeds.",
+      "file": "health_success.json",
+      "id": "health_success"
+    },
+    {
+      "description": "A valid application token resolves the current user.",
+      "file": "auth_me_success.json",
+      "id": "auth_me_success"
+    },
+    {
+      "description": "A manager can create an inventory location.",
+      "file": "inventory_location_create_success.json",
+      "id": "inventory_location_create_success"
+    },
+    {
+      "description": "An authenticated user can list active inventory locations.",
+      "file": "inventory_locations_success.json",
+      "id": "inventory_locations_success"
+    },
+    {
+      "description": "A protected route rejects a missing application token.",
+      "file": "authentication_required_error.json",
+      "id": "authentication_required_error"
+    },
+    {
+      "description": "A server cannot call a manager-only route.",
+      "file": "manager_role_required_error.json",
+      "id": "manager_role_required_error"
+    },
+    {
+      "description": "Invalid request data uses FastAPI's 422 error envelope.",
+      "file": "request_validation_error.json",
+      "id": "request_validation_error"
+    },
+    {
+      "description": "A missing employee returns the endpoint-specific 404 detail.",
+      "file": "resource_not_found_error.json",
+      "id": "resource_not_found_error"
+    },
+    {
+      "description": "Invalid JSON login credentials return the authentication error.",
+      "file": "invalid_login_error.json",
+      "id": "invalid_login_error"
+    },
+    {
+      "description": "An unsupported method returns FastAPI's 405 envelope.",
+      "file": "method_not_allowed_error.json",
+      "id": "method_not_allowed_error"
+    },
+    {
+      "description": "An unknown API path returns FastAPI's default 404 envelope.",
+      "file": "unknown_route_error.json",
+      "id": "unknown_route_error"
+    }
+  ],
+  "format_version": 1
+}

@@ -54,27 +54,31 @@
       .btn {
         min-height: 66px;
         min-width: 145px;
-        border: 1px solid #b8b8b8;
-        border-radius: 16px;
-        background: #e1e1e1;
+        border: 1px solid #ffffff5c;
+        border-radius: 13px;
+        background: linear-gradient(180deg, #f1f1f1 0%, #d5d5d5 100%);
         color: #0c0c0c;
         padding: 10px 18px;
-        font-weight: 900;
+        font-weight: 850;
         font-size: clamp(1rem, 2.1vw, 1.45rem);
         cursor: pointer;
-        box-shadow: 0 5px 0 #1116;
+        box-shadow: inset 0 1px 0 #fff, 0 3px 8px #0006;
+        transition: transform .14s ease, box-shadow .14s ease, filter .14s ease, border-color .14s ease;
       }
-      .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #1116; }
+      .btn:hover:not(:disabled) { filter: brightness(1.045); border-color: #ffffff8f; box-shadow: inset 0 1px 0 #fff, 0 5px 13px #0007; }
+      .btn:active:not(:disabled) { transform: translateY(1px) scale(.992); box-shadow: inset 0 2px 4px #0002, 0 1px 4px #0006; }
+      .btn:focus-visible, .key:focus-visible, .category:focus-visible, .menu-button:focus-visible, .payment-option:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
       .btn.exit {
-        background: var(--red);
-        border-color: #ff666a;
+        background: linear-gradient(180deg, #ff555a 0%, var(--red-dark) 100%);
+        border-color: #ff898d;
         color: #fff;
         min-width: 220px;
         font-size: clamp(1.7rem, 3.4vw, 2.7rem);
+        text-shadow: 0 1px 1px #7b1116;
       }
       .btn.small { min-width: 92px; min-height: 54px; font-size: 1rem; border-radius: 13px; }
-      .btn.green { background: var(--green); border-color: #a5e8ae; }
-      .btn:disabled { opacity: .46; cursor: not-allowed; box-shadow: none; }
+      .btn.green { background: linear-gradient(180deg, #85df8f 0%, #52b960 100%); border-color: #b9efbf; }
+      .btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: inset 0 1px 0 #fff5; filter: saturate(.45); }
       .view { display: flex; flex-direction: column; min-height: 100dvh; }
       .workspace { flex: 1; padding: 28px 22px; min-height: 0; }
       .bottombar {
@@ -125,15 +129,18 @@
       .key {
         width: 122px;
         height: 118px;
-        border: 1px solid #050505;
-        border-radius: 38px;
-        background: #f7f7f7;
+        border: 1px solid #ffffff70;
+        border-radius: 24px;
+        background: linear-gradient(160deg, #fff 0%, #e3e3e3 100%);
         color: #000;
-        font-size: 3.6rem;
-        font-weight: 950;
+        font-size: 3.25rem;
+        font-weight: 850;
         cursor: pointer;
-        box-shadow: 0 7px 0 #16161666;
+        box-shadow: inset 0 1px 0 #fff, 0 5px 12px #0006;
+        transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
       }
+      .key:hover { filter: brightness(1.04); box-shadow: inset 0 1px 0 #fff, 0 7px 16px #0007; }
+      .key:active { transform: translateY(2px) scale(.985); box-shadow: inset 0 2px 5px #0002, 0 2px 5px #0006; }
       .key.word { font-size: 1.35rem; letter-spacing: -.04em; }
       .key.ok { color: #58b97c; }
       .login-status { min-height: 28px; margin-top: 16px; color: #ff9ba0; font-weight: 800; }
@@ -255,15 +262,35 @@
       .category-rail { display: grid; align-content: start; gap: 7px; }
       .category {
         min-height: 58px;
-        border-radius: 14px;
-        border: 1px solid #111;
-        background: #ddd;
+        border-radius: 11px;
+        border: 1px solid #ffffff45;
+        background: linear-gradient(180deg, #ededed 0%, #cecece 100%);
         color: #111;
         font-size: 1.05rem;
-        font-weight: 900;
+        font-weight: 800;
+        box-shadow: inset 0 1px 0 #fff, 0 2px 6px #0005;
+        transition: transform .12s ease, filter .12s ease, background .12s ease;
       }
-      .item-panel { min-height: 650px; display: grid; place-items: center; text-align: center; padding: 28px; color: #5b5b5b; }
+      .category:hover { filter: brightness(1.04); }
+      .category:active { transform: translateY(1px); }
+      .category.active { background: linear-gradient(180deg, #7cdb87 0%, #4eae5b 100%); border-color: #a8e9b0; box-shadow: inset 0 1px 0 #d9ffde, 0 3px 8px #0006; }
+      .item-panel { min-height: 650px; display: block; padding: 16px; color: #5b5b5b; overflow: auto; }
       .item-panel strong { display: block; color: #333; font-size: 1.4rem; margin-bottom: 5px; }
+      .menu-grid { display: grid; grid-template-columns: repeat(4, minmax(92px, 1fr)); grid-auto-rows: 92px; gap: 10px; }
+      .menu-button { position: relative; min-width: 0; padding: 9px; border: 1px solid #ffffff66; border-radius: 12px; background: linear-gradient(160deg, #fafafa 0%, #d9d9d9 100%); color: #111; font-weight: 850; overflow: hidden; box-shadow: inset 0 1px 0 #fff, 0 3px 8px #0006; transition:transform .12s ease,box-shadow .12s ease,filter .12s ease; }
+      .menu-button:hover { filter: brightness(1.045); box-shadow: inset 0 1px 0 #fff, 0 5px 12px #0007; }
+      .menu-button:active { transform: translateY(1px) scale(.99); box-shadow: inset 0 2px 4px #0002, 0 1px 4px #0006; }
+      .menu-button span,.menu-button small { position: relative; z-index: 1; display: block; }
+      .menu-button small { margin-top: 5px; opacity: .7; }
+      .menu-button.has-image::before { position:absolute; inset:0; background:linear-gradient(#0002,#000a),var(--menu-image) center/cover; content:""; }
+      .menu-button.has-image { color:#fff; }
+      .menu-empty { display:grid; min-height:300px; place-items:center; text-align:center; }
+      .modifier-groups { display:grid; gap:14px; max-height:55vh; overflow:auto; }
+      .modifier-group { margin:0; padding:12px; border:1px solid #666; border-radius:12px; }
+      .modifier-group legend { padding:0 5px; font-weight:900; }
+      .modifier-option { display:flex; align-items:center; gap:9px; padding:8px; border-bottom:1px solid #444; }
+      .modifier-option input { width:20px; min-height:20px; }
+      .modifier-option span { margin-left:auto; color:#ddd; }
       .order-bottom {
         background: var(--chrome);
         min-height: 142px;
@@ -286,13 +313,17 @@
       .payment-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 18px; }
       .payment-option {
         min-height: 92px;
-        border-radius: 18px;
-        border: 2px solid #777;
-        background: #f5f5f5;
+        border-radius: 13px;
+        border: 1px solid #aaa;
+        background: linear-gradient(180deg, #fff 0%, #dedede 100%);
         color: #111;
         font-size: 1.1rem;
-        font-weight: 900;
+        font-weight: 850;
+        box-shadow: inset 0 1px 0 #fff, 0 3px 8px #0004;
+        transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
       }
+      .payment-option:hover { filter: brightness(1.04); box-shadow: inset 0 1px 0 #fff, 0 5px 12px #0005; }
+      .payment-option:active { transform: translateY(1px); box-shadow: inset 0 2px 4px #0002, 0 1px 4px #0004; }
       .empty-close {
         margin-top: 40px;
         padding: 22px;
@@ -462,7 +493,7 @@
         <main class="workspace order-workspace">
           <section class="check-paper" data-check-paper></section>
           <nav class="category-rail" id="categoryRail" aria-label="Menu categories"></nav>
-          <section class="item-panel"><div><strong>Menu items are coming next</strong>Categories are ready, but ordering is intentionally disabled in POS V1.</div></section>
+          <section class="item-panel" id="itemPanel"></section>
         </main>
         <footer class="order-bottom screen-footer">
           <button class="btn" data-view="close" type="button">Close</button>
@@ -594,6 +625,12 @@
       <div class="dialog-actions"><button class="btn green" id="staySignedIn" type="button">Stay Signed In</button></div>
     </dialog>
 
+    <dialog id="modifierDialog">
+      <h2 id="modifierTitle">Configure item</h2>
+      <div class="modifier-groups" id="modifierGroups"></div>
+      <div class="dialog-actions"><button class="btn small" data-close-dialog="modifierDialog">Cancel</button><button class="btn small green" id="addConfiguredItem" type="button">Add to check</button></div>
+    </dialog>
+
     <div class="toast" id="toast" role="status"></div>
 
     <script>
@@ -602,6 +639,9 @@
         session: null,
         tables: [],
         categories: [],
+        menuConfig: {pages: [], buttons: []},
+        currentMenuPage: null,
+        pendingButton: null,
         transferCandidates: [],
         permissions: {},
         currentTable: null,
@@ -657,8 +697,8 @@
             <div class="table-number">${table.table_number}<small><span>${formatMoney(table.check.total_cents)}</span><span>Chk ${table.check.check_number}</span></small></div>
             <div class="table-summary">
               <div class="summary-copy">
-                <strong>Check ${table.check.check_number} · No items yet</strong>
-                <span>Food unordered · Empty POS V1 check</span>
+                <strong>Check ${table.check.check_number} · ${table.check.item_count ? `${table.check.item_count} item${table.check.item_count === 1 ? "" : "s"}` : "No items yet"}</strong>
+                <span>${table.check.item_count ? "Food ordered" : "Food unordered"}</span>
                 <div class="owner">${escapeHtml(table.owner_name)}</div>
               </div>
               <div>${statusDots(table.progress)}<span class="elapsed" data-opened="${table.opened_at}">${elapsed(table.opened_at)}</span></div>
@@ -676,16 +716,57 @@
         const table = state.currentTable;
         if (!table) return;
         document.querySelectorAll("[data-check-paper]").forEach(el => {
+          const itemRows = (table.check.items || []).map(item => `
+            <div style="padding:8px 2px;border-bottom:1px solid #aaa">
+              <div style="display:flex;justify-content:space-between;gap:8px"><strong>${item.quantity} × ${escapeHtml(item.display_name)}</strong><span>${formatMoney((item.price_cents + item.modifier_total_cents) * item.quantity)}</span></div>
+              ${(item.configuration?.modifiers || []).map(modifier => `<small style="display:block;color:#666">${escapeHtml(modifier.name)}${modifier.price_delta_cents ? ` +${formatMoney(modifier.price_delta_cents)}` : ""}</small>`).join("")}
+            </div>`).join("") || '<div class="check-empty">No menu items have been added.</div>';
           el.innerHTML = `
             <div class="check-head"><span>Table ${table.table_number}</span><span>Check ${table.check.check_number}</span></div>
-            <div class="check-body"><h3>Check details</h3><div class="check-empty">No menu items have been added.</div></div>
+            <div class="check-body"><h3>Check details</h3>${itemRows}</div>
             <div class="check-total"><span>Total</span><span>${formatMoney(table.check.total_cents)}</span></div>`;
         });
       }
       function renderCategories() {
-        $("categoryRail").innerHTML = state.categories.map(category =>
-          `<button class="category" type="button" disabled title="Menu ordering is coming in a later release">${escapeHtml(category.name)}</button>`
+        $("categoryRail").innerHTML = (state.menuConfig.pages || []).map(page =>
+          `<button class="category ${page.id === state.currentMenuPage ? "active" : ""}" data-menu-page="${page.id}" type="button">${escapeHtml(page.name)}</button>`
         ).join("");
+        renderMenuButtons();
+      }
+      function renderMenuButtons() {
+        const buttons = (state.menuConfig.buttons || []).filter(button => button.page_id === state.currentMenuPage && button.active && !button.deleted_at);
+        $("itemPanel").innerHTML = buttons.length ? `<div class="menu-grid">${buttons.map(button => {
+          const layout = button.layout || {}, visual = button.visual || {};
+          const image = visual.image_url ? `--menu-image:url('${String(visual.image_url).replace(/'/g, "%27")}');` : "";
+          return `<button class="menu-button ${visual.image_url ? "has-image" : ""}" data-menu-button="${button.id}" style="grid-row:${layout.row || "auto"}/span ${layout.height || 1};grid-column:${layout.column || "auto"}/span ${layout.width || 1};background-color:${visual.background_color || "#f2f2f2"};color:${visual.text_color || "#111"};font-size:${Number(visual.font_size || 16)}px;${image}"><span>${escapeHtml(button.display_name)}</span><small>${formatMoney(button.price_cents)}</small></button>`;
+        }).join("")}</div>` : '<div class="menu-empty"><div><strong>No buttons on this page</strong><p>A manager can add buttons in the POS Button Editor.</p></div></div>';
+      }
+      function openButton(button) {
+        if (!state.currentTable) return toast("Open a table first.", true);
+        state.pendingButton = button;
+        const groups = button.modifier_groups || [];
+        if (!groups.length) return void addConfiguredItem();
+        $("modifierTitle").textContent = button.display_name;
+        $("modifierGroups").innerHTML = groups.map(group => {
+          const inputType = group.maximum_selections === 1 ? "radio" : "checkbox";
+          return `<fieldset class="modifier-group" data-modifier-group="${group.id}"><legend>${escapeHtml(group.prompt || group.name)}${group.required ? " *" : ""}</legend>${group.modifiers.filter(option => option.active).map(option => `<label class="modifier-option"><input type="${inputType}" name="modifier-group-${group.id}" value="${option.id}" ${option.default_selected ? "checked" : ""}><strong>${escapeHtml(option.name)}</strong><span>${option.price_delta_cents ? `+${formatMoney(option.price_delta_cents)}` : "Included"}</span></label>`).join("")}</fieldset>`;
+        }).join("");
+        $("modifierDialog").showModal();
+      }
+      async function addConfiguredItem() {
+        const button = state.pendingButton;
+        if (!button || !state.currentTable) return;
+        const modifiers = $("modifierDialog").open ? [...$("modifierGroups").querySelectorAll("input:checked")].map(input => ({modifier_id: Number(input.value), quantity: 1})) : [];
+        $("addConfiguredItem").disabled = true;
+        try {
+          const result = await json(await authFetch(`/pos/terminal/checks/${state.currentTable.check.id}/items`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({button_id:button.id, quantity:1, modifiers})}));
+          state.currentTable.check = result.check;
+          state.currentTable.revision = result.table_revision;
+          state.currentTable.progress = result.check.progress;
+          if ($("modifierDialog").open) $("modifierDialog").close();
+          renderCheck(); renderTables(); toast(`${button.display_name} added.`);
+        } catch (error) { toast(error.message, true); }
+        finally { $("addConfiguredItem").disabled = false; state.pendingButton = null; }
       }
       function setCurrentTable(tableId) {
         state.currentTable = state.tables.find(table => table.id === Number(tableId)) || null;
@@ -703,6 +784,8 @@
         state.session = {employee: payload.employee, idle_timeout_seconds: payload.idle_timeout_seconds, expires_at: payload.expires_at};
         state.tables = payload.tables;
         state.categories = payload.categories;
+        state.menuConfig = payload.menu_config || {pages: [], buttons: []};
+        state.currentMenuPage = state.menuConfig.pages[0]?.id || null;
         state.transferCandidates = payload.transfer_candidates;
         state.permissions = payload.permissions;
         state.lastActivity = Date.now();
@@ -881,6 +964,18 @@
           showView("order");
         }
       });
+      $("categoryRail").addEventListener("click", event => {
+        const button = event.target.closest("[data-menu-page]");
+        if (!button) return;
+        state.currentMenuPage = Number(button.dataset.menuPage);
+        renderCategories();
+      });
+      $("itemPanel").addEventListener("click", event => {
+        const target = event.target.closest("[data-menu-button]");
+        if (!target) return;
+        const button = state.menuConfig.buttons.find(row => row.id === Number(target.dataset.menuButton));
+        if (button) openButton(button);
+      });
       document.addEventListener("click", event => {
         const viewButton = event.target.closest("[data-view]");
         if (viewButton) {
@@ -907,6 +1002,7 @@
         $("tableNumberInput").focus();
       });
       $("confirmTransfer").addEventListener("click", transferTable);
+      $("addConfiguredItem").addEventListener("click", addConfiguredItem);
       $("closeEmptyButton").addEventListener("click", closeEmpty);
       $("staySignedIn").addEventListener("click", async () => {
         markActivity();

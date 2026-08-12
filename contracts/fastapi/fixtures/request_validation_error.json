@@ -1,0 +1,35 @@
+{
+  "description": "Invalid request data uses FastAPI's 422 error envelope.",
+  "id": "request_validation_error",
+  "request": {
+    "auth": "manager",
+    "json": {
+      "active": true,
+      "name": ""
+    },
+    "method": "POST",
+    "path": "/inventory/locations"
+  },
+  "response": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 1
+          },
+          "input": "",
+          "loc": [
+            "body",
+            "name"
+          ],
+          "msg": "String should have at least 1 character",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "headers": {
+      "content-type": "application/json"
+    },
+    "status": 422
+  }
+}

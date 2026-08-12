@@ -18,6 +18,7 @@ from app.models import (
     POSCheckProgress,
     POSCredential,
     POSOrder,
+    POSOrderItem,
     POSOrderStatus,
     POSTable,
     POSTableEvent,
@@ -290,7 +291,7 @@ def session_payload(principal: POSPrincipal) -> dict:
 def _table_query(db: Session):
     return db.query(POSTable).options(
         joinedload(POSTable.owner),
-        selectinload(POSTable.checks).selectinload(POSOrder.items),
+        selectinload(POSTable.checks).selectinload(POSOrder.items).joinedload(POSOrderItem.menu_item),
     )
 
 
@@ -308,6 +309,18 @@ def serialize_check(check: POSOrder) -> dict:
         "printed_at": check.printed_at,
         "closed_at": check.closed_at,
         "item_count": sum(item.quantity for item in check.items),
+        "items": [
+            {
+                "id": item.id,
+                "menu_item_id": item.menu_item_id,
+                "display_name": item.display_name_snapshot or item.menu_item.name,
+                "quantity": item.quantity,
+                "price_cents": item.price_cents,
+                "modifier_total_cents": item.modifier_total_cents,
+                "configuration": item.configuration_snapshot or {},
+            }
+            for item in check.items
+        ],
     }
 
 

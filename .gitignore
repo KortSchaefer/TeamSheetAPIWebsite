@@ -90,12 +90,17 @@ voice_audio/
 # Coverage and profiling
 coverage/
 nosetests.xml
+*.cpuprofile
 
 # Jupyter
 .ipynb_checkpoints
 
 # Node
 node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 
 # Ignore compiled frontend assets (if you generate them locally)
 public/static/

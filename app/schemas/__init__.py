@@ -64,6 +64,9 @@ from .schemas import (
     InventoryCatalogActivationCreate,
     InventoryBalanceRead,
     InventoryBalanceUpsert,
+    EasyInventoryRowInput,
+    EasyInventoryPreviewRequest,
+    EasyInventoryCommitRequest,
     InventoryPlanningSettingsRowUpdate,
     InventoryPlanningSettingsBulkUpdate,
     VendorCreate,
@@ -119,6 +122,17 @@ from .schemas import (
     UserCreate,
     UserRead,
     UserEmployeeLink,
+)
+from .pos_config import (
+    POSBehaviorRuleUpsert,
+    POSButtonUpsert,
+    POSConfigImportRequest,
+    POSLayoutUpdate,
+    POSModifierGroupUpsert,
+    POSPageUpsert,
+    POSPromptUpsert,
+    POSTagUpsert,
+    POSTerminalItemCreate,
 )
 
 __all__ = [
@@ -203,6 +217,9 @@ __all__ = [
     "InventoryCatalogActivationCreate",
     "InventoryBalanceRead",
     "InventoryBalanceUpsert",
+    "EasyInventoryRowInput",
+    "EasyInventoryPreviewRequest",
+    "EasyInventoryCommitRequest",
     "InventoryPlanningSettingsRowUpdate",
     "InventoryPlanningSettingsBulkUpdate",
     "VendorCreate",
@@ -242,4 +259,13 @@ __all__ = [
     "PyosRequestCreate",
     "PyosRequestManualCreate",
     "PyosRequestRead",
+    "POSBehaviorRuleUpsert",
+    "POSButtonUpsert",
+    "POSConfigImportRequest",
+    "POSLayoutUpdate",
+    "POSModifierGroupUpsert",
+    "POSPageUpsert",
+    "POSPromptUpsert",
+    "POSTagUpsert",
+    "POSTerminalItemCreate",
 ]

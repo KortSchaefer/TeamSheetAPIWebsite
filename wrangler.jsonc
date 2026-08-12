@@ -1,0 +1,172 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "teamsheet-studio-local",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": [
+      "/",
+      "/health",
+      "/api/*",
+      "/auth/login",
+      "/auth/token",
+      "/auth/logout",
+      "/auth/me",
+      "/pos/*",
+      "/employees*",
+      "/sections*",
+      "/shifts*",
+      "/seasons*",
+      "/store-preferences*",
+      "/cobrands*",
+      "/daily-rosters*",
+      "/teamsheet-presets*",
+      "/team-sheets*",
+      "/gift-tracker*",
+      "/payouts*",
+      "/pyos*",
+      "/imports*",
+      "/agm/*",
+      "/inventory/*",
+      "/ingredient-catalog*",
+      "/static/*"
+    ]
+  },
+  "vars": {
+    "APP_NAME": "Team Sheet Studio API",
+    "APP_VERSION": "0.1.0",
+    "APP_ENVIRONMENT": "local",
+    "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
+    "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
+    "VOICE_AUDIO_RETENTION_HOURS": "24",
+    "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+    "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+    "POS_IDLE_TIMEOUT_SECONDS": "45",
+    "POS_SESSION_EXPIRE_HOURS": "12",
+    "POS_LOGIN_MAX_ATTEMPTS": "5",
+    "POS_LOGIN_LOCK_MINUTES": "5"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "teamsheet-studio-local",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+      "migrations_dir": "d1/migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "agm-floor-v1", "new_sqlite_classes": ["AGMServiceRoom"] }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "VOICE_AUDIO",
+      "bucket_name": "teamsheet-studio-voice-local"
+    }
+  ],
+  "triggers": {
+    "crons": ["17 * * * *"]
+  },
+  "secrets": {
+    "required": ["SECRET_KEY"]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.05 }
+  },
+  "env": {
+    "staging": {
+      "name": "teamsheet-studio-staging",
+      "vars": {
+        "APP_NAME": "Team Sheet Studio API",
+        "APP_VERSION": "0.1.0",
+        "APP_ENVIRONMENT": "staging",
+        "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
+        "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
+        "VOICE_AUDIO_RETENTION_HOURS": "24",
+        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+        "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+        "POS_IDLE_TIMEOUT_SECONDS": "45",
+        "POS_SESSION_EXPIRE_HOURS": "12",
+        "POS_LOGIN_MAX_ATTEMPTS": "5",
+        "POS_LOGIN_LOCK_MINUTES": "5"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "teamsheet-studio-staging",
+          "database_id": "c732183e-2d84-4ff4-83b4-51c4fa06b5d5",
+          "migrations_dir": "d1/migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+        ]
+      },
+      "r2_buckets": [
+        {
+          "binding": "VOICE_AUDIO",
+          "bucket_name": "teamsheet-studio-voice-staging"
+        }
+      ],
+      "triggers": {
+        "crons": ["17 * * * *"]
+      },
+      "secrets": {
+        "required": ["SECRET_KEY"]
+      }
+    },
+    "production": {
+      "name": "teamsheet-studio-production",
+      "vars": {
+        "APP_NAME": "Team Sheet Studio API",
+        "APP_VERSION": "0.1.0",
+        "APP_ENVIRONMENT": "production",
+        "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
+        "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
+        "VOICE_AUDIO_RETENTION_HOURS": "24",
+        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+        "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+        "POS_IDLE_TIMEOUT_SECONDS": "45",
+        "POS_SESSION_EXPIRE_HOURS": "12",
+        "POS_LOGIN_MAX_ATTEMPTS": "5",
+        "POS_LOGIN_LOCK_MINUTES": "5"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "teamsheet-studio-production",
+          "migrations_dir": "d1/migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
+        ]
+      },
+      "r2_buckets": [
+        {
+          "binding": "VOICE_AUDIO",
+          "bucket_name": "teamsheet-studio-voice-production"
+        }
+      ],
+      "triggers": {
+        "crons": []
+      },
+      "secrets": {
+        "required": ["SECRET_KEY"]
+      }
+    }
+  }
+}

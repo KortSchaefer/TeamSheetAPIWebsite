@@ -555,6 +555,7 @@ class POSCheckSummaryRead(BaseModel):
     printed_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     item_count: int = 0
+    items: list[dict] = Field(default_factory=list)
 
 
 class POSTableRead(BaseModel):
@@ -596,6 +597,7 @@ class POSTerminalBootstrapRead(POSTerminalSessionRead):
     categories: list[MenuCategoryRead]
     tables: list[POSTableRead]
     transfer_candidates: list[POSTerminalEmployeeRead] = Field(default_factory=list)
+    menu_config: dict = Field(default_factory=dict)
 
 
 class POSPrintStartRead(BaseModel):
@@ -731,6 +733,36 @@ class InventoryBalanceUpsert(BaseModel):
     minimum_quantity: Decimal = Field(default=Decimal("0"), ge=0)
     par_quantity: Decimal = Field(default=Decimal("0"), ge=0)
     maximum_quantity: Optional[Decimal] = Field(default=None, ge=0)
+
+
+class EasyInventoryRowInput(BaseModel):
+    client_row_id: str = Field(min_length=1, max_length=100)
+    action: Optional[Literal["CREATE", "UPDATE", "STOCK_AT_LOCATION"]] = None
+    inventory_item_id: Optional[int] = None
+    catalog_id: Optional[str] = Field(default=None, max_length=150)
+    name: Optional[str] = Field(default=None, max_length=150)
+    category: Optional[str] = Field(default=None, max_length=100)
+    sku: Optional[str] = Field(default=None, max_length=100)
+    base_unit: Optional[str] = Field(default=None, max_length=30)
+    location_id: Optional[int] = None
+    purchase_unit: Optional[str] = Field(default=None, max_length=30)
+    pack_quantity: Optional[Decimal] = None
+    pack_cost_cents: Optional[int] = None
+    opening_quantity: Optional[Decimal] = None
+    minimum_quantity: Optional[Decimal] = None
+    par_quantity: Optional[Decimal] = None
+    maximum_quantity: Optional[Decimal] = None
+    preferred_vendor_id: Optional[int] = None
+    vendor_sku: Optional[str] = Field(default=None, max_length=100)
+    shelf_life_days: Optional[int] = None
+
+
+class EasyInventoryPreviewRequest(BaseModel):
+    rows: List[EasyInventoryRowInput] = Field(min_length=1, max_length=250)
+
+
+class EasyInventoryCommitRequest(EasyInventoryPreviewRequest):
+    idempotency_key: str = Field(min_length=8, max_length=100)
 
 
 class InventoryPlanningSettingsRowUpdate(BaseModel):

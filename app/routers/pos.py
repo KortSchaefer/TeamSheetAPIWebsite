@@ -32,6 +32,7 @@ from app.services.pos_terminal import (
     transfer_pos_table,
     upsert_pos_access,
 )
+from app.services.pos_configuration import configuration_bundle
 
 router = APIRouter(prefix="/pos", tags=["pos"])
 
@@ -273,6 +274,12 @@ def terminal_bootstrap(
     principal: POSPrincipal = Depends(get_current_pos_principal),
 ):
     categories = ensure_pos_categories(db)
+    resolved_config = configuration_bundle(db, include_deleted=False, resolve=True)
+    menu_config = {
+        "schema_version": resolved_config["schema_version"],
+        "pages": [page for page in resolved_config["pages"] if page["active"]],
+        "buttons": resolved_config["buttons"],
+    }
     tables = [
         serialize_table(table) for table in accessible_tables(db, principal)
     ]
@@ -293,7 +300,7 @@ def terminal_bootstrap(
             "transfer_tables": principal.is_manager,
         },
         "features": {
-            "menu_items": False,
+            "menu_items": True,
             "payments": False,
             "tips": False,
             "promos": False,
@@ -303,6 +310,7 @@ def terminal_bootstrap(
         "categories": categories,
         "tables": tables,
         "transfer_candidates": transfer_candidates,
+        "menu_config": menu_config,
     }
 
 
@@ -422,6 +430,11 @@ def terminal_print_view(
         else "Open"
     )
     owner = escape(employee_display_name(table.owner))
+    item_rows = "".join(
+        f'<div class="row"><span>{item.quantity} x {escape(item.display_name_snapshot or item.menu_item.name)}</span>'
+        f'<span>${((item.price_cents + item.modifier_total_cents) * item.quantity) / 100:.2f}</span></div>'
+        for item in check.items
+    ) or '<p class="center">No menu items</p>'
     return HTMLResponse(
         f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Table {table.table_number} Check</title>
@@ -440,9 +453,9 @@ body{{font:14px/1.35 ui-monospace,Consolas,monospace;margin:0;color:#111}}
 <div class="row"><span>Opened</span><span>{opened}</span></div>
 <div class="row"><span>Closed</span><span>{closed}</span></div>
 <div class="rule"></div>
-<p class="center">No menu items in POS V1</p>
+{item_rows}
 <div class="rule"></div>
-<div class="row total"><span>Total</span><span>$0.00</span></div>
+<div class="row total"><span>Total</span><span>${check.total_cents / 100:.2f}</span></div>
 <p class="center"><button onclick="window.print()">Print Check</button></p>
 <script>window.addEventListener('load',()=>window.print())</script>
 </main></body></html>"""

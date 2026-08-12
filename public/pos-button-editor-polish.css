@@ -1,0 +1,14 @@
+.pos-button {
+  border: 1px solid #ffffff70;
+  background: linear-gradient(160deg, #f4f4f4, #d5d5d5);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 10px #0005;
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+.pos-button:hover {
+  filter: brightness(1.04);
+  box-shadow: inset 0 1px 0 #fff, 0 6px 14px #0006;
+}
+.pos-button:active {
+  transform: translateY(1px) scale(.992);
+  box-shadow: inset 0 2px 4px #0002, 0 2px 5px #0005;
+}
