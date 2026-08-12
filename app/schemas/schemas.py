@@ -555,6 +555,7 @@ class POSCheckSummaryRead(BaseModel):
     printed_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     item_count: int = 0
+    items: list[dict] = Field(default_factory=list)
 
 
 class POSTableRead(BaseModel):
@@ -596,6 +597,7 @@ class POSTerminalBootstrapRead(POSTerminalSessionRead):
     categories: list[MenuCategoryRead]
     tables: list[POSTableRead]
     transfer_candidates: list[POSTerminalEmployeeRead] = Field(default_factory=list)
+    menu_config: dict = Field(default_factory=dict)
 
 
 class POSPrintStartRead(BaseModel):

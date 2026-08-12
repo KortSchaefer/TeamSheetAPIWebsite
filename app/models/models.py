@@ -16,6 +16,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -641,6 +642,8 @@ class RecipeItem(Base):
     menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"))
     quantity: Mapped[float] = mapped_column(Float, default=1)
+    selection_type: Mapped[str] = mapped_column(String(20), default="INCLUDED", nullable=False, server_default="INCLUDED")
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default=text("0"))
 
     menu_item = relationship("MenuItem", back_populates="recipe_items")
     ingredient = relationship("Ingredient", back_populates="recipe_items")
@@ -689,6 +692,9 @@ class POSOrderItem(Base, TimestampMixin):
     menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"))
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    modifier_total_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
+    display_name_snapshot: Mapped[str | None] = mapped_column(String(150))
+    configuration_snapshot: Mapped[dict | None] = mapped_column(JSON)
 
     order = relationship("POSOrder", back_populates="items")
     menu_item = relationship("MenuItem")

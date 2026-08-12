@@ -4233,6 +4233,304 @@
         "title": "POSAccessUpsert",
         "type": "object"
       },
+      "POSAssignmentInput": {
+        "properties": {
+          "disabled": {
+            "default": false,
+            "title": "Disabled",
+            "type": "boolean"
+          },
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Id",
+            "type": "integer"
+          },
+          "overrides": {
+            "additionalProperties": true,
+            "title": "Overrides",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "POSAssignmentInput",
+        "type": "object"
+      },
+      "POSBehaviorRuleUpsert": {
+        "properties": {
+          "action": {
+            "additionalProperties": true,
+            "title": "Action",
+            "type": "object"
+          },
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "condition": {
+            "additionalProperties": true,
+            "title": "Condition",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "default": 0,
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "scope_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Id"
+          },
+          "scope_type": {
+            "default": "GLOBAL",
+            "enum": [
+              "GLOBAL",
+              "BUTTON",
+              "TAG"
+            ],
+            "title": "Scope Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "condition",
+          "action"
+        ],
+        "title": "POSBehaviorRuleUpsert",
+        "type": "object"
+      },
+      "POSButtonUpsert": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "alternate_price_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternate Price Cents"
+          },
+          "availability": {
+            "additionalProperties": true,
+            "title": "Availability",
+            "type": "object"
+          },
+          "button_type": {
+            "default": "PRODUCT",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Button Type",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "grid_column": {
+            "default": 1,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Grid Column",
+            "type": "integer"
+          },
+          "grid_height": {
+            "default": 1,
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Grid Height",
+            "type": "integer"
+          },
+          "grid_row": {
+            "default": 1,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Grid Row",
+            "type": "integer"
+          },
+          "grid_width": {
+            "default": 1,
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Grid Width",
+            "type": "integer"
+          },
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/POSIngredientInput"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "internal_key": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Internal Key",
+            "type": "string"
+          },
+          "menu_item_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Menu Item Id"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "modifier_groups": {
+            "items": {
+              "$ref": "#/components/schemas/POSAssignmentInput"
+            },
+            "title": "Modifier Groups",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "page_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Page Id",
+            "type": "integer"
+          },
+          "price_cents": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Price Cents",
+            "type": "integer"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/POSAssignmentInput"
+            },
+            "title": "Prompts",
+            "type": "array"
+          },
+          "routing": {
+            "additionalProperties": true,
+            "title": "Routing",
+            "type": "object"
+          },
+          "tag_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Tag Ids",
+            "type": "array"
+          },
+          "visual": {
+            "additionalProperties": true,
+            "title": "Visual",
+            "type": "object"
+          },
+          "weight_unit": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Unit"
+          },
+          "weight_value": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Value"
+          }
+        },
+        "required": [
+          "internal_key",
+          "name",
+          "display_name",
+          "page_id"
+        ],
+        "title": "POSButtonUpsert",
+        "type": "object"
+      },
       "POSCheckProgress": {
         "enum": [
           "FOOD_UNORDERED",
@@ -4268,6 +4566,14 @@
             "default": 0,
             "title": "Item Count",
             "type": "integer"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
           },
           "print_count": {
             "title": "Print Count",
@@ -4346,6 +4652,298 @@
           "payment"
         ],
         "title": "POSCloseRequest",
+        "type": "object"
+      },
+      "POSConfigImportRequest": {
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "preview": {
+            "default": true,
+            "title": "Preview",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "title": "POSConfigImportRequest",
+        "type": "object"
+      },
+      "POSIngredientInput": {
+        "properties": {
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "ingredient_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Ingredient Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "default": 1,
+            "exclusiveMinimum": 0.0,
+            "title": "Quantity",
+            "type": "number"
+          },
+          "selection_type": {
+            "default": "INCLUDED",
+            "enum": [
+              "INCLUDED",
+              "DEFAULT",
+              "OPTIONAL"
+            ],
+            "title": "Selection Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient_id"
+        ],
+        "title": "POSIngredientInput",
+        "type": "object"
+      },
+      "POSLayoutEntry": {
+        "properties": {
+          "button_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Button Id",
+            "type": "integer"
+          },
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "grid_column": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Grid Column",
+            "type": "integer"
+          },
+          "grid_height": {
+            "default": 1,
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Grid Height",
+            "type": "integer"
+          },
+          "grid_row": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Grid Row",
+            "type": "integer"
+          },
+          "grid_width": {
+            "default": 1,
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Grid Width",
+            "type": "integer"
+          },
+          "page_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Page Id",
+            "type": "integer"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "button_id",
+          "page_id",
+          "grid_row",
+          "grid_column",
+          "revision"
+        ],
+        "title": "POSLayoutEntry",
+        "type": "object"
+      },
+      "POSLayoutUpdate": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/POSLayoutEntry"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "title": "POSLayoutUpdate",
+        "type": "object"
+      },
+      "POSModifierGroupUpsert": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "allow_quantities": {
+            "default": false,
+            "title": "Allow Quantities",
+            "type": "boolean"
+          },
+          "conditional_visibility": {
+            "additionalProperties": true,
+            "title": "Conditional Visibility",
+            "type": "object"
+          },
+          "maximum_selections": {
+            "default": 1,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Maximum Selections",
+            "type": "integer"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "minimum_selections": {
+            "default": 0,
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Minimum Selections",
+            "type": "integer"
+          },
+          "modifiers": {
+            "items": {
+              "$ref": "#/components/schemas/POSModifierInput"
+            },
+            "title": "Modifiers",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "maxLength": 220,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "slug": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "POSModifierGroupUpsert",
+        "type": "object"
+      },
+      "POSModifierInput": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "conditional_visibility": {
+            "additionalProperties": true,
+            "title": "Conditional Visibility",
+            "type": "object"
+          },
+          "default_selected": {
+            "default": false,
+            "title": "Default Selected",
+            "type": "boolean"
+          },
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "internal_key": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Internal Key",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "opens_modifier_group_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opens Modifier Group Id"
+          },
+          "price_delta_cents": {
+            "default": 0,
+            "title": "Price Delta Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "internal_key",
+          "name"
+        ],
+        "title": "POSModifierInput",
         "type": "object"
       },
       "POSOrderCreate": {
@@ -4578,6 +5176,56 @@
         "title": "POSOrderStatus",
         "type": "string"
       },
+      "POSPageUpsert": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_order": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "POSPageUpsert",
+        "type": "object"
+      },
       "POSPaymentCreate": {
         "properties": {
           "amount_cents": {
@@ -4633,6 +5281,63 @@
           "printed_at"
         ],
         "title": "POSPrintStartRead",
+        "type": "object"
+      },
+      "POSPromptUpsert": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "message": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "modifier_group_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modifier Group Id"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "slug": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "message"
+        ],
+        "title": "POSPromptUpsert",
         "type": "object"
       },
       "POSTableCreate": {
@@ -4747,6 +5452,76 @@
         "title": "POSTableTransfer",
         "type": "object"
       },
+      "POSTagUpsert": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "behavior": {
+            "additionalProperties": true,
+            "title": "Behavior",
+            "type": "object"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "modifier_groups": {
+            "items": {
+              "$ref": "#/components/schemas/POSAssignmentInput"
+            },
+            "title": "Modifier Groups",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/POSAssignmentInput"
+            },
+            "title": "Prompts",
+            "type": "array"
+          },
+          "slug": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "POSTagUpsert",
+        "type": "object"
+      },
       "POSTerminalBootstrapRead": {
         "properties": {
           "categories": {
@@ -4774,6 +5549,11 @@
           "idle_timeout_seconds": {
             "title": "Idle Timeout Seconds",
             "type": "integer"
+          },
+          "menu_config": {
+            "additionalProperties": true,
+            "title": "Menu Config",
+            "type": "object"
           },
           "permissions": {
             "additionalProperties": {
@@ -4829,6 +5609,67 @@
           "access_role"
         ],
         "title": "POSTerminalEmployeeRead",
+        "type": "object"
+      },
+      "POSTerminalItemCreate": {
+        "properties": {
+          "button_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Button Id",
+            "type": "integer"
+          },
+          "modifiers": {
+            "items": {
+              "$ref": "#/components/schemas/POSTerminalModifierSelection"
+            },
+            "title": "Modifiers",
+            "type": "array"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "quantity": {
+            "default": 1,
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "button_id"
+        ],
+        "title": "POSTerminalItemCreate",
+        "type": "object"
+      },
+      "POSTerminalModifierSelection": {
+        "properties": {
+          "modifier_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Modifier Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "default": 1,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "modifier_id"
+        ],
+        "title": "POSTerminalModifierSelection",
         "type": "object"
       },
       "POSTerminalSessionRead": {
@@ -15443,6 +16284,1111 @@
         ]
       }
     },
+    "/pos/admin/config/audit": {
+      "get": {
+        "operationId": "list_audit_pos_admin_config_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Audit",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/bootstrap": {
+      "get": {
+        "operationId": "admin_config_bootstrap_pos_admin_config_bootstrap_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_deleted",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Deleted",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Admin Config Bootstrap",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/buttons": {
+      "post": {
+        "operationId": "create_button_pos_admin_config_buttons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSButtonUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Button",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/buttons/{button_id}": {
+      "delete": {
+        "operationId": "delete_button_pos_admin_config_buttons__button_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Button",
+        "tags": [
+          "pos-configuration"
+        ]
+      },
+      "put": {
+        "operationId": "update_button_pos_admin_config_buttons__button_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSButtonUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Button",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/buttons/{button_id}/duplicate": {
+      "post": {
+        "operationId": "duplicate_button_pos_admin_config_buttons__button_id__duplicate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Duplicate Button",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/buttons/{button_id}/restore": {
+      "post": {
+        "operationId": "restore_button_pos_admin_config_buttons__button_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore Button",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/export": {
+      "get": {
+        "operationId": "export_config_pos_admin_config_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Export Config",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/import": {
+      "post": {
+        "operationId": "import_config_pos_admin_config_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSConfigImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Import Config",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/layout": {
+      "put": {
+        "operationId": "update_layout_pos_admin_config_layout_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Layout",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/modifier-groups": {
+      "post": {
+        "operationId": "create_group_pos_admin_config_modifier_groups_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSModifierGroupUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Group",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/modifier-groups/{group_id}": {
+      "delete": {
+        "operationId": "disable_group_pos_admin_config_modifier_groups__group_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Disable Group",
+        "tags": [
+          "pos-configuration"
+        ]
+      },
+      "put": {
+        "operationId": "update_group_pos_admin_config_modifier_groups__group_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSModifierGroupUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Group",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/pages": {
+      "post": {
+        "operationId": "create_page_pos_admin_config_pages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPageUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Page",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/pages/{page_id}": {
+      "delete": {
+        "operationId": "disable_page_pos_admin_config_pages__page_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "page_id",
+            "required": true,
+            "schema": {
+              "title": "Page Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Disable Page",
+        "tags": [
+          "pos-configuration"
+        ]
+      },
+      "put": {
+        "operationId": "update_page_pos_admin_config_pages__page_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "page_id",
+            "required": true,
+            "schema": {
+              "title": "Page Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPageUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Page",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/prompts": {
+      "post": {
+        "operationId": "create_prompt_pos_admin_config_prompts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPromptUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Prompt",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/prompts/{prompt_id}": {
+      "put": {
+        "operationId": "update_prompt_pos_admin_config_prompts__prompt_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPromptUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Prompt",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/rules": {
+      "post": {
+        "operationId": "create_rule_pos_admin_config_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSBehaviorRuleUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Rule",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/rules/{rule_id}": {
+      "delete": {
+        "operationId": "disable_rule_pos_admin_config_rules__rule_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Disable Rule",
+        "tags": [
+          "pos-configuration"
+        ]
+      },
+      "put": {
+        "operationId": "update_rule_pos_admin_config_rules__rule_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSBehaviorRuleUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Rule",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/tags": {
+      "post": {
+        "operationId": "create_tag_pos_admin_config_tags_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTagUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Tag",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
+    "/pos/admin/config/tags/{tag_id}": {
+      "delete": {
+        "operationId": "disable_tag_pos_admin_config_tags__tag_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Disable Tag",
+        "tags": [
+          "pos-configuration"
+        ]
+      },
+      "put": {
+        "operationId": "update_tag_pos_admin_config_tags__tag_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTagUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Tag",
+        "tags": [
+          "pos-configuration"
+        ]
+      }
+    },
     "/pos/menu-categories": {
       "get": {
         "operationId": "list_menu_categories_pos_menu_categories_get",
@@ -15981,6 +17927,56 @@
         "summary": "Terminal Close Empty Check",
         "tags": [
           "pos"
+        ]
+      }
+    },
+    "/pos/terminal/checks/{check_id}/items": {
+      "post": {
+        "operationId": "add_terminal_item_pos_terminal_checks__check_id__items_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "check_id",
+            "required": true,
+            "schema": {
+              "title": "Check Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTerminalItemCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Terminal Item",
+        "tags": [
+          "pos-configuration"
         ]
       }
     },

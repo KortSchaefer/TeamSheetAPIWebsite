@@ -45,10 +45,11 @@ beforeEach(async () => {
   ).run();
   await testEnv.DB.prepare(
     `INSERT INTO inventory_items
-     (id, ingredient_id, name, category, sku, base_unit, purchase_unit, purchase_to_base,
-      default_location_id, cost_cents, shelf_life_days, active, created_at, updated_at)
-     VALUES (611, NULL, 'Synthetic Milk', 'Dairy', NULL, 'case', NULL, 1, 61, 100, NULL, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-            (612, NULL, 'Synthetic Chicken', 'Protein', NULL, 'case', NULL, 1, 61, 200, NULL, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      (id, ingredient_id, name, category, sku, base_unit, purchase_unit, purchase_to_base,
+       default_location_id, cost_cents, shelf_life_days, active, created_at, updated_at)
+      VALUES (611, NULL, 'Synthetic Milk', 'Dairy', NULL, 'case', NULL, 1, 61, 100, NULL, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+             (612, NULL, 'Synthetic Chicken', 'Protein', NULL, 'case', NULL, 1, 61, 200, NULL, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+             (613, NULL, 'Mozzarella Sticks', 'Food', NULL, 'case', NULL, 1, 61, 300, NULL, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
   ).run();
 });
 
@@ -117,6 +118,78 @@ describe("Worker voice inventory", () => {
     const realtime = await authRequest(`/inventory/voice/sessions/${session.id}/realtime-token`, { method: "POST", body: "{}" });
     expect(realtime.status).toBe(503);
     await expect(realtime.json()).resolves.toMatchObject({ detail: { code: "OPENAI_NOT_CONFIGURED" } });
+  });
+
+  it("removes a counted item without requiring a spoken quantity", async () => {
+    await testEnv.DB.prepare(
+      `INSERT INTO inventory_counts
+       (id, location_id, status, counted_by_user_id, revision, created_at, updated_at)
+       VALUES (630, 61, 'DRAFT', 601, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    ).run();
+    await testEnv.DB.prepare(
+      `INSERT INTO inventory_count_lines
+       (id, count_id, inventory_item_id, counted_quantity, expected_quantity,
+        display_order, is_counted, source, review_status, revision)
+       VALUES (631, 630, 613, 3, 4, 0, 1, 'VOICE', 'READY', 1)`,
+    ).run();
+    const create = await authRequest("/inventory/voice/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        client_session_id: "synthetic-session-remove",
+        initial_location_id: 61,
+        device_metadata: { target_count_id: 630 },
+      }),
+    });
+    const session = await create.json<{ id: number }>();
+    await authRequest(`/inventory/voice/sessions/${session.id}/utterances`, {
+      method: "POST",
+      body: JSON.stringify({
+        client_event_id: "synthetic-event-remove-set",
+        sequence: 1,
+        transcript: "Mozzarella Sticks 3 next Synthetic Chicken 2",
+      }),
+    });
+
+    const remove = await authRequest(`/inventory/voice/sessions/${session.id}/utterances`, {
+      method: "POST",
+      body: JSON.stringify({
+        client_event_id: "synthetic-event-remove-command",
+        sequence: 2,
+        transcript: "Remove mozzarella sticks.",
+      }),
+    });
+
+    expect(remove.status).toBe(201);
+    await expect(remove.json()).resolves.toMatchObject({
+      status: "ACCEPTED",
+      entries: [expect.objectContaining({
+        inventory_item_id: 613,
+        action: "REMOVE",
+        normalized_quantity: 0,
+        review_status: "AUTO_ACCEPTED",
+      })],
+      feedback: { clarification_needed: false },
+    });
+    await expect(authRequest(`/inventory/voice/sessions/${session.id}`).then((response) => response.json()))
+      .resolves.toMatchObject({
+        blocking_review_count: 0,
+        effective_counts: [expect.objectContaining({ inventory_item_id: 612, quantity: 2 })],
+      });
+    const current = await authRequest(`/inventory/voice/sessions/${session.id}`);
+    expect((await current.json<{ effective_counts: Array<{ inventory_item_id: number }> }>()).effective_counts)
+      .not.toEqual(expect.arrayContaining([expect.objectContaining({ inventory_item_id: 613 })]));
+    expect((await authRequest(`/inventory/voice/sessions/${session.id}/finish`, {
+      method: "POST",
+      body: "{}",
+    })).status).toBe(200);
+    await expect(testEnv.DB.prepare(
+      "SELECT counted_quantity, is_counted, source, review_status FROM inventory_count_lines WHERE id = 631",
+    ).first()).resolves.toMatchObject({
+      counted_quantity: 0,
+      is_counted: 0,
+      source: null,
+      review_status: "PENDING",
+    });
   });
 
   it("writes finished voice counts into the count sheet that launched the session", async () => {

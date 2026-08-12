@@ -17,7 +17,7 @@
     "sqlalchemy_models": "app/models/models.py",
     "startup_repairs": "app/database.py"
   },
-  "table_count": 68,
+  "table_count": 81,
   "tables": [
     {
       "columns": [
@@ -4773,6 +4773,711 @@
         },
         {
           "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(150)"
+        },
+        {
+          "default": null,
+          "name": "scope_type",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(30)"
+        },
+        {
+          "default": null,
+          "name": "scope_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "condition",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "action",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": "0",
+          "name": "priority",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_behavior_rules_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "scope_id"
+          ],
+          "name": "ix_pos_behavior_rules_scope_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "scope_type"
+          ],
+          "name": "ix_pos_behavior_rules_scope_type",
+          "unique": false
+        }
+      ],
+      "name": "pos_behavior_rules",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "button_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "modifier_group_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "disabled",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "override_config",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_buttons"
+        },
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_modifier_groups"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "name": "ix_pos_button_modifier_groups_button_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "name": "ix_pos_button_modifier_groups_modifier_group_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_button_modifier_groups",
+      "unique_constraints": [
+        [
+          "button_id",
+          "modifier_group_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "button_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "prompt_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "disabled",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "override_config",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_buttons"
+        },
+        {
+          "columns": [
+            "prompt_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_prompts"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "name": "ix_pos_button_prompts_button_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "prompt_id"
+          ],
+          "name": "ix_pos_button_prompts_prompt_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_button_prompts",
+      "unique_constraints": [
+        [
+          "button_id",
+          "prompt_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "button_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "tag_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_buttons"
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_tags"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "button_id"
+          ],
+          "name": "ix_pos_button_tags_button_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "name": "ix_pos_button_tags_tag_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_button_tags",
+      "unique_constraints": [
+        [
+          "button_id",
+          "tag_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "internal_key",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "menu_item_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "page_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "display_name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "description",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "TEXT"
+        },
+        {
+          "default": "'PRODUCT'",
+          "name": "button_type",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(40)"
+        },
+        {
+          "default": null,
+          "name": "alternate_price_cents",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "weight_value",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "FLOAT"
+        },
+        {
+          "default": null,
+          "name": "weight_unit",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(30)"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "deleted_at",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "availability",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "visual",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "routing",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "metadata",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": "1",
+          "name": "grid_row",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "grid_column",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "grid_width",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "grid_height",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "revision",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "menu_item_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "menu_items"
+        },
+        {
+          "columns": [
+            "page_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_pages"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_buttons_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "deleted_at"
+          ],
+          "name": "ix_pos_buttons_deleted_at",
+          "unique": false
+        },
+        {
+          "columns": [
+            "internal_key"
+          ],
+          "name": "ix_pos_buttons_internal_key",
+          "unique": true
+        },
+        {
+          "columns": [
+            "menu_item_id"
+          ],
+          "name": "ix_pos_buttons_menu_item_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "page_id"
+          ],
+          "name": "ix_pos_buttons_page_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_buttons",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "actor_user_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "action",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(60)"
+        },
+        {
+          "default": null,
+          "name": "entity_type",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(50)"
+        },
+        {
+          "default": null,
+          "name": "entity_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "before_value",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "after_value",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "actor_user_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "users"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "action"
+          ],
+          "name": "ix_pos_config_audit_action",
+          "unique": false
+        },
+        {
+          "columns": [
+            "actor_user_id"
+          ],
+          "name": "ix_pos_config_audit_actor_user_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "created_at"
+          ],
+          "name": "ix_pos_config_audit_created_at",
+          "unique": false
+        },
+        {
+          "columns": [
+            "entity_id"
+          ],
+          "name": "ix_pos_config_audit_entity_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "entity_type"
+          ],
+          "name": "ix_pos_config_audit_entity_type",
+          "unique": false
+        }
+      ],
+      "name": "pos_config_audit",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
           "name": "employee_id",
           "nullable": false,
           "primary_key_position": 0,
@@ -4885,6 +5590,255 @@
         },
         {
           "default": null,
+          "name": "slug",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "prompt",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(220)"
+        },
+        {
+          "default": "0",
+          "name": "required",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "0",
+          "name": "minimum_selections",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "1",
+          "name": "maximum_selections",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "allow_quantities",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "conditional_visibility",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "metadata",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_modifier_groups_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_pos_modifier_groups_slug",
+          "unique": true
+        }
+      ],
+      "name": "pos_modifier_groups",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "group_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "internal_key",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": "0",
+          "name": "price_delta_cents",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "default_selected",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "opens_modifier_group_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "conditional_visibility",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "metadata",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "group_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_modifier_groups"
+        },
+        {
+          "columns": [
+            "opens_modifier_group_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_modifier_groups"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "group_id"
+          ],
+          "name": "ix_pos_modifiers_group_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_modifiers",
+      "unique_constraints": [
+        [
+          "group_id",
+          "internal_key"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
           "name": "order_id",
           "nullable": false,
           "primary_key_position": 0,
@@ -4910,6 +5864,27 @@
           "nullable": false,
           "primary_key_position": 0,
           "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "modifier_total_cents",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "display_name_snapshot",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(150)"
+        },
+        {
+          "default": null,
+          "name": "configuration_snapshot",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
         },
         {
           "default": null,
@@ -5141,6 +6116,92 @@
         },
         {
           "default": null,
+          "name": "slug",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "description",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "TEXT"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "metadata",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_pages_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_pos_pages_slug",
+          "unique": true
+        }
+      ],
+      "name": "pos_pages",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
           "name": "order_id",
           "nullable": false,
           "primary_key_position": 0,
@@ -5190,6 +6251,118 @@
       ],
       "indexes": [],
       "name": "pos_payments",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "slug",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(120)"
+        },
+        {
+          "default": null,
+          "name": "message",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(240)"
+        },
+        {
+          "default": null,
+          "name": "modifier_group_id",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "required",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "config",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_modifier_groups"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_prompts_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "name": "ix_pos_prompts_modifier_group_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_pos_prompts_slug",
+          "unique": true
+        }
+      ],
+      "name": "pos_prompts",
       "unique_constraints": []
     },
     {
@@ -5450,6 +6623,264 @@
         }
       ],
       "name": "pos_tables",
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "tag_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "modifier_group_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "override_config",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_modifier_groups"
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_tags"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "modifier_group_id"
+          ],
+          "name": "ix_pos_tag_modifier_groups_modifier_group_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "name": "ix_pos_tag_modifier_groups_tag_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_tag_modifier_groups",
+      "unique_constraints": [
+        [
+          "tag_id",
+          "modifier_group_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "tag_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "prompt_id",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "override_config",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "columns": [
+            "prompt_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_prompts"
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "on_delete": "NO ACTION",
+          "on_update": "NO ACTION",
+          "referenced_columns": [
+            "id"
+          ],
+          "referenced_table": "pos_tags"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "prompt_id"
+          ],
+          "name": "ix_pos_tag_prompts_prompt_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "tag_id"
+          ],
+          "name": "ix_pos_tag_prompts_tag_id",
+          "unique": false
+        }
+      ],
+      "name": "pos_tag_prompts",
+      "unique_constraints": [
+        [
+          "tag_id",
+          "prompt_id"
+        ]
+      ]
+    },
+    {
+      "columns": [
+        {
+          "default": null,
+          "name": "id",
+          "nullable": false,
+          "primary_key_position": 1,
+          "type": "INTEGER"
+        },
+        {
+          "default": null,
+          "name": "slug",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "name",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(100)"
+        },
+        {
+          "default": null,
+          "name": "description",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "TEXT"
+        },
+        {
+          "default": null,
+          "name": "color",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": "1",
+          "name": "active",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "BOOLEAN"
+        },
+        {
+          "default": null,
+          "name": "behavior",
+          "nullable": true,
+          "primary_key_position": 0,
+          "type": "JSON"
+        },
+        {
+          "default": null,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        },
+        {
+          "default": null,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "DATETIME"
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "active"
+          ],
+          "name": "ix_pos_tags_active",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_pos_tags_slug",
+          "unique": true
+        }
+      ],
+      "name": "pos_tags",
       "unique_constraints": []
     },
     {
@@ -6067,6 +7498,20 @@
           "nullable": false,
           "primary_key_position": 0,
           "type": "FLOAT"
+        },
+        {
+          "default": "'INCLUDED'",
+          "name": "selection_type",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "VARCHAR(20)"
+        },
+        {
+          "default": "0",
+          "name": "display_order",
+          "nullable": false,
+          "primary_key_position": 0,
+          "type": "INTEGER"
         }
       ],
       "foreign_keys": [

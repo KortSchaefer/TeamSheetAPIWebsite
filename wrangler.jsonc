@@ -17,6 +17,20 @@
       "/auth/token",
       "/auth/logout",
       "/auth/me",
+      "/pos/*",
+      "/employees*",
+      "/sections*",
+      "/shifts*",
+      "/seasons*",
+      "/store-preferences*",
+      "/cobrands*",
+      "/daily-rosters*",
+      "/teamsheet-presets*",
+      "/team-sheets*",
+      "/gift-tracker*",
+      "/payouts*",
+      "/pyos*",
+      "/imports*",
       "/agm/*",
       "/inventory/*",
       "/ingredient-catalog*",
@@ -30,8 +44,12 @@
     "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
     "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
     "VOICE_AUDIO_RETENTION_HOURS": "24",
-    "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608"
-    ,"OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna"
+    "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+    "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+    "POS_IDLE_TIMEOUT_SECONDS": "45",
+    "POS_SESSION_EXPIRE_HOURS": "12",
+    "POS_LOGIN_MAX_ATTEMPTS": "5",
+    "POS_LOGIN_LOCK_MINUTES": "5"
   },
   "d1_databases": [
     {
@@ -62,7 +80,9 @@
     "required": ["SECRET_KEY"]
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.05 }
   },
   "env": {
     "staging": {
@@ -74,8 +94,12 @@
         "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
         "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
         "VOICE_AUDIO_RETENTION_HOURS": "24",
-        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608"
-        ,"OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna"
+        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+        "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+        "POS_IDLE_TIMEOUT_SECONDS": "45",
+        "POS_SESSION_EXPIRE_HOURS": "12",
+        "POS_LOGIN_MAX_ATTEMPTS": "5",
+        "POS_LOGIN_LOCK_MINUTES": "5"
       },
       "d1_databases": [
         {
@@ -112,14 +136,31 @@
         "ACCESS_TOKEN_EXPIRE_MINUTES": "60",
         "REFRESH_TOKEN_EXPIRE_MINUTES": "10080",
         "VOICE_AUDIO_RETENTION_HOURS": "24",
-        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608"
-        ,"OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna"
+        "VOICE_AUDIO_MAX_CHUNK_BYTES": "8388608",
+        "OPENAI_NORMALIZATION_MODEL": "gpt-5.6-luna",
+        "POS_IDLE_TIMEOUT_SECONDS": "45",
+        "POS_SESSION_EXPIRE_HOURS": "12",
+        "POS_LOGIN_MAX_ATTEMPTS": "5",
+        "POS_LOGIN_LOCK_MINUTES": "5"
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "teamsheet-studio-production",
+          "migrations_dir": "d1/migrations"
+        }
+      ],
       "durable_objects": {
         "bindings": [
           { "name": "AGM_SERVICE", "class_name": "AGMServiceRoom" }
         ]
       },
+      "r2_buckets": [
+        {
+          "binding": "VOICE_AUDIO",
+          "bucket_name": "teamsheet-studio-voice-production"
+        }
+      ],
       "triggers": {
         "crons": []
       },

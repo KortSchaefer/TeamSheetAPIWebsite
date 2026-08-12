@@ -51,8 +51,9 @@ describe("D1 schema migrations", () => {
       "0003_voice_audio_r2_metadata.sql",
       "0004_easy_inventory_manager.sql",
       "0005_agm_floor.sql",
+      "0006_pos_button_management.sql",
     ]);
-    expect(await applicationTableNames()).toHaveLength(69);
+    expect(await applicationTableNames()).toHaveLength(82);
     const orderIndexes = await testEnv.DB.prepare(
       "PRAGMA index_list('inventory_purchase_orders')",
     ).all<{ name: string; unique: number }>();

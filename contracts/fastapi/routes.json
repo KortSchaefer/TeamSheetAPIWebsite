@@ -2,9 +2,9 @@
   "application": "Team Sheet Studio API",
   "authentication_counts": {
     "authenticated_user": 60,
-    "manager_or_admin": 103,
+    "manager_or_admin": 127,
     "optional_pos_session": 1,
-    "pos_session": 9,
+    "pos_session": 10,
     "public": 7,
     "signed_upload": 1
   },
@@ -57,7 +57,7 @@
     }
   ],
   "openapi_version": "3.1.0",
-  "operation_count": 181,
+  "operation_count": 206,
   "operations": [
     {
       "authentication": {
@@ -8837,6 +8837,1526 @@
           "authorization_bearer",
           "tss_access_token_cookie"
         ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "list_audit",
+      "path": "/pos/admin/config/audit",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "admin_config_bootstrap",
+      "path": "/pos/admin/config/bootstrap",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_deleted",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Deleted",
+              "type": "boolean"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_button",
+      "path": "/pos/admin/config/buttons",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSButtonUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSButtonUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "DELETE",
+      "name": "delete_button",
+      "path": "/pos/admin/config/buttons/{button_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_button",
+      "path": "/pos/admin/config/buttons/{button_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSButtonUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSButtonUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "duplicate_button",
+      "path": "/pos/admin/config/buttons/{button_id}/duplicate",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "restore_button",
+      "path": "/pos/admin/config/buttons/{button_id}/restore",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "button_id",
+            "required": true,
+            "schema": {
+              "title": "Button Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "GET",
+      "name": "export_config",
+      "path": "/pos/admin/config/export",
+      "request": {
+        "body": null,
+        "parameters": [],
+        "schema_refs": []
+      },
+      "response_schema_refs": [],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "import_config",
+      "path": "/pos/admin/config/import",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSConfigImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSConfigImportRequest"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_layout",
+      "path": "/pos/admin/config/layout",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSLayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSLayoutUpdate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_group",
+      "path": "/pos/admin/config/modifier-groups",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSModifierGroupUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSModifierGroupUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "DELETE",
+      "name": "disable_group",
+      "path": "/pos/admin/config/modifier-groups/{group_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_group",
+      "path": "/pos/admin/config/modifier-groups/{group_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSModifierGroupUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSModifierGroupUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_page",
+      "path": "/pos/admin/config/pages",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPageUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSPageUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "DELETE",
+      "name": "disable_page",
+      "path": "/pos/admin/config/pages/{page_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "page_id",
+            "required": true,
+            "schema": {
+              "title": "Page Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_page",
+      "path": "/pos/admin/config/pages/{page_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPageUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "page_id",
+            "required": true,
+            "schema": {
+              "title": "Page Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSPageUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_prompt",
+      "path": "/pos/admin/config/prompts",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPromptUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSPromptUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_prompt",
+      "path": "/pos/admin/config/prompts/{prompt_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSPromptUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSPromptUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_rule",
+      "path": "/pos/admin/config/rules",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSBehaviorRuleUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSBehaviorRuleUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "DELETE",
+      "name": "disable_rule",
+      "path": "/pos/admin/config/rules/{rule_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_rule",
+      "path": "/pos/admin/config/rules/{rule_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSBehaviorRuleUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "title": "Rule Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSBehaviorRuleUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "create_tag",
+      "path": "/pos/admin/config/tags",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTagUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [],
+        "schema_refs": [
+          "POSTagUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "DELETE",
+      "name": "disable_tag",
+      "path": "/pos/admin/config/tags/{tag_id}",
+      "request": {
+        "body": null,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": []
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
+        "mode": "manager_or_admin",
+        "roles": [
+          "ADMIN",
+          "MANAGER"
+        ],
+        "unauthenticated_status": 401,
+        "unauthorized_status": 403
+      },
+      "included_in_openapi": true,
+      "method": "PUT",
+      "name": "update_tag",
+      "path": "/pos/admin/config/tags/{tag_id}",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTagUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSTagUpsert"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 200,
+      "tags": [
+        "pos-configuration"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "authorization_bearer",
+          "tss_access_token_cookie"
+        ],
         "mode": "authenticated_user",
         "roles": [
           "ADMIN",
@@ -9611,6 +11131,76 @@
       "success_status": 200,
       "tags": [
         "pos"
+      ]
+    },
+    {
+      "authentication": {
+        "credentials": [
+          "tss_pos_session_cookie"
+        ],
+        "mode": "pos_session",
+        "roles": [
+          "MANAGER",
+          "SERVER"
+        ],
+        "unauthenticated_status": 401
+      },
+      "included_in_openapi": true,
+      "method": "POST",
+      "name": "add_terminal_item",
+      "path": "/pos/terminal/checks/{check_id}/items",
+      "request": {
+        "body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/POSTerminalItemCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "check_id",
+            "required": true,
+            "schema": {
+              "title": "Check Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "schema_refs": [
+          "POSTerminalItemCreate"
+        ]
+      },
+      "response_schema_refs": [
+        "HTTPValidationError"
+      ],
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      },
+      "success_status": 201,
+      "tags": [
+        "pos-configuration"
       ]
     },
     {

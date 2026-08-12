@@ -50,7 +50,7 @@ def test_migrated_schema_matches_all_sqlalchemy_tables_columns_and_relationships
     expected_tables = {table["name"] for table in MANIFEST["tables"]}
     # Worker-only R2 metadata is intentionally outside the SQLAlchemy model set.
     assert actual_tables - {"inventory_voice_audio_objects"} == expected_tables
-    assert len(expected_tables) == MANIFEST["table_count"] == 68
+    assert len(expected_tables) == MANIFEST["table_count"] == 81
 
     for table in MANIFEST["tables"]:
         name = table["name"]

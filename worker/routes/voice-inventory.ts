@@ -95,7 +95,7 @@ async function sessionEntries(database: D1Database, sessionId: number): Promise<
      JOIN inventory_locations l ON l.id = e.location_id
      LEFT JOIN inventory_items i ON i.id = e.inventory_item_id
      JOIN inventory_voice_utterances u ON u.id=e.utterance_id
-     WHERE e.session_id = ? ORDER BY e.id`,
+     WHERE e.session_id = ? ORDER BY u.sequence, e.id`,
   ).bind(sessionId).all<Record<string, unknown>>();
   return result.results.map((row) => ({ ...row, created_at: iso(row.created_at) }));
 }
@@ -302,10 +302,13 @@ function parseSegment(
   const item = candidates.find((candidate) => normalized.includes(candidate.normalized));
   const numeric = /(?:^|\s)(\d+(?:\.\d+)?)(?:\s|$)/u.exec(normalized);
   const wordEntry = Object.entries(NUMBER_WORDS).find(([word]) => new RegExp(`(?:^|\\s)${word}(?:\\s|$)`, "u").test(normalized));
-  const quantity = numeric ? Number(numeric[1]) : wordEntry?.[1] ?? null;
   const action = /\badd\b/u.test(normalized) ? "ADD"
     : /\b(?:change|replace)\b/u.test(normalized) ? "REPLACE"
       : /\b(?:remove|delete)\b/u.test(normalized) ? "REMOVE" : "SET";
+  // Removing an existing session count does not require a spoken quantity.
+  // Store zero for audit/export consistency while effectiveCounts applies the
+  // REMOVE action by deleting the item from the session's effective state.
+  const quantity = action === "REMOVE" ? 0 : numeric ? Number(numeric[1]) : wordEntry?.[1] ?? null;
   const unitMatch = quantity === null ? null : /(?:\d+(?:\.\d+)?|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+([a-z]+)/u.exec(normalized);
   return { item, quantity, action, spokenUnit: unitMatch?.[1] ?? item?.base_unit ?? null };
 }
@@ -393,6 +396,7 @@ async function utterance(request: Request, sessionId: number, bindings: RuntimeB
   if(parsed.some(entry=>entry.item===undefined||entry.quantity===null)){
     const resolved=await resolveWithOpenAI(segments,candidates,bindings);for(const entry of resolved??[]){const target=parsed[entry.index];if(!target)continue;if(entry.item)target.item=entry.item;if(entry.quantity!==null)target.quantity=entry.quantity;if(entry.unit)target.spokenUnit=entry.unit;if(["SET","ADD","REPLACE","REMOVE"].includes(entry.action))target.action=entry.action}
   }
+  for (const entry of parsed) if (entry.action === "REMOVE" && entry.quantity === null) entry.quantity = 0;
   const needsReview = parsed.some((entry) => entry.item === undefined || entry.quantity === null);
   const utteranceId = randomId();
   const status = command ? "ACCEPTED" : needsReview ? "NEEDS_CLARIFICATION" : "ACCEPTED";
@@ -560,18 +564,27 @@ async function finish(request: Request, sessionId: number, bindings: RuntimeBind
     const locationId = numberValue(row.location_id);
     grouped.set(locationId, [...(grouped.get(locationId) ?? []), row]);
   }
+  const linkedCounts = await bindings.database.prepare(
+    "SELECT location_id, inventory_count_id FROM inventory_voice_session_counts WHERE session_id = ?",
+  ).bind(sessionId).all<{ location_id: number; inventory_count_id: number }>();
+  const linkedByLocation = new Map(linkedCounts.results.map((row) => [row.location_id, row.inventory_count_id]));
+  for (const locationId of linkedByLocation.keys()) if (!grouped.has(locationId)) grouped.set(locationId, []);
   for (const [locationId, rows] of grouped) {
-    const linked = await bindings.database.prepare(
-      "SELECT inventory_count_id FROM inventory_voice_session_counts WHERE session_id = ? AND location_id = ?",
-    ).bind(sessionId, locationId).first<{ inventory_count_id: number }>();
-    const countId = linked?.inventory_count_id ?? randomId();
+    const linkedCountId = linkedByLocation.get(locationId);
+    const countId = linkedCountId ?? randomId();
     const statements: D1PreparedStatement[] = [];
-    if (linked === null) statements.push(bindings.database.prepare(
+    if (linkedCountId === undefined) statements.push(bindings.database.prepare(
       `INSERT INTO inventory_counts
        (id, location_id, template_id, status, counted_by_user_id, reviewed_by_user_id,
         notes, revision, approved_at, created_at, updated_at)
        VALUES (?, ?, NULL, 'DRAFT', ?, NULL, ?, 1, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     ).bind(countId, locationId, owned.auth.user.id, `Created by voice inventory session #${sessionId}`));
+    else statements.push(bindings.database.prepare(
+      `UPDATE inventory_count_lines SET counted_quantity = 0, is_counted = 0,
+       source = NULL, confidence = NULL, review_status = 'PENDING', evidence = NULL,
+       revision = revision + 1, updated_by_user_id = ?
+       WHERE count_id = ? AND source = 'VOICE'`,
+    ).bind(owned.auth.user.id, countId));
     rows.forEach((row, index) => statements.push(bindings.database.prepare(
       `INSERT INTO inventory_count_lines
        (id, count_id, inventory_item_id, counted_quantity, expected_quantity,
@@ -589,7 +602,7 @@ async function finish(request: Request, sessionId: number, bindings: RuntimeBind
     ).bind(randomId(), countId, numberValue(row.inventory_item_id), numberValue(row.quantity),
       numberValue(row.inventory_item_id), locationId, index,
       `Voice session #${sessionId}`, owned.auth.user?.id)));
-    if (linked === null) statements.push(bindings.database.prepare(
+    if (linkedCountId === undefined) statements.push(bindings.database.prepare(
       `INSERT INTO inventory_voice_session_counts
        (id, session_id, location_id, inventory_count_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,

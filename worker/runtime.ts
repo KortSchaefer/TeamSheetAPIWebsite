@@ -5,6 +5,10 @@ export interface RuntimeBindings {
   refreshTokenExpireMinutes: number;
   openaiApiKey?: string;
   openaiNormalizationModel: string;
+  posIdleTimeoutSeconds: number;
+  posSessionExpireHours: number;
+  posLoginMaxAttempts: number;
+  posLoginLockMinutes: number;
 }
 
 export interface VoiceRuntimeBindings extends RuntimeBindings {
@@ -46,5 +50,9 @@ export function runtimeBindings(env: Env): RuntimeBindings | null {
     ),
     openaiApiKey: optionalEnv.OPENAI_API_KEY,
     openaiNormalizationModel: optionalEnv.OPENAI_NORMALIZATION_MODEL ?? "gpt-5.6-luna",
+    posIdleTimeoutSeconds: positiveInteger(env.POS_IDLE_TIMEOUT_SECONDS, 45),
+    posSessionExpireHours: positiveInteger(env.POS_SESSION_EXPIRE_HOURS, 12),
+    posLoginMaxAttempts: positiveInteger(env.POS_LOGIN_MAX_ATTEMPTS, 5),
+    posLoginLockMinutes: positiveInteger(env.POS_LOGIN_LOCK_MINUTES, 5),
   };
 }

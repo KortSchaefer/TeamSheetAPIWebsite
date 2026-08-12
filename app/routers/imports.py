@@ -24,9 +24,29 @@ def _parse_int(value: str | None) -> int | None:
         return None
 
 
+def _normalize_header(value: str) -> str:
+    characters = (character.lower() if character.isalnum() else "_" for character in value)
+    return "_".join(filter(None, "".join(characters).split("_")))
+
+
+def _row_value(row: dict[str, str | None], *aliases: str) -> str | None:
+    expected = {_normalize_header(alias) for alias in aliases}
+    for key, value in row.items():
+        if key and _normalize_header(key) in expected and value and value.strip():
+            return value.strip()
+    return None
+
+
+def _parse_blast(value: str | None) -> int | None:
+    return _parse_int(value.strip().removesuffix("%").strip()) if value is not None else None
+
+
 @router.post("/servers", status_code=status.HTTP_201_CREATED)
 async def import_servers(
-    file: UploadFile = File(..., description="CSV with columns: name, upsell_score, pitty, employment_days, max_guests"),
+    file: UploadFile = File(
+        ...,
+        description="CSV with columns: name, upsell_score, pitty, employment_days, max_guests",
+    ),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_manager_or_admin),
 ):
@@ -37,24 +57,34 @@ async def import_servers(
         text = raw.decode("latin-1")
 
     reader = csv.DictReader(io.StringIO(text))
-    if not reader.fieldnames or "name" not in {h.lower() for h in reader.fieldnames}:
+    if not reader.fieldnames or "name" not in {_normalize_header(header) for header in reader.fieldnames}:
         raise HTTPException(status_code=400, detail="CSV must include a 'name' column.")
 
     created = 0
     updated = 0
     for row in reader:
-        name = row.get("name") or row.get("Name")
+        name = _row_value(row, "name")
         if not name:
             continue
         parts = name.strip().split()
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ""
 
-        upsell_score = _parse_int(row.get("upsell_score") or row.get("Upsell"))
-        pitty = _parse_int(row.get("pitty") or row.get("Pitty"))
-        employment_days = _parse_int(row.get("employment_days") or row.get("employment"))
-        max_guests = _parse_int(row.get("max_guests") or row.get("capacity") or row.get("max_section_load"))
-        nickname = row.get("nickname")
+        upsell_score = _parse_blast(
+            _row_value(
+                row,
+                "upsell_score",
+                "upsell",
+                "blast",
+                "blast_percent",
+                "blast_percentage",
+                "blast_score",
+            )
+        )
+        pitty = _parse_int(_row_value(row, "pitty", "pity"))
+        employment_days = _parse_int(_row_value(row, "employment_days", "employment"))
+        max_guests = _parse_int(_row_value(row, "max_guests", "capacity", "max_section_load"))
+        nickname = _row_value(row, "nickname")
 
         employee = (
             db.query(Employee)
@@ -109,22 +139,19 @@ async def import_daily_roster(
     if not reader.fieldnames:
         raise HTTPException(status_code=400, detail="CSV must include a header row.")
 
-    headers = {h.lower() for h in reader.fieldnames}
-    name_key = "name" if "name" in headers else None
-    has_in_time = "in_time" in headers
-    if not name_key:
+    headers = {_normalize_header(header) for header in reader.fieldnames}
+    if "name" not in headers:
         raise HTTPException(status_code=400, detail="CSV must include a 'name' column.")
 
     entries = []
     for row in reader:
-        name = row.get("name") or row.get("Name")
+        name = _row_value(row, "name")
         if not name:
             continue
         entry = {"name": name.strip()}
-        if has_in_time:
-            in_time = row.get("in_time") or row.get("In_time") or row.get("In Time")
-            if in_time:
-                entry["in_time"] = str(in_time).strip()
+        in_time = _row_value(row, "in_time")
+        if in_time:
+            entry["in_time"] = in_time
         entries.append(entry)
 
     roster = (

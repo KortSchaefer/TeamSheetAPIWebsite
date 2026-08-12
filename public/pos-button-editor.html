@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>POS Button Editor</title>
+  <link rel="stylesheet" href="/static/pos-button-editor.css">
+  <link rel="stylesheet" href="/static/pos-button-editor-polish.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><a href="/static/index.html" aria-label="Back">←</a><div><small>POS administration</small><h1>Button Editor</h1></div></div>
+    <div class="header-actions">
+      <button class="secondary" id="auditButton">History</button>
+      <button class="secondary" id="importButton">Import</button>
+      <button class="secondary" id="exportButton">Export</button>
+      <button class="primary" id="newButton">+ Add button</button>
+      <input id="importFile" type="file" accept="application/json" hidden>
+    </div>
+  </header>
+  <main class="shell">
+    <aside class="catalog-panel">
+      <div class="panel-title"><div><small>Catalog</small><h2>Buttons</h2></div><span id="buttonCount">0</span></div>
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search name or key"></label>
+      <div class="filters">
+        <select id="pageFilter" aria-label="Filter by page"><option value="">All pages</option></select>
+        <select id="tagFilter" aria-label="Filter by tag"><option value="">All tags</option></select>
+        <select id="statusFilter" aria-label="Filter by status"><option value="active">Active</option><option value="all">All</option><option value="disabled">Disabled</option><option value="deleted">Deleted</option></select>
+      </div>
+      <div class="catalog-list" id="catalogList"></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-toolbar">
+        <div class="page-tabs" id="pageTabs" role="tablist"></div>
+        <button class="secondary compact" id="managePages">Manage pages</button>
+        <button class="secondary compact" id="manageLibrary">Tags &amp; modifiers</button>
+      </div>
+      <div class="canvas-head"><div><small>Live POS layout</small><h2 id="canvasTitle">Select a page</h2></div><p>Drag a button into any cell. Changes save when dropped.</p></div>
+      <div class="pos-canvas" id="posCanvas" aria-label="POS button layout"></div>
+    </section>
+
+    <aside class="inspector" id="inspector">
+      <div class="empty-inspector" id="emptyInspector"><span>✦</span><h2>Select a button</h2><p>Edit product information, inherited behaviors, appearance, and layout from one place.</p></div>
+      <form id="buttonForm" class="hidden">
+        <div class="inspector-head"><div><small id="editorEyebrow">Button</small><h2 id="editorTitle">New button</h2></div><button class="icon" id="closeEditor" type="button" aria-label="Close">×</button></div>
+        <div class="preview-wrap"><button class="pos-button preview" id="buttonPreview" type="button"><span>Button</span><small>$0.00</small></button></div>
+        <nav class="editor-tabs" id="editorTabs">
+          <button class="active" data-tab="general" type="button">General</button><button data-tab="behavior" type="button">Behavior</button><button data-tab="visual" type="button">Visual</button><button data-tab="advanced" type="button">Advanced</button>
+        </nav>
+        <section class="tab-section" data-section="general">
+          <div class="field-grid">
+            <label class="wide">Product name<input name="name" required maxlength="150"></label>
+            <label>POS label<input name="display_name" required maxlength="100"></label>
+            <label>Internal key<input name="internal_key" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></label>
+            <label>Price ($)<input name="price" type="number" min="0" step="0.01" required></label>
+            <label>Alternate price ($)<input name="alternate_price" type="number" min="0" step="0.01"></label>
+            <label>Page<select name="page_id" required></select></label>
+            <label>Type<select name="button_type"><option>PRODUCT</option><option>ACTION</option><option>NAVIGATION</option></select></label>
+            <label>Weight<input name="weight_value" type="number" min="0" step="0.01"></label>
+            <label>Unit<input name="weight_unit" placeholder="oz, lb, each"></label>
+            <label class="wide">Description<textarea name="description" rows="3"></textarea></label>
+            <label class="check wide"><input name="active" type="checkbox" checked><span>Active and available on the POS</span></label>
+          </div>
+        </section>
+        <section class="tab-section hidden" data-section="behavior">
+          <h3>Reusable tags</h3><div class="choice-grid" id="tagChoices"></div>
+          <h3>Direct modifier groups</h3><p class="hint">Direct assignments override behavior inherited from tags.</p><div class="choice-list" id="modifierChoices"></div>
+          <h3>Prompt chain</h3><div class="choice-list" id="promptChoices"></div>
+        </section>
+        <section class="tab-section hidden" data-section="visual">
+          <div class="field-grid">
+            <label>Presentation<select name="visual_type"><option value="text">Text only</option><option value="image_text">Image + text</option><option value="image">Image only</option><option value="icon">Icon only</option></select></label>
+            <label>Font size<input name="font_size" type="number" min="10" max="36" value="16"></label>
+            <label>Background<input name="background_color" type="color" value="#dedede"></label>
+            <label>Text color<input name="text_color" type="color" value="#111111"></label>
+            <label class="wide">Image URL<input name="image_url" type="url" placeholder="/static/images/menu/item.jpg"></label>
+            <label>Text position<select name="text_position"><option value="center">Center</option><option value="bottom">Bottom</option><option value="top">Top</option></select></label>
+            <label>Border style<select name="border_style"><option value="solid">Solid</option><option value="none">None</option><option value="double">Double</option></select></label>
+          </div>
+        </section>
+        <section class="tab-section hidden" data-section="advanced">
+          <div class="field-grid">
+            <label>Row<input name="grid_row" type="number" min="1" max="100" value="1"></label><label>Column<input name="grid_column" type="number" min="1" max="100" value="1"></label>
+            <label>Width<input name="grid_width" type="number" min="1" max="4" value="1"></label><label>Height<input name="grid_height" type="number" min="1" max="4" value="1"></label>
+            <label class="wide">Availability JSON<textarea name="availability" class="code" rows="4">{}</textarea></label>
+            <label class="wide">Kitchen routing JSON<textarea name="routing" class="code" rows="4">{}</textarea></label>
+            <label class="wide">Metadata JSON<textarea name="metadata" class="code" rows="4">{}</textarea></label>
+          </div>
+        </section>
+        <footer class="form-actions"><button class="danger ghost hidden" id="restoreButton" type="button">Restore</button><button class="danger ghost" id="deleteButton" type="button">Delete</button><button class="secondary" id="duplicateButton" type="button">Duplicate</button><button class="primary" type="submit">Save changes</button></footer>
+      </form>
+    </aside>
+  </main>
+
+  <dialog id="pagesDialog"><form method="dialog"><header><div><small>Layout structure</small><h2>POS pages</h2></div><button class="icon" value="cancel">×</button></header><div id="pageManager"></div><button class="secondary wide-button" id="addPage" type="button">+ Add page</button></form></dialog>
+  <dialog id="libraryDialog"><form method="dialog"><header><div><small>Reusable configuration</small><h2>Behavior library</h2></div><button class="icon" value="cancel">×</button></header><nav class="dialog-tabs"><button class="active" data-library="tags" type="button">Tags</button><button data-library="modifiers" type="button">Modifiers</button><button data-library="prompts" type="button">Prompts</button><button data-library="rules" type="button">Rules</button></nav><div id="libraryContent"></div><button class="secondary wide-button" id="addLibraryItem" type="button">+ Add</button></form></dialog>
+  <dialog id="auditDialog"><form method="dialog"><header><div><small>Accountable changes</small><h2>Recent POS history</h2></div><button class="icon" value="cancel">×</button></header><div class="audit-list" id="auditList"></div></form></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/static/pos-button-editor.js"></script>
+</body>
+</html>

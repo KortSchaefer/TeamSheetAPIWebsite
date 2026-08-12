@@ -89,6 +89,21 @@ from .agm_floor import (
     AGMTableDefinition,
     AGMTableState,
 )
+from .pos_config import (
+    POSBehaviorRule,
+    POSButton,
+    POSButtonModifierGroup,
+    POSButtonPrompt,
+    POSButtonTag,
+    POSConfigAudit,
+    POSModifier,
+    POSModifierGroup,
+    POSPage,
+    POSPrompt,
+    POSTag,
+    POSTagModifierGroup,
+    POSTagPrompt,
+)
 
 __all__ = [
     "CobrandDeal",
@@ -178,4 +193,17 @@ __all__ = [
     "AGMStoreMembership",
     "AGMTableDefinition",
     "AGMTableState",
+    "POSBehaviorRule",
+    "POSButton",
+    "POSButtonModifierGroup",
+    "POSButtonPrompt",
+    "POSButtonTag",
+    "POSConfigAudit",
+    "POSModifier",
+    "POSModifierGroup",
+    "POSPage",
+    "POSPrompt",
+    "POSTag",
+    "POSTagModifierGroup",
+    "POSTagPrompt",
 ]

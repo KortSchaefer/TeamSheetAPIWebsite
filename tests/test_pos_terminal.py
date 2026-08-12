@@ -98,7 +98,8 @@ async def test_pos_server_and_manager_table_lifecycle(
     bootstrap = await client.get("/pos/terminal/bootstrap")
     assert bootstrap.status_code == 200, bootstrap.text
     assert bootstrap.json()["permissions"]["view_all_tables"] is False
-    assert bootstrap.json()["features"]["menu_items"] is False
+    assert bootstrap.json()["features"]["menu_items"] is True
+    assert bootstrap.json()["menu_config"]["schema_version"] == 1
     assert [row["name"] for row in bootstrap.json()["categories"]] == [
         "Drinks",
         "Apps",

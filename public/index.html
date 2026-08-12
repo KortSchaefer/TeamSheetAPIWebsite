@@ -400,6 +400,7 @@
           <a class="hub-action-btn" href="/static/settings.html">Settings</a>
           <a class="hub-action-btn" href="/static/store-preferences.html">Store Preferences</a>
           <a class="hub-action-btn" href="/static/accounts.html">Accounts</a>
+          <a class="hub-action-btn" href="/static/pos-button-editor.html">POS Button Editor</a>
         </div>
       </div>
       <div class="wheel" id="hub-wheel">
@@ -884,10 +885,10 @@
         const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
         if (!rows.length) return [];
 
-        const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const normalizeHeader = (h) => h.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         const headersRaw = splitCsvLine(rows[0]);
         const normalizedHeaders = headersRaw.map(normalizeHeader);
-        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
+        const expectedHeaders = ['name', 'nickname', 'upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score', 'pitty', 'pity', 'employment_days', 'employment', 'max_guests', 'capacity', 'max_section_load', 'hours', 'hrs'];
         const hasHeader = normalizedHeaders.some((h) => expectedHeaders.includes(h));
 
         const dataRows = hasHeader ? rows.slice(1) : rows;
@@ -895,6 +896,12 @@
         const toNumber = (value) => {
           if (value === undefined || value === null) return undefined;
           const num = Number(String(value).trim());
+          return Number.isFinite(num) ? num : undefined;
+        };
+
+        const toBlastNumber = (value) => {
+          if (value === undefined || value === null) return undefined;
+          const num = Number(String(value).trim().replace(/%$/, '').trim());
           return Number.isFinite(num) ? num : undefined;
         };
 
@@ -915,7 +922,7 @@
 
             const name = hasHeader ? resolveField(headers, cells, ['name']) : extractName(cells[0]);
             const nickname = hasHeader ? resolveField(headers, cells, ['nickname']) : undefined;
-            const upsell_score = toNumber(resolveField(headers, cells, ['upsell_score', 'upsell']));
+            const upsell_score = toBlastNumber(resolveField(headers, cells, ['upsell_score', 'upsell', 'blast', 'blast_percent', 'blast_percentage', 'blast_score']));
             const pitty = toNumber(resolveField(headers, cells, ['pitty', 'pity']));
             const employment_days = toNumber(resolveField(headers, cells, ['employment_days', 'employment']));
             const max_guests = toNumber(resolveField(headers, cells, ['max_guests', 'capacity', 'max_section_load']));

@@ -123,6 +123,17 @@ from .schemas import (
     UserRead,
     UserEmployeeLink,
 )
+from .pos_config import (
+    POSBehaviorRuleUpsert,
+    POSButtonUpsert,
+    POSConfigImportRequest,
+    POSLayoutUpdate,
+    POSModifierGroupUpsert,
+    POSPageUpsert,
+    POSPromptUpsert,
+    POSTagUpsert,
+    POSTerminalItemCreate,
+)
 
 __all__ = [
     "CobrandDealCreate",
@@ -248,4 +259,13 @@ __all__ = [
     "PyosRequestCreate",
     "PyosRequestManualCreate",
     "PyosRequestRead",
+    "POSBehaviorRuleUpsert",
+    "POSButtonUpsert",
+    "POSConfigImportRequest",
+    "POSLayoutUpdate",
+    "POSModifierGroupUpsert",
+    "POSPageUpsert",
+    "POSPromptUpsert",
+    "POSTagUpsert",
+    "POSTerminalItemCreate",
 ]
